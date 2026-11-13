@@ -1,0 +1,37 @@
+/* The host's part of the look: type, spacing and chart tokens the page uses. Colours come from look.json (site.py). */
+:root{--font-anthropic-sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;--font-anthropic-serif:Georgia,serif;
+--cds-font-size-caption:12px;--cds-font-size-body:14px;--cds-font-size-heading:17px;--cds-font-size-title:28px;--cds-font-weight-medium:600;
+--cds-gap-xs:4px;--cds-gap-sm:8px;--cds-gap-md:12px;--cds-gap-lg:16px;--cds-gap-xl:28px;--cds-pad-xs:4px;--cds-pad-sm:8px;--cds-pad-md:12px;--cds-pad-lg:16px;--cds-radius:8px;
+--cds-ease-out:cubic-bezier(.2,.7,.2,1);--cds-dur-slow:320ms;
+--cds-chart-muted:var(--color-fg-muted);--cds-chart-grid:color-mix(in oklab,var(--color-fg) 9%,var(--color-panel));--cds-chart-axis:color-mix(in oklab,var(--color-fg) 24%,var(--color-panel));--cds-chart-reference:var(--color-fg-muted);
+--cds-text-secondary:var(--color-fg-muted);--cds-surface-popover:var(--color-panel);--cds-border:var(--color-border-line);--cds-shadow-popover:0 4px 14px rgba(0,0,0,.18)}
+body{margin:0;background:var(--color-bg);color:var(--color-fg)}
+#dash-root{padding-block:20px 60px;padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px))}
+@media (max-width:520px){#dash-root{padding-block:16px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}}
+select.dash-select{font:inherit;font-size:12px;padding:5px 26px 5px 9px;border:1px solid var(--color-border-line);border-radius:8px;background-color:var(--color-panel);color:var(--color-fg)}
+.ed-foot{display:none}
+
+.ed-foot [data-l=zh],html[lang="zh-Hant"] .ed-foot [data-l=en]{display:none}
+html[lang="zh-Hant"] .ed-foot [data-l=zh]{display:inline}
+
+/* Print layout (Save as PDF, the browser's Print, and `elevendash pdf`): a fixed width so the charts drawn for the
+   screen fit the printed page. The page has no margin, so the theme's ground reaches every edge (a browser prints
+   margins white); the content's own padding repeats on each page instead. */
+@page{size:1040px 1471px;margin:0}
+html.pdf{-webkit-print-color-adjust:exact;print-color-adjust:exact;background:var(--color-bg)}
+html.pdf body{background:var(--color-bg)}
+html.pdf #dash-root{box-sizing:content-box;width:968px;padding:34px 36px;margin:0;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+html.pdf .er-page{border-radius:0}
+html.pdf .er{gap:40px}
+html.pdf .er-nav,html.pdf .er-ruler,html.pdf .er-rbar,html.pdf .er-rside>.er-muted,html.pdf .er-btn,html.pdf .er-save,html.pdf .er-smatches .er-muted{display:none}
+html.pdf .er-card,html.pdf .er-find,html.pdf .er-pitem,html.pdf .er-keephead,html.pdf .er-board,html.pdf .er-multi,html.pdf .er-sechead,html.pdf .er-mgrid>div,html.pdf .er-t tr{break-inside:avoid}
+html.pdf .er-sechead{break-after:avoid}
+html.pdf #match{break-before:page}
+/* a two-column block of cards never splits across pages (Chrome overlaps the cards when it does); each fits on one */
+html.pdf .er-grid{break-inside:avoid}
+/* a list laid out as a grid loses its height when it runs over a page: print the plan as plain blocks */
+html.pdf #plan,html.pdf ol.er-plan{display:block}
+html.pdf #plan>*+*{margin-top:18px}
+html.pdf .er-plan.keep{break-inside:avoid}
+html.pdf .er-card{background:var(--color-panel)}
+html.pdf .ed-foot{display:block;width:968px;margin:0;padding:0 36px 34px;font:12px var(--font-anthropic-sans),"Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif;color:var(--color-fg-muted)}

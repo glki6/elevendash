@@ -1,0 +1,9 @@
+{
+  "system": { "name": "Table blue" },
+  "light": { "ground": "#f3f6fa", "card": "#ffffff", "text": "#111a2b", "muted": "#5b667a", "border": "#dbe1ea",
+    "good": "#006300", "warning": "#734500", "bad": "#8e2626",
+    "charts": ["#1f63c9", "#e0700a", "#0f968b"] },
+  "dark": { "ground": "#0b1018", "card": "#151c27", "text": "#eef1f5", "muted": "#8a93a3", "border": "#253041",
+    "good": "#0ca30c", "warning": "#db9300", "bad": "#ec7e7e",
+    "charts": ["#4b8ff2", "#d9731c", "#2ba398"] }
+}

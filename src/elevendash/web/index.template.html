@@ -1,0 +1,2769 @@
+<meta name="dash-one-writer">
+<style>
+/* The page's own dark and light looks (from look.json) on its outer element: it opens dark, and the switch in the
+   masthead turns it light, whatever the host's own theme. */
+{{THEME_CSS}}
+.er-page{background:var(--color-bg);color:var(--color-fg);border-radius:12px}
+/* Every piece of text is in the page in both languages; the language switch shows one. */
+.er-page:not(.er-zh) [data-l=zh],.er-page.er-zh [data-l=en]{display:none!important}
+
+/* Layout: one reading column. A scoreboard strip opens it, findings run as an open two-column list,
+   and only charts and tables sit in cards. Blue is you and points you won, orange is the AI and points you lost. */
+.er{
+  --er-you:var(--er-c0,var(--color-fg));
+  --er-ai:var(--er-c1,var(--color-fg-muted));
+  --er-alt:var(--er-c2,var(--color-fg-muted));
+  --er-display:Bahnschrift,'DIN Alternate','Roboto Condensed','Arial Narrow',var(--font-anthropic-sans),var(--er-cjk);
+  --er-line:var(--color-border-line);
+  --er-track:color-mix(in oklab,var(--color-fg) 9%,var(--color-panel));
+  --er-you-wash:color-mix(in oklab,var(--er-you) 8%,var(--color-panel));
+  --er-you-tint:color-mix(in oklab,var(--er-you) 16%,var(--color-panel));
+  --er-ai-tint:color-mix(in oklab,var(--er-ai) 18%,var(--color-panel));
+  --er-court:color-mix(in oklab,var(--er-you) 84%,#000);
+  container-type:inline-size;display:grid;gap:56px;max-width:1180px;margin-inline:auto;
+  font-family:var(--font-anthropic-sans),var(--er-cjk);color:var(--color-fg);font-size:var(--cds-font-size-body);line-height:1.5}
+/* Chinese text falls back to a Traditional Chinese face; Latin letters and numbers keep the page's own */
+.er-page{--er-cjk:"Microsoft JhengHei","PingFang TC","Noto Sans TC","Noto Sans CJK TC","Source Han Sans TC",sans-serif}
+.er-nav{font-family:var(--font-anthropic-sans),var(--er-cjk)}
+.er h1{font-family:var(--er-display);font-weight:600;font-stretch:88%;font-size:clamp(32px,5.4cqi,48px);line-height:1;letter-spacing:-.005em;margin:0;text-wrap:balance}
+.er h2{font-family:var(--er-display);font-weight:600;font-stretch:92%;font-size:clamp(22px,3cqi,28px);line-height:1.1;margin:0;text-wrap:balance}
+.er h3{font-size:var(--cds-font-size-body);font-weight:var(--cds-font-weight-medium);line-height:1.3;margin:0;text-wrap:balance}
+.er p{margin:0;max-width:68ch}
+.er b{font-weight:var(--cds-font-weight-medium);font-variant-numeric:tabular-nums}
+.er-muted{color:var(--color-fg-muted);font-size:var(--cds-font-size-caption)}
+
+/* masthead */
+.er-mast{display:grid;gap:12px}
+.er-eyebrow{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;font-size:var(--cds-font-size-caption);letter-spacing:.09em;text-transform:uppercase;color:var(--color-fg-muted)}
+.er-ball{width:9px;height:9px;border-radius:50%;background:var(--er-ai);flex:none}
+.er-lede{font-size:calc(var(--cds-font-size-body)*1.12);line-height:1.55;max-width:66ch}
+.er-top{display:grid;gap:20px}
+
+/* scoreboard strip */
+.er-board{display:grid;grid-template-columns:1.2fr 1fr 1fr;background:var(--color-panel);border:1px solid var(--er-line);border-radius:calc(var(--cds-radius)*1.5);overflow:hidden}
+.er-panel{display:grid;gap:12px;align-content:start;min-width:0;padding:20px 22px 22px;border-left:1px solid var(--er-line)}
+.er-panel:first-child{border-left:0;background:var(--er-you-wash)}
+.er-label{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);text-transform:uppercase;letter-spacing:.07em}
+.er-score{display:flex;align-items:baseline;gap:.1em;font-family:var(--er-display);font-weight:600;font-stretch:84%;font-size:clamp(40px,5.6cqi,52px);line-height:.9}
+.er-panel:first-child .er-score{font-size:clamp(52px,7.4cqi,68px)}
+.er-score b{font-weight:600;font-variant-numeric:normal}
+.er-score .er-dash{color:var(--color-fg-muted);font-weight:300}
+.er-score .er-los{color:var(--color-fg-muted)}
+.er-rows{display:grid;gap:8px}
+.er-board{--er-valw:10.6em}
+.er-row{display:grid;grid-template-columns:minmax(0,var(--er-rowlabel,6.2rem)) minmax(0,1fr);gap:4px 12px;align-items:center;font-size:var(--cds-font-size-caption)}
+.er-meter{display:grid;grid-template-columns:minmax(0,1fr) var(--er-valw,3.5em);gap:10px;align-items:center;min-width:0}
+.er-track{display:block;height:8px;border-radius:99px;background:var(--er-track);overflow:hidden}
+.er-fill{display:block;height:100%;min-width:2px;border-radius:99px;background:var(--er-you)}
+.er-meter[data-tone=ai] .er-fill{background:var(--er-ai)}
+.er-val{white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:var(--cds-font-weight-medium);text-align:right}
+.er-cnt{color:var(--color-fg-muted);font-weight:400;margin-left:8px}
+.er-delta{font-variant-numeric:tabular-nums;font-weight:var(--cds-font-weight-medium);white-space:nowrap}
+.er-delta.up{color:var(--color-ok)}
+.er-delta.down{color:var(--color-bad)}
+
+/* sections */
+.er-section{display:grid;gap:18px;min-width:0}
+.er-sechead{display:flex;flex-wrap:wrap;gap:12px 28px;align-items:end;justify-content:space-between}
+.er-sechead>div:first-child{display:grid;gap:6px;min-width:0}
+.er-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.er-col{display:flex;flex-direction:column;gap:16px;min-width:0}
+.er-col>.er-card:last-child{flex:1}
+.er-mgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 44px;margin-top:6px}
+.er-mgrid .er-t thead th:first-child{color:var(--color-fg);font-weight:var(--cds-font-weight-medium);text-transform:none;letter-spacing:0;font-size:var(--cds-font-size-caption)}
+.er-card{background:var(--color-panel);border:1px solid var(--er-line);border-radius:var(--cds-radius);padding:18px 20px 20px;min-width:0;display:grid;gap:10px;align-content:start}
+.er-multi{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--er-line);border:1px solid var(--er-line);border-radius:var(--cds-radius);overflow:hidden}
+.er-multi>div{background:var(--color-panel);padding:14px 16px 12px;display:grid;gap:6px;min-width:0}
+.er-chart{position:relative;min-height:240px;min-width:0}
+.er-mini{position:relative;min-height:120px;min-width:0}
+.er-chart svg,.er-mini svg{display:block;max-width:100%}
+.er svg text{fill:var(--cds-text-secondary);font-size:var(--cds-font-size-caption);font-family:var(--font-anthropic-sans)}
+.er svg .tick text{fill:var(--cds-text-secondary);font-size:var(--cds-font-size-caption)}
+.er svg .tick line{stroke:var(--cds-chart-axis)}
+.er svg .domain{stroke:var(--cds-chart-axis)}
+.er svg text.er-strong{fill:var(--color-fg);font-weight:var(--cds-font-weight-medium)}
+.er svg text.er-on{fill:#fff;font-weight:var(--cds-font-weight-medium)}
+.er svg text.er-num{font-variant-numeric:tabular-nums}
+
+/* findings: an open list, no cards */
+.er-finds{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 44px}
+.er-find{display:grid;gap:10px;align-content:start;min-width:0;padding:20px 0 24px;border-top:1px solid var(--er-line)}
+.er-find h3{font-family:var(--er-display);font-weight:600;font-stretch:94%;font-size:calc(var(--cds-font-size-heading)*1.05);line-height:1.2}
+.er-find .er-rows{--er-rowlabel:11.5rem;margin-top:4px}
+
+/* save as PDF */
+.er-save{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.er-save .er-btn{display:inline-flex;align-items:center;gap:7px;padding:6px 13px;font-weight:var(--cds-font-weight-medium)}
+.er-save .er-btn[aria-busy=true]{opacity:.6;cursor:progress}
+.er-save svg{display:block;flex:none}
+.er-prefs{display:inline-flex;gap:6px}
+.er-save .er-ibtn{justify-content:center;min-width:34px;min-height:32px;padding:5px 8px}
+.er-ibtn [data-l]{line-height:1}
+.er-page:not(.er-light) .er-moon,.er-page.er-light .er-sun{display:none}
+/* a switch fades in what it changed (ER.set): dim in the frame it is drawn, then a fade as long as a typical shot
+   takes from bat to bat (--er-fade, set from the data: the findings main row's shotSecs) */
+.er-pre{opacity:.12}
+@keyframes er-in{from{opacity:.12}to{opacity:1}}
+.er-in{animation:er-in var(--er-fade,.67s) cubic-bezier(.3,.45,.4,1)}
+@media (prefers-reduced-motion:reduce){.er-pre{opacity:1}.er-in{animation:none}}
+
+/* session report */
+.er-shead{display:flex;flex-wrap:wrap;align-items:center;gap:14px 28px}
+.er-shead .er-score{font-size:clamp(46px,6.2cqi,58px)}
+.er-shead .er-rows{flex:1 1 250px;--er-valw:9.4em}
+.er-notes{list-style:none;margin:6px 0 2px;padding:14px 0 0;display:grid;gap:11px;border-top:1px solid var(--er-line)}
+.er-notes li{display:grid;grid-template-columns:20px minmax(0,1fr);gap:10px;align-items:start;line-height:1.45;max-width:64ch}
+.er-mark{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:14px;font-weight:700;line-height:1;background:var(--er-track);color:var(--color-fg-muted)}
+.er-mark.good{background:color-mix(in oklab,var(--color-ok) 15%,var(--color-panel));color:var(--color-ok)}
+.er-mark.bad{background:color-mix(in oklab,var(--color-bad) 15%,var(--color-panel));color:var(--color-bad)}
+.er-smatches{display:grid;gap:8px;padding-top:14px;border-top:1px solid var(--er-line)}
+.er-watch{display:inline-flex;align-items:center;gap:7px;padding:4px 11px 4px 10px;border:1px solid var(--er-line);border-radius:var(--cds-radius);background-color:var(--color-panel);color:var(--color-fg);font-size:var(--cds-font-size-caption);font-weight:var(--cds-font-weight-medium);line-height:1.5;text-decoration:none;white-space:nowrap}
+.er-watch::before{content:"";border-style:solid;border-width:5px 0 5px 8px;border-color:transparent transparent transparent var(--er-you)}
+.er-watch:hover{border-color:var(--color-fg-muted)}
+.er-watch:focus-visible{outline:2px solid var(--er-you);outline-offset:2px}
+.er-svideo{display:flex;flex-wrap:wrap;gap:8px}
+.er-svideo:empty{display:none}
+.er-chips{display:flex;flex-wrap:wrap;gap:6px}
+.er-chip{font:inherit;font-size:var(--cds-font-size-caption);font-variant-numeric:tabular-nums;display:inline-flex;align-items:center;gap:6px;padding:3px 11px 3px 9px;border:1px solid var(--er-line);border-radius:999px;background-color:var(--color-panel);color:var(--color-fg);cursor:pointer;white-space:nowrap}
+.er-chip::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--er-ai);flex:none}
+.er-chip.won{background-color:var(--er-you-tint);border-color:transparent}
+.er-chip.won::before{background:var(--er-you)}
+.er-chip:hover{border-color:var(--color-fg-muted)}
+.er-chip[aria-pressed=true],.er-chip.on{border-color:var(--color-fg);box-shadow:inset 0 0 0 1px var(--color-fg)}
+.er-chip:focus-visible{outline:2px solid var(--er-you);outline-offset:2px}
+.er-cmprows{display:grid;gap:13px;--er-rowlabel:13rem;--er-valw:8.2em;margin-top:6px}
+.er-cmp{position:relative;display:block}
+.er-ref{position:absolute;top:-4px;bottom:-4px;width:2px;margin-left:-1px;border-radius:1px;background:var(--color-fg);box-shadow:0 0 0 1.5px var(--color-panel)}
+.er-chg{display:inline-block;min-width:3.7em;margin-left:8px;font-weight:400;color:var(--color-fg-muted)}
+.er-chg.good{color:var(--color-ok);font-weight:var(--cds-font-weight-medium)}
+.er-chg.bad{color:var(--color-bad);font-weight:var(--cds-font-weight-medium)}
+.er-sw.ref{width:2px;height:14px;border-radius:1px;background:var(--color-fg)}
+
+/* training plan */
+.er-plead>div{gap:8px;padding:16px 18px 16px}
+.er-pnum{display:flex;align-items:baseline;gap:.25em;font-family:var(--er-display);font-weight:600;font-stretch:88%;font-size:clamp(30px,4.4cqi,40px);line-height:1;font-variant-numeric:tabular-nums}
+.er-pnum small{font-family:var(--font-anthropic-sans);font-size:var(--cds-font-size-caption);font-weight:400;font-stretch:100%;color:var(--color-fg-muted)}
+.er-plan{list-style:none;margin:0;padding:0;display:grid}
+.er-pitem{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px 44px;align-items:start;padding:22px 0 26px;border-top:1px solid var(--er-line);min-width:0}
+.er-pitem>div{display:grid;gap:11px;align-content:start;min-width:0}
+.er-phead{display:flex;align-items:baseline;gap:12px;min-width:0}
+.er-prank{font-family:var(--er-display);font-weight:600;font-size:32px;line-height:1;color:var(--er-you);font-variant-numeric:tabular-nums;flex:none}
+.er-pitem h3{font-family:var(--er-display);font-weight:600;font-stretch:94%;font-size:calc(var(--cds-font-size-heading)*1.05);line-height:1.2}
+.er-ptag{justify-self:start;font-size:var(--cds-font-size-caption);font-weight:var(--cds-font-weight-medium);font-variant-numeric:tabular-nums;padding:2px 11px;border-radius:999px;background:var(--er-you-tint)}
+.er-ptag.ok{background:color-mix(in oklab,var(--color-ok) 15%,var(--color-panel));color:var(--color-ok)}
+.er-ptag.none{background:var(--er-track);color:var(--color-fg-muted)}
+.er-pdrill{display:grid;gap:3px;padding:10px 14px 11px;border-left:3px solid var(--er-you);border-radius:0 var(--cds-radius) var(--cds-radius) 0;background:var(--er-you-wash)}
+.er-pmetric{font-weight:var(--cds-font-weight-medium);line-height:1.35}
+.er-pnow{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px;font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.er-pnow .er-pnum{font-size:30px;color:var(--color-fg)}
+.er-pnow b{color:var(--color-fg)}
+.er-pnow .er-chg{min-width:0;margin-left:0}
+.er-ptrend{position:relative;min-height:118px;min-width:0}
+.er-ptrend svg{display:block;max-width:100%}
+.er-plan.keep{grid-template-columns:repeat(2,minmax(0,1fr));gap:0 44px}
+.er-plan.keep .er-pitem{grid-template-columns:minmax(0,1fr)}
+.er-keephead{display:grid;gap:4px;padding-top:6px}
+.er-sw.hollow{border-radius:50%;background:var(--color-panel);box-shadow:inset 0 0 0 2px var(--er-you)}
+.er-sw.dash{width:16px;height:0;border-radius:0;background:none;border-top:2px dashed var(--color-fg)}
+
+/* serves and returns */
+.er h3.er-subhead{font-family:var(--er-display);font-weight:600;font-stretch:94%;font-size:clamp(18px,2.4cqi,21px);line-height:1.2;margin:14px 0 0;padding-top:22px;border-top:1px solid var(--er-line)}
+.er-notes.plain{border-top:0;padding-top:0;margin:0}
+.er-notes.plain li{grid-template-columns:8px minmax(0,1fr);gap:12px;max-width:78ch}
+.er-notes.plain li::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--er-you);margin-top:.5em}
+.er-flow{display:grid;gap:8px;margin-top:4px;min-width:0}
+.er-frow{display:grid;grid-template-columns:minmax(0,11.5rem) minmax(0,1fr) 5.8em;gap:4px 14px;align-items:center;font-size:var(--cds-font-size-caption)}
+.er-fhead{color:var(--color-fg-muted)}
+.er-fhead span:last-child{text-align:right;white-space:nowrap}
+.er-fgroup{margin-top:10px}
+.er-stack{display:flex;gap:2px;height:24px;min-width:0}
+.er-seg{flex:1 1 0;min-width:3px;display:flex;align-items:center;justify-content:center;overflow:hidden;white-space:nowrap;font-size:11px;font-variant-numeric:tabular-nums;color:var(--color-fg)}
+.er-seg:first-child{border-radius:4px 0 0 4px}
+.er-seg:last-child{border-radius:0 4px 4px 0}
+.er-seg.s0,.er-sw.s0{background:var(--er-ai)}
+.er-seg.s1,.er-sw.s1{background:color-mix(in oklab,var(--er-ai) 58%,var(--color-panel))}
+.er-seg.s2,.er-sw.s2{background:color-mix(in oklab,var(--er-ai) 30%,var(--color-panel))}
+.er-seg.s3,.er-sw.s3{background:color-mix(in oklab,var(--er-you) 30%,var(--color-panel))}
+.er-seg.s4,.er-sw.s4{background:var(--er-you)}
+.er-seg.s0,.er-seg.s4{color:#fff;font-weight:var(--cds-font-weight-medium)}
+.er-fdiv{flex:none;width:2px;margin:-4px 1px;border-radius:1px;background:var(--color-fg)}
+.er-t.types tbody th{min-width:8.5rem}
+.er-t td.er-strongcell{font-weight:var(--cds-font-weight-medium);color:var(--color-fg)}
+
+/* point replay: a fixed dark hall in both themes, so the white ball and lines always read */
+.er-replay{overflow-anchor:none;display:grid;grid-template-columns:minmax(0,clamp(214px,34cqi,300px)) minmax(0,1fr);gap:18px clamp(20px,3.6cqi,34px);align-items:start}
+.er-rstage,.er-rside{display:grid;gap:12px;min-width:0;align-content:start}
+.er-rcourt{min-height:0;max-width:300px;width:100%}
+.er-rflow{min-height:0}
+.er-rcourt svg{border-radius:10px;touch-action:pan-y}
+.er-rbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.er-rbar input[type=range]{flex:1 1 120px;min-width:0;margin:0;accent-color:var(--er-you)}
+.er-rplay{min-width:5.4em;text-align:center}
+.er-rout{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;line-height:1.5}
+.er-rshots tbody tr{cursor:pointer}
+.er-rshots tbody tr.on th,.er-rshots tbody tr.on td{background:var(--er-you-wash)}
+.er-rshots tbody th{white-space:nowrap}
+.er-rwho{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.er-sw.rx{background:none;border-radius:0;width:11px;height:11px;position:relative}
+.er-sw.rx::before,.er-sw.rx::after{content:"";position:absolute;left:5px;top:-1px;width:2px;height:13px;background:var(--er-ai);border-radius:1px;transform:rotate(45deg)}
+.er-sw.rx::after{transform:rotate(-45deg)}
+.er-rnav .er-btn{flex:1 1 0;white-space:nowrap;padding-inline:6px}
+.er-rshots td:last-child{white-space:normal}
+.er-rpoint{display:grid;gap:8px;padding-top:12px;border-top:1px solid var(--er-line)}
+.er-rlong{display:grid;gap:6px;font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.er-rstage .er-tab{padding-inline:9px}
+.er-hit{fill:transparent;cursor:pointer}
+.er-hit.on{fill:color-mix(in oklab,var(--color-fg) 9%,transparent);stroke:var(--color-fg);stroke-width:1.5}
+
+/* tooltips, legends */
+.er-tip{position:absolute;z-index:5;pointer-events:none;background:var(--cds-surface-popover);border:1px solid var(--cds-border);box-shadow:var(--cds-shadow-popover);border-radius:var(--cds-radius);padding:var(--cds-pad-xs) var(--cds-pad-sm);font-size:var(--cds-font-size-caption);color:var(--cds-text-secondary);max-width:250px;line-height:1.4}
+.er-tip-h{color:var(--color-fg);font-weight:var(--cds-font-weight-medium)}
+.er-legend{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.er-legend span{display:inline-flex;align-items:center;gap:6px}
+.er-sw{width:10px;height:10px;border-radius:3px;display:inline-block;background:var(--er-you);flex:none}
+.er-sw.ai{background:var(--er-ai)}
+.er-sw.alt{background:var(--er-alt)}
+.er-sw.line{height:3px;width:16px;border-radius:2px}
+.er-sw.dot{border-radius:50%}
+.er-sw.ball{border-radius:50%;background:#fff;box-shadow:0 0 0 3px var(--er-court)}
+.er-sw.ball.ai{background:var(--er-ai)}
+.er-legend.court{gap:4px 20px;padding-left:3px}
+
+/* bars in the level cards */
+.er-bars{display:grid;gap:10px;--er-rowlabel:13rem;--er-valw:6.4em;margin-top:4px}
+
+/* tables */
+.er-tablewrap{overflow-x:auto;min-width:0}
+table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-caption);font-variant-numeric:tabular-nums}
+.er-t th,.er-t td{padding:7px 8px;text-align:right;border-bottom:1px solid var(--er-line);white-space:nowrap}
+.er-t th:first-child,.er-t td:first-child{text-align:left;white-space:normal;padding-left:0}
+.er-t th:last-child,.er-t td:last-child{padding-right:0}
+.er-t thead th{color:var(--color-fg-muted);font-weight:400;text-transform:uppercase;letter-spacing:.06em;font-size:calc(var(--cds-font-size-caption)*.92);border-bottom-color:var(--color-fg-muted)}
+.er-t tbody th{font-weight:400;color:var(--color-fg)}
+.er-t tbody tr:last-child th,.er-t tbody tr:last-child td{border-bottom:0}
+.er-t tr.er-group th{padding-top:16px;color:var(--color-fg);font-weight:var(--cds-font-weight-medium)}
+
+/* controls */
+.er-controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.er-controls label,.er-controls .er-ctl{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.er select.dash-select{max-width:100%}
+.er-tabs{display:inline-flex;flex-wrap:wrap;gap:2px;padding:3px;background-color:var(--er-track);border-radius:calc(var(--cds-radius) + 3px);min-height:32px}
+.er-tab{font:inherit;font-size:var(--cds-font-size-caption);font-variant-numeric:tabular-nums;font-weight:var(--cds-font-weight-medium);border:0;background-color:transparent;color:var(--color-fg-muted);padding:5px 12px;border-radius:var(--cds-radius);cursor:pointer}
+.er-tab:hover{color:var(--color-fg)}
+.er-tab[aria-pressed=true]{background-color:var(--color-panel);color:var(--color-fg);box-shadow:0 1px 2px rgb(0 0 0 / .14)}
+.er-btn{font:inherit;font-size:var(--cds-font-size-caption);color:var(--color-fg);background-color:var(--color-panel);border:1px solid var(--er-line);border-radius:var(--cds-radius);padding:5px 11px;cursor:pointer}
+.er-btn:hover{border-color:var(--color-fg-muted)}
+.er-btn:focus-visible,.er-tab:focus-visible,.er select:focus-visible,.er summary:focus-visible{outline:2px solid var(--er-you);outline-offset:2px}
+
+/* match header */
+.er-match{display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px 40px;align-items:center}
+.er-result{display:flex;flex-wrap:wrap;align-items:center;gap:14px 22px}
+.er-result .er-score{font-size:clamp(48px,6.4cqi,60px)}
+.er-pill{display:inline-flex;align-items:center;gap:6px;padding:2px 10px 2px 8px;border-radius:999px;font-family:var(--font-anthropic-sans);font-size:var(--cds-font-size-caption);font-weight:var(--cds-font-weight-medium);line-height:1.7;background:var(--er-you-tint);color:var(--color-fg);white-space:nowrap}
+.er-pill::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--er-you)}
+.er-pill.lost{background:var(--er-ai-tint)}
+.er-pill.lost::before{background:var(--er-ai)}
+.er-sets{display:flex;align-items:stretch;gap:8px}
+.er-setlabels{display:grid;grid-template-rows:1fr 1fr;align-items:center;font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.er-games{display:flex;gap:5px;min-height:58px}
+.er-game{display:grid;grid-template-rows:1fr 1fr;min-width:36px;border:1px solid var(--er-line);border-radius:6px;overflow:hidden;font-family:var(--er-display);font-weight:600;font-size:18px;line-height:1;text-align:center}
+.er-game span{display:grid;place-items:center;padding:6px 7px;color:var(--color-fg-muted)}
+.er-game span+span{border-top:1px solid var(--er-line)}
+.er-game span.you.win{background:var(--er-you-tint);color:var(--color-fg)}
+.er-game span.ai.win{background:var(--er-ai-tint);color:var(--color-fg)}
+.er-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(128px,100%),1fr));gap:12px 24px;margin:0}
+.er-meta dt{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);text-transform:uppercase;letter-spacing:.06em}
+.er-meta dd{margin:2px 0 0;font-variant-numeric:tabular-nums}
+
+.er details{border-top:1px solid var(--er-line);padding-top:var(--cds-pad-md)}
+.er summary{cursor:pointer;font-weight:var(--cds-font-weight-medium)}
+.er details ul{margin:var(--cds-gap-sm) 0 0;padding-left:1.2em;display:grid;gap:6px;max-width:72ch}
+.er [data-dash-source-state=refreshing]{opacity:.5}
+.er-fail{color:var(--color-fg-muted);font-size:var(--cds-font-size-caption);padding:var(--cds-pad-md) 0}
+
+/* section menu: sits outside .er, so it reads the dashboard's own colours */
+.er-shell{container-type:inline-size;max-width:1396px;margin-inline:auto;--er-jump:64px;position:relative}
+.er-ruler{position:absolute;inset:0 auto 0 0;width:1px;overflow:hidden;display:grid;grid-auto-rows:240px;align-content:start;pointer-events:none;visibility:hidden}
+.er-ruler b{position:absolute;left:0;bottom:0;width:1px;height:2px}
+.er [id]{scroll-margin-top:var(--er-jump)}
+.er-nav{position:sticky;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:6;font-family:var(--font-anthropic-sans);font-size:var(--cds-font-size-caption);line-height:1.35}
+.er-nav ol{list-style:none;margin:0;padding:0}
+.er-nav ol ol{display:none}
+.er-nav li.on>ol{display:block}
+.er-nav a{display:block;color:var(--color-fg-muted);text-decoration:none}
+.er-nav a:hover{color:var(--color-fg)}
+.er-nav li.on>a{color:var(--color-fg);font-weight:var(--cds-font-weight-medium)}
+.er-nav ol ol li.on>a{font-weight:400}
+.er-nav a:focus-visible,.er-navbtn:focus-visible{outline:2px solid var(--er-c0,var(--color-fg));outline-offset:-2px}
+.er-navgroup{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--color-fg-muted)}
+/* one button that names the section you are in and opens the whole list */
+.er-navbtn{display:inline-flex;align-items:center;gap:9px;max-width:100%;font:inherit;font-size:13px;font-weight:var(--cds-font-weight-medium);color:var(--color-fg);background-color:var(--color-panel);
+  border:1px solid var(--color-border-line);border-radius:999px;padding:8px 14px 8px 13px;cursor:pointer;box-shadow:0 2px 10px rgb(0 0 0 / .14)}
+.er-navbtn svg{flex:none;color:var(--color-fg-muted)}
+.er-navbtn:hover svg{color:var(--color-fg)}
+.er-nav.open .er-navchev{transform:rotate(180deg)}
+@container (max-width:1127.98px){
+  .er-nav{width:fit-content;max-width:100%;margin:0 0 20px}
+  .er-nav>ol{display:none;position:absolute;left:0;top:calc(100% + 6px);width:max-content;min-width:236px;max-width:min(320px,100cqi);max-height:var(--er-room,70vh);overflow-y:auto;overscroll-behavior:contain;
+    padding:6px;background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:12px;box-shadow:0 10px 30px rgb(0 0 0 / .22)}
+  .er-nav.open>ol{display:block}
+  .er-nav a{padding:8px 12px;border-radius:8px;font-size:13px}
+  .er-nav a[aria-current=true]{background:color-mix(in oklab,var(--er-c0,var(--color-fg)) 14%,var(--color-panel))}
+  .er-nav ol ol a{padding:6px 12px 6px 26px;font-size:var(--cds-font-size-caption)}
+  .er-navgroup{padding:12px 12px 4px}
+  .er-navgroup:first-child{padding-top:6px}
+}
+@container (min-width:1128px){
+  .er-frame{--er-jump:24px;display:grid;grid-template-columns:172px minmax(0,1fr);gap:0 44px;align-items:start}
+  .er-frame>.er{margin-inline:0;width:100%}
+  .er-navbtn{display:none}
+  .er-nav{top:calc(env(safe-area-inset-top,0px) + 24px);margin:6px 0 0;max-height:calc(100vh - 48px);overflow-y:auto;scrollbar-width:thin}
+  .er-nav>ol{border-left:1px solid var(--color-border-line)}
+  .er-nav a{margin-left:-1px;padding:5px 6px 5px 13px;border-left:2px solid transparent;font-size:13px}
+  .er-nav a[aria-current=true]{border-left-color:var(--er-c0,var(--color-fg))}
+  .er-nav li.on>ol{padding:2px 0 6px}
+  .er-nav ol ol a{padding:3px 6px 3px 25px;font-size:var(--cds-font-size-caption)}
+  .er-navgroup{padding:16px 6px 7px 14px}
+  .er-navgroup:first-child{padding-top:0}
+}
+
+@container (max-width:900px){
+  .er-multi{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .er-finds{gap:0 28px}
+}
+@container (max-width:800px){
+  .er-board{grid-template-columns:minmax(0,1fr)}
+  .er-panel{border-left:0;border-top:1px solid var(--er-line)}
+  .er-panel:first-child{border-top:0}
+  .er-grid,.er-finds,.er-mgrid,.er-pitem,.er-plan.keep{grid-template-columns:minmax(0,1fr)}
+  .er-match{grid-template-columns:minmax(0,1fr)}
+}
+@container (max-width:540px){
+  .er-replay{grid-template-columns:minmax(0,1fr)}
+  .er-rstage{justify-items:center}
+  .er-rcourt{max-width:260px}
+  .er-rbar{width:100%;max-width:300px}
+  .er-multi{grid-template-columns:minmax(0,1fr)}
+  .er-card{padding:16px 16px 18px}
+  .er-panel{padding:18px 16px 20px}
+  .er-bars .er-row,.er-find .er-row,.er-cmprows .er-row{grid-template-columns:minmax(0,1fr)}
+  .er-frow{grid-template-columns:minmax(0,1fr) 5.8em}
+  .er-frow .er-stack{grid-column:1 / -1;grid-row:2}
+  .er-fhead span:first-child{display:none}
+}
+@media (prefers-reduced-motion:no-preference){
+  .er-tab,.er-btn{transition:color var(--cds-dur-slow,.2s) var(--cds-ease-out,ease-out),background-color var(--cds-dur-slow,.2s) var(--cds-ease-out,ease-out),border-color var(--cds-dur-slow,.2s) var(--cds-ease-out,ease-out)}
+}
+</style>
+
+<div class="er-page er-dark" id="page"><div class="er-shell"><div class="er-ruler" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><b></b></div><div class="er-frame">
+<nav class="er-nav" id="section-menu" aria-label="Sections">
+  <button class="er-navbtn" type="button" id="section-toggle" aria-expanded="false" aria-controls="section-list">
+    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 3.5h10M2 7h10M2 10.5h6.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    <span class="er-navnow"><span data-now="summary">Overview</span><span data-now="session" hidden>Session report</span><span data-now="plan" hidden>Training plan</span><span data-now="match" hidden>Match explorer</span><span data-now="progress" hidden>Progress by day</span><span data-now="findings" hidden>What decides points</span><span data-now="serve" hidden>Serves and returns</span><span data-now="by-level" hidden>By AI level</span><span data-now="notes" hidden>How it's worked out</span></span>
+    <svg class="er-navchev" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+  <ol id="section-list">
+    <li class="er-navgroup">Latest</li>
+    <li><a href="#summary">Overview</a></li>
+    <li><a href="#session">Session report</a></li>
+    <li><a href="#match">Match explorer</a>
+      <ol>
+        <li><a href="#match-replay">Point by point</a></li>
+        <li><a href="#match-serves">Services</a></li>
+        <li><a href="#match-shots">Rally shots by type</a></li>
+        <li><a href="#metrics-match">11hero metrics</a></li>
+      </ol></li>
+    <li><a href="#plan">Training plan</a></li>
+    <li class="er-navgroup">All-time analysis</li>
+    <li><a href="#progress">Progress by day</a></li>
+    <li><a href="#findings">What decides points</a></li>
+    <li><a href="#serve">Serves and returns</a>
+      <ol>
+        <li><a href="#recv">When the AI serves</a></li>
+        <li><a href="#own-serve">When you serve</a></li>
+      </ol></li>
+    <li><a href="#by-level">By AI level</a>
+      <ol>
+        <li><a href="#how-lost">How points end</a></li>
+        <li><a href="#rally-length">Length of point</a></li>
+        <li><a href="#won-vs-lost">Matches won and lost</a></li>
+        <li><a href="#serve-zones">Where serves land</a></li>
+        <li><a href="#shot-mix-level">Rally shots by type</a></li>
+        <li><a href="#metrics-level">11hero metrics</a></li>
+      </ol></li>
+    <li><a href="#notes">How it's worked out</a></li>
+  </ol>
+</nav>
+<div class="er" id="report">
+
+<div class="er-top">
+<header class="er-mast" id="summary">
+  <div class="er-eyebrow"><i class="er-ball"></i><span>Eleven Table Tennis</span><span>Quest game logs</span><span><span data-draw="v" data-ds="summary" data-k="all" data-f="from" data-fmt="date">—</span> to <span data-draw="v" data-ds="summary" data-k="all" data-f="to" data-fmt="date">—</span></span></div>
+  <h1>Eleven vs AI Report</h1>
+  <p class="er-lede">At <span data-draw="v" data-ds="findings" data-k="main" data-f="levelText">—</span> you have won <b data-draw="v" data-ds="summary" data-k="L{TOP}" data-f="wins" data-fmt="int">—</b> of <b data-draw="v" data-ds="summary" data-k="L{TOP}" data-f="matches" data-fmt="int">—</b> matches and <b data-draw="v" data-ds="summary" data-k="L{TOP}" data-f="pointRate" data-fmt="pct">—</b> of points. In your last session, on <span data-draw="v" data-ds="summary" data-k="last" data-f="from" data-fmt="date">—</span> at <span data-draw="v" data-ds="summary" data-k="last" data-f="start" data-fmt="time">—</span>, you won <b data-draw="v" data-ds="summary" data-k="last" data-f="wins" data-fmt="int">—</b> of <b data-draw="v" data-ds="summary" data-k="last" data-f="matches" data-fmt="int">—</b> matches and <b data-draw="v" data-ds="summary" data-k="last" data-f="pointRate" data-fmt="pct">—</b> of points.</p>
+  <div class="er-save" id="save">
+    <button class="er-btn" type="button" id="save-pdf" data-source="report_pdf" aria-describedby="save-note"><svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true"><path d="M6.5 1v7.2M3.4 5.6l3.1 3.1 3.1-3.1M1.5 11.5h10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Save as PDF</button>
+    <div class="er-prefs" translate="no">
+      <button class="er-btn er-ibtn" type="button" id="pref-theme"><svg class="er-sun" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="3"/><path d="M8 1.3v1.5M8 13.2v1.5M1.3 8h1.5M13.2 8h1.5M3.3 3.3l1 1M11.7 11.7l1 1M3.3 12.7l1-1M11.7 4.3l1-1"/></g></svg><svg class="er-moon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 10.2A5.8 5.8 0 0 1 5.8 2.5a5.8 5.8 0 1 0 7.7 7.7Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
+      <button class="er-btn er-ibtn" type="button" id="pref-lang"><span data-l="en" lang="zh-Hant">中</span><span data-l="zh" lang="en">Eng</span></button>
+    </div>
+    <span id="save-note">The whole report as a file you can send to anyone, as it stood at the last update.</span>
+    <span id="save-busy" role="status" hidden>Getting the PDF ready…</span>
+    <span id="save-done" role="status" hidden>Saved.</span>
+    <span id="save-none" role="status" hidden>Saving a file is not available in this view. Ask Claude for the PDF instead.</span>
+    <span id="save-fail" role="status" hidden>The PDF could not be loaded. Try again, or ask Claude for it.</span>
+  </div>
+</header>
+
+<div class="er-board" id="tiles">
+  <div class="er-panel" id="tile-last">
+    <div class="er-label">Last session · <span data-draw="v" data-ds="summary" data-k="last" data-f="from" data-fmt="date">—</span>, <span data-draw="v" data-ds="summary" data-k="last" data-f="start" data-fmt="time">—</span></div>
+    <div class="er-score"><b data-draw="v" data-ds="summary" data-k="last" data-f="wins" data-fmt="int">—</b><span class="er-dash">–</span><span class="er-los" data-draw="v" data-ds="summary" data-k="last" data-f="losses" data-fmt="int">—</span></div>
+    <div>Matches won and lost: <b data-draw="v" data-ds="summary" data-k="last" data-f="matchRate" data-fmt="pct">—</b> won</div>
+    <div class="er-rows">
+      <div class="er-row"><span>Games won</span><div class="er-meter" data-draw="meter" data-ds="summary" data-k="last" data-f="gameRate" data-num="gamesWon" data-den="games"></div></div>
+      <div class="er-row"><span>Points won</span><div class="er-meter" data-draw="meter" data-ds="summary" data-k="last" data-f="pointRate" data-num="pointsWonN" data-den="points"></div></div>
+    </div>
+    <p class="er-muted">Points won moved <span data-draw="delta" data-k="last" data-f="pointRateChange">—</span> percentage points from the session before (<span data-draw="v" data-ds="summary" data-k="prev" data-f="from" data-fmt="date">—</span>, <span data-draw="v" data-ds="summary" data-k="prev" data-f="start" data-fmt="time">—</span>: <span data-draw="v" data-ds="summary" data-k="prev" data-f="wins" data-fmt="int">—</span> of <span data-draw="v" data-ds="summary" data-k="prev" data-f="matches" data-fmt="int">—</span> matches won).</p>
+  </div>
+  <div class="er-panel" id="tile-main">
+    <div class="er-label"><span data-draw="v" data-ds="findings" data-k="main" data-f="levelTitle">—</span> · <span data-draw="v" data-ds="summary" data-k="L{TOP}" data-f="from" data-fmt="date">—</span> to <span data-draw="v" data-ds="summary" data-k="L{TOP}" data-f="to" data-fmt="date">—</span></div>
+    <div class="er-score"><b data-draw="v" data-ds="summary" data-k="L{TOP}" data-f="wins" data-fmt="int">—</b><span class="er-dash">–</span><span class="er-los" data-draw="v" data-ds="summary" data-k="L{TOP}" data-f="losses" data-fmt="int">—</span></div>
+    <div>Matches won and lost: <b data-draw="v" data-ds="summary" data-k="L{TOP}" data-f="matchRate" data-fmt="pct">—</b> won</div>
+    <div class="er-rows">
+      <div class="er-row"><span>Games won</span><div class="er-meter" data-draw="meter" data-ds="summary" data-k="L{TOP}" data-f="gameRate" data-num="gamesWon" data-den="games"></div></div>
+      <div class="er-row"><span>Points won</span><div class="er-meter" data-draw="meter" data-ds="summary" data-k="L{TOP}" data-f="pointRate" data-num="pointsWonN" data-den="points"></div></div>
+    </div>
+  </div>
+  <div class="er-panel" id="tile-all">
+    <div class="er-label">All AI matches · <span data-draw="v" data-ds="summary" data-k="all" data-f="from" data-fmt="date">—</span> to <span data-draw="v" data-ds="summary" data-k="all" data-f="to" data-fmt="date">—</span></div>
+    <div class="er-score"><b data-draw="v" data-ds="summary" data-k="all" data-f="wins" data-fmt="int">—</b><span class="er-dash">–</span><span class="er-los" data-draw="v" data-ds="summary" data-k="all" data-f="losses" data-fmt="int">—</span></div>
+    <div>Matches won and lost: <b data-draw="v" data-ds="summary" data-k="all" data-f="matchRate" data-fmt="pct">—</b> won</div>
+    <div class="er-rows">
+      <div class="er-row"><span>Games won</span><div class="er-meter" data-draw="meter" data-ds="summary" data-k="all" data-f="gameRate" data-num="gamesWon" data-den="games"></div></div>
+      <div class="er-row"><span>Points won</span><div class="er-meter" data-draw="meter" data-ds="summary" data-k="all" data-f="pointRate" data-num="pointsWonN" data-den="points"></div></div>
+    </div>
+  </div>
+</div>
+<p class="er-muted" id="online-note">A session is a run of matches with less than 45 minutes between them. On the last day you played, <span data-draw="v" data-ds="summary" data-k="lastDay" data-f="from" data-fmt="date">—</span>, you won <span data-draw="v" data-ds="summary" data-k="lastDay" data-f="wins" data-fmt="int">—</span> of <span data-draw="v" data-ds="summary" data-k="lastDay" data-f="matches" data-fmt="int">—</span> matches in all.<span data-showif data-ds="summary" data-k="online" data-f="matches" hidden> Online matches are left out of these totals: <span data-draw="v" data-ds="summary" data-k="online" data-f="matches" data-fmt="int">—</span> in the logs, <span data-draw="v" data-ds="summary" data-k="online" data-f="wins" data-fmt="int">—</span> won. Pick one in the match explorer below.</span></p>
+</div>
+
+<section class="er-section" id="session">
+  <div class="er-sechead">
+    <div><h2>Session report</h2><p class="er-muted">Written from the logs each time the report is updated. A session is set against your average at the same AI level over every session before it.</p></div>
+    <div class="er-controls">
+      <label for="session-select">Session</label>
+      <select class="dash-select" id="session-select" data-draw="session-select" aria-label="Session"></select>
+      <button class="er-btn" type="button" data-sstep="-1" id="session-prev">← Older</button>
+      <button class="er-btn" type="button" data-sstep="1" id="session-next">Newer →</button>
+    </div>
+  </div>
+  <div class="er-grid">
+    <div class="er-card" id="session-summary">
+      <div class="er-label">Session <span data-draw="v" data-ds="sessions" data-k="{S}" data-f="n" data-fmt="int">—</span> · <span data-draw="v" data-ds="sessions" data-k="{S}" data-f="date" data-fmt="date">—</span>, <span data-draw="v" data-ds="sessions" data-k="{S}" data-f="start" data-fmt="time">—</span> to <span data-draw="v" data-ds="sessions" data-k="{S}" data-f="end" data-fmt="time">—</span> · level <span data-draw="v" data-ds="sessions" data-k="{S}" data-f="levels">—</span></div>
+      <div class="er-shead">
+        <div class="er-score"><b data-draw="v" data-ds="sessions" data-k="{S}" data-f="wins" data-fmt="int">—</b><span class="er-dash">–</span><span class="er-los" data-draw="v" data-ds="sessions" data-k="{S}" data-f="losses" data-fmt="int">—</span></div>
+        <div class="er-rows">
+          <div class="er-row"><span>Games won</span><div class="er-meter" data-draw="meter" data-ds="sessions" data-k="{S}" data-f="gameRate" data-num="gamesWon" data-den="games"></div></div>
+          <div class="er-row"><span>Points won</span><div class="er-meter" data-draw="meter" data-ds="sessions" data-k="{S}" data-f="pointRate" data-num="pointsWonN" data-den="points"></div></div>
+        </div>
+      </div>
+      <ul class="er-notes" data-draw="session-notes" data-source="session_notes"></ul>
+      <div class="er-smatches">
+        <div class="er-label">Matches in this session</div>
+        <div class="er-chips" data-draw="session-matches"></div>
+        <p class="er-muted">Pick a match to open it in the match explorer below.</p>
+        <div class="er-svideo" data-draw="session-videos" data-source="videos"></div>
+      </div>
+    </div>
+    <div class="er-card" id="session-compare">
+      <h3>This session against your average before it</h3>
+      <p class="er-muted" data-draw="session-base"></p>
+      <div class="er-legend"><span><i class="er-sw"></i>This session</span><span><i class="er-sw ref"></i>Your average before</span></div>
+      <div class="er-cmprows" data-draw="session-compare" data-source="sessions"></div>
+      <p class="er-muted">The last column is the change in percentage points. It is coloured when the gap is bigger than a session of this size shows by chance about one time in ten. Rally speed <span data-draw="v" data-ds="sessions" data-k="{S}" data-f="rallySpeed" data-fmt="n1">—</span> m/s (<span data-draw="v" data-ds="sessions" data-k="{S}" data-f="base_rallySpeed" data-fmt="n1">—</span> before), <span data-draw="v" data-ds="sessions" data-k="{S}" data-f="rallyLength" data-fmt="n1">—</span> shots per point (<span data-draw="v" data-ds="sessions" data-k="{S}" data-f="base_rallyLength" data-fmt="n1">—</span> before).</p>
+    </div>
+  </div>
+</section>
+
+<section class="er-section" id="match">
+  <div class="er-sechead">
+    <div><h2>Match explorer</h2><p class="er-muted">Every match in the logs, newest first.</p></div>
+    <div class="er-controls">
+      <label for="match-select">Match</label>
+      <select class="dash-select" id="match-select" data-draw="match-select" aria-label="Match"></select>
+      <button class="er-btn" type="button" data-step="-1" id="match-prev">← Older</button>
+      <button class="er-btn" type="button" data-step="1" id="match-next">Newer →</button>
+    </div>
+  </div>
+  <div class="er-card" id="match-head">
+    <div class="er-match">
+      <div class="er-result">
+        <span data-draw="result"></span>
+        <div class="er-score"><b data-draw="v" data-ds="matches" data-k="{M}" data-f="gamesWon" data-fmt="int">—</b><span class="er-dash">–</span><span class="er-los" data-draw="v" data-ds="matches" data-k="{M}" data-f="gamesLost" data-fmt="int">—</span></div>
+        <div class="er-sets"><div class="er-setlabels"><span>You</span><span>Opponent</span></div><div class="er-games" data-draw="games"></div></div>
+      </div>
+      <dl class="er-meta">
+        <div><dt>Opponent</dt><dd><span data-draw="v" data-tr data-ds="matches" data-k="{M}" data-f="vs">—</span>, level <span data-draw="v" data-ds="matches" data-k="{M}" data-f="level" data-fmt="int">—</span></dd></div>
+        <div><dt>Played</dt><dd><span data-draw="v" data-ds="matches" data-k="{M}" data-f="date" data-fmt="date">—</span>, <span data-draw="v" data-ds="matches" data-k="{M}" data-f="start" data-fmt="time">—</span> to <span data-draw="v" data-ds="matches" data-k="{M}" data-f="end" data-fmt="time">—</span></dd></div>
+        <div><dt>Points won</dt><dd><span data-draw="v" data-ds="matches" data-k="{M}" data-f="pointRate" data-fmt="pct">—</span> of <span data-draw="v" data-ds="matches" data-k="{M}" data-f="points" data-fmt="int">—</span></dd></div>
+        <div><dt>Shots per point</dt><dd><span data-draw="v" data-ds="matches" data-k="{M}" data-f="rallyLength" data-fmt="n1">—</span></dd></div>
+        <div id="match-video" hidden><dt>Video</dt><dd data-draw="match-video" data-source="matches"></dd></div>
+      </dl>
+    </div>
+  </div>
+  <div class="er-card" id="match-replay">
+    <h3>Point by point</h3>
+    <p class="er-muted">One bar per point, in order: bars above the line are points you won, bars below are points you lost, and a longer bar is a longer point. Click a bar to watch that point from above, you at the bottom, drawn from every contact the game logged: bat, table, net and floor.</p>
+    <div class="er-replay">
+      <div class="er-rstage">
+        <div class="er-chart er-rcourt" id="chart-replay" data-draw="replay" data-source="replay" data-fetchpriority="low"></div>
+        <div class="er-rbar">
+          <button class="er-btn er-rplay" type="button" id="replay-play"><span id="replay-play-go">Play</span><span id="replay-play-stop" hidden>Pause</span></button>
+          <input type="range" id="replay-seek" min="0" max="1000" step="1" value="1000" aria-label="Position in the point">
+        </div>
+        <div class="er-rbar er-rnav">
+          <button class="er-btn" type="button" id="replay-prev">← Previous point</button>
+          <button class="er-btn" type="button" id="replay-next">Next point →</button>
+        </div>
+        <div class="er-rbar"><span class="er-ctl" id="replay-rate-label">Speed</span><div class="er-tabs" id="replay-rate" role="group" aria-labelledby="replay-rate-label"><button class="er-tab" type="button" data-rate="1" aria-pressed="true">Full</button><button class="er-tab" type="button" data-rate="0.5" aria-pressed="false">Half</button><button class="er-tab" type="button" data-rate="0.25" aria-pressed="false">Quarter</button></div></div>
+        <div class="er-legend court"><span><i class="er-sw ball"></i>Your shots</span><span><i class="er-sw ball ai"></i>Opponent's shots</span><span><i class="er-sw rx"></i>Shot that missed</span></div>
+      </div>
+      <div class="er-rside">
+        <div class="er-legend"><span><i class="er-sw"></i>You won the point</span><span><i class="er-sw ai"></i>You lost it</span></div>
+        <div class="er-chart er-rflow" id="chart-match-flow" data-draw="match-flow" data-source="points" data-fetchpriority="low"></div>
+        <div class="er-rlong"><span>Longest points</span><div class="er-chips" data-draw="longest" data-source="points" data-fetchpriority="low"></div></div>
+        <div class="er-rpoint">
+          <div class="er-controls">
+            <label for="replay-select">On the table</label>
+            <select class="dash-select" id="replay-select" data-draw="replay-select" data-source="points" aria-label="Point"></select>
+          </div>
+          <div class="er-rout" data-draw="replay-result" data-source="points"></div>
+        </div>
+        <div class="er-tablewrap"><table class="er-t er-rshots"><thead><tr><th>Shot</th><th>Type</th><th>m/s</th><th>Spin r/s</th><th>Result</th></tr></thead><tbody data-draw="replay-shots" data-source="replay"></tbody></table></div>
+        <p class="er-muted">Click a shot to jump to it.</p>
+      </div>
+    </div>
+  </div>
+  <div class="er-grid">
+    <div class="er-card" id="match-serves">
+      <h3>Services</h3>
+      <p class="er-muted">Where each serve first landed on the receiver's half, seen from your end.</p>
+      <div class="er-legend court"><span><i class="er-sw ball"></i>You won the point</span><span><i class="er-sw ball ai"></i>You lost it</span></div>
+      <div class="er-chart" id="chart-match-serves" data-draw="match-serves" data-source="serves" data-fetchpriority="low"></div>
+    </div>
+    <div class="er-card" id="match-shots">
+      <h3>Rally shots by type</h3>
+      <div class="er-tablewrap"><table class="er-t"><thead><tr><th>Shot</th><th>Shots</th><th>Share</th><th>Landed</th><th>m/s</th><th>r/s</th><th>Winners</th></tr></thead><tbody data-draw="shots" data-scope="{M}"></tbody></table></div>
+    </div>
+  </div>
+  <div class="er-card" id="metrics-match">
+    <h3>11hero metrics for this match</h3>
+    <p class="er-muted">Level avg is your average over every match at the same AI level.</p>
+    <div class="er-mgrid">
+{{METRICS_MATCH}}
+    </div>
+  </div>
+</section>
+
+<section class="er-section" id="plan">
+  <div class="er-sechead">
+    <div><h2>Training plan</h2><p class="er-muted">What to practise next, in order of how many points a match each item is worth. It is rebuilt from the logs at every update, so an item drops down the list as you close its gap.</p></div>
+    <div class="er-legend"><span><i class="er-sw dot"></i>Recent sessions, counted as now</span><span><i class="er-sw hollow"></i>Earlier sessions</span><span><i class="er-sw dash"></i>Target: the same number in matches you won</span></div>
+  </div>
+  <div class="er-multi er-plead" data-draw="plan-lead" data-source="plan"></div>
+  <ol class="er-plan" id="plan-items" data-draw="plan-items" data-source="plan"></ol>
+  <div class="er-keephead"><h3>Already working</h3><p class="er-muted">At or close to the level of the matches you won. Nothing to drill here; keep doing it.</p></div>
+  <ul class="er-plan keep" id="plan-keep" data-draw="plan-keep" data-source="plan"></ul>
+</section>
+
+<section class="er-section" id="progress">
+  <div class="er-sechead">
+    <div><h2>Progress by day</h2><p class="er-muted">Share of points and games you won on each day you played the AI. The strip along the top is the AI level.</p></div>
+    <div class="er-legend"><span><i class="er-sw line"></i>Points won</span><span><i class="er-sw line alt"></i>Games won</span></div>
+  </div>
+  <div class="er-card"><div class="er-chart" id="chart-progress" data-draw="progress" data-source="days"></div></div>
+  <div class="er-multi">
+    <div id="mini-serve-points"><h3>Points won on your serve</h3><div class="er-mini" data-draw="mini" data-f="servePointRate" data-fmt="pct" data-source="days"></div></div>
+    <div id="mini-return-points"><h3>Points won on the AI's serve</h3><div class="er-mini" data-draw="mini" data-f="returnPointRate" data-fmt="pct" data-source="days"></div></div>
+    <div id="mini-returns"><h3>Your returns that landed</h3><div class="er-mini" data-draw="mini" data-f="returnsLanded" data-fmt="pct" data-source="days"></div></div>
+    <div id="mini-rally"><h3>Your rally shots that landed</h3><div class="er-mini" data-draw="mini" data-f="rallyLanded" data-fmt="pct" data-source="days"></div></div>
+    <div id="mini-speed"><h3>Your average rally speed (m/s)</h3><div class="er-mini" data-draw="mini" data-f="rallySpeed" data-fmt="n1" data-source="days"></div></div>
+    <div id="mini-length"><h3>Shots per point</h3><div class="er-mini" data-draw="mini" data-f="rallyLength" data-fmt="n1" data-source="days"></div></div>
+  </div>
+</section>
+
+<section class="er-section" id="findings">
+  <div class="er-sechead"><div><h2>What decides your points at <span data-draw="v" data-ds="findings" data-k="main" data-f="levelName">—</span></h2><p class="er-muted">From all <span data-draw="v" data-ds="findings" data-k="main" data-f="matches" data-fmt="int">—</span> level-<span data-draw="v" data-ds="findings" data-k="main" data-f="level">—</span> matches, <span data-draw="v" data-ds="findings" data-k="main" data-f="from" data-fmt="date">—</span> to <span data-draw="v" data-ds="findings" data-k="main" data-f="to" data-fmt="date">—</span>. The headlines are written by fixed rules from these numbers and change when the numbers do.</p></div></div>
+  <div class="er-finds" data-draw="findings"></div>
+</section>
+
+<section class="er-section" id="serve">
+  <div class="er-sechead">
+    <div><h2>Serves and returns</h2><p class="er-muted">Every point starts with a serve. First what the AI sends you and what your return does with it, then your own serve and the third ball that follows. Over <span data-draw="v" data-ds="levels" data-k="{L}" data-f="matches" data-fmt="int">—</span> matches at this level.</p></div>
+    <div class="er-controls"><span class="er-ctl" id="serve-level-label">AI level</span><div class="er-tabs" id="serve-level" role="group" aria-labelledby="serve-level-label" data-draw="level-tabs"></div></div>
+  </div>
+
+  <h3 class="er-subhead" id="recv">When the AI serves</h3>
+  <ul class="er-notes plain" id="recv-notes" data-draw="sr-notes" data-who="recv" data-source="serve_notes"></ul>
+  <div class="er-card" id="recv-flow">
+    <h3>How points on the AI's serve end</h3>
+    <p class="er-muted">Each bar is all the AI's serves of one kind, split by where the point ended. Orange is lost, blue is won, and the dark ends are points settled by your return. The line marks where lost turns to won.</p>
+    <div class="er-legend"><span><i class="er-sw s0"></i>Return missed, or serve not touched</span><span><i class="er-sw s1"></i>Lost to the AI's next shot</span><span><i class="er-sw s2"></i>Lost later</span><span><i class="er-sw s3"></i>Won later</span><span><i class="er-sw s4"></i>Won by the return</span></div>
+    <div class="er-flow" data-draw="sr-flow" data-who="recv" data-source="serve_flow"></div>
+  </div>
+  <div class="er-card" id="recv-types">
+    <h3>The AI's serves, type by type</h3>
+    <p class="er-muted">Side, spin and depth together, easiest first. Only types with 30 serves or more.</p>
+    <div class="er-tablewrap"><table class="er-t types"><thead><tr><th>Serve</th><th>Points won</th><th>Serves</th><th>Share</th><th>m/s</th><th>Returns landed</th><th>Your return m/s</th></tr></thead><tbody data-draw="sr-types" data-who="recv" data-source="serve_types"></tbody></table></div>
+  </div>
+  <div class="er-card" id="recv-next">
+    <h3>Your return</h3>
+    <div class="er-mgrid">
+      <div class="er-tablewrap"><table class="er-t"><thead><tr><th>By its pace</th><th>Returns</th><th>Share</th><th>Landed</th><th>Points won</th></tr></thead><tbody data-draw="sr-next" data-who="recv" data-kinds="pace" data-source="serve_next"></tbody></table></div>
+      <div class="er-tablewrap"><table class="er-t"><thead><tr><th>By where it lands</th><th>Returns</th><th>Share</th><th>Points won</th></tr></thead><tbody data-draw="sr-next" data-who="recv" data-kinds="land-depth,land-side" data-source="serve_next"></tbody></table></div>
+    </div>
+  </div>
+
+  <h3 class="er-subhead" id="own-serve">When you serve</h3>
+  <ul class="er-notes plain" id="own-serve-notes" data-draw="sr-notes" data-who="serve" data-source="serve_notes"></ul>
+  <div class="er-card" id="own-serve-flow">
+    <h3>How points on your serve end</h3>
+    <p class="er-muted">Each bar is all your serves of one kind, split by where the point ended. Rows by side and depth count only serves that landed, since a missed serve has neither.</p>
+    <div class="er-legend"><span><i class="er-sw s0"></i>Serve missed</span><span><i class="er-sw s1"></i>Lost on your third ball</span><span><i class="er-sw s2"></i>Lost later</span><span><i class="er-sw s3"></i>Won later</span><span><i class="er-sw s4"></i>Won by the serve or the third ball</span></div>
+    <div class="er-flow" data-draw="sr-flow" data-who="serve" data-source="serve_flow"></div>
+  </div>
+  <div class="er-card" id="own-serve-types">
+    <h3>Your serves, type by type</h3>
+    <p class="er-muted">Where it lands, spin and depth together, best first. Only types with 30 serves or more.</p>
+    <div class="er-tablewrap"><table class="er-t types"><thead><tr><th>Serve</th><th>Points won</th><th>Serves</th><th>Share</th><th>m/s</th><th>AI return m/s</th><th>Third balls landed</th></tr></thead><tbody data-draw="sr-types" data-who="serve" data-source="serve_types"></tbody></table></div>
+  </div>
+  <div class="er-card" id="own-serve-next">
+    <h3>The AI's return, and your third ball</h3>
+    <div class="er-mgrid">
+      <div class="er-tablewrap"><table class="er-t"><thead><tr><th>By its pace</th><th>Returns</th><th>Share</th><th>Third balls landed</th><th>Points won</th></tr></thead><tbody data-draw="sr-next" data-who="serve" data-kinds="pace" data-source="serve_next"></tbody></table></div>
+      <div class="er-tablewrap"><table class="er-t"><thead><tr><th>By where it lands on your half</th><th>Returns</th><th>Share</th><th>Third balls landed</th><th>Points won</th></tr></thead><tbody data-draw="sr-next" data-who="serve" data-kinds="zone" data-source="serve_next"></tbody></table></div>
+    </div>
+  </div>
+</section>
+
+<section class="er-section" id="by-level">
+  <div class="er-sechead">
+    <div><h2>Breakdown by AI level</h2><p class="er-muted">How points ended, where serves landed and the full 11hero metrics, over <span data-draw="v" data-ds="levels" data-k="{L}" data-f="matches" data-fmt="int">—</span> matches at this level.</p></div>
+    <div class="er-controls"><span class="er-ctl" id="level-label">AI level</span><div class="er-tabs" id="level-select" role="group" aria-labelledby="level-label" data-draw="level-tabs"></div></div>
+  </div>
+  <div class="er-grid">
+    <div class="er-card" id="how-lost">
+      <h3>How you lose points</h3>
+      <p class="er-muted">Share of the points you lost, and how many</p>
+      <div class="er-bars">
+        <div class="er-row"><span>Your rally shot missed</span><div class="er-meter" data-tone="ai" data-draw="meter" data-ds="insights" data-k="{L}|lost|rallyMiss" data-f="share" data-n="n"></div></div>
+        <div class="er-row"><span>Your return missed</span><div class="er-meter" data-tone="ai" data-draw="meter" data-ds="insights" data-k="{L}|lost|returnMiss" data-f="share" data-n="n"></div></div>
+        <div class="er-row"><span>Your serve missed</span><div class="er-meter" data-tone="ai" data-draw="meter" data-ds="insights" data-k="{L}|lost|serveMiss" data-f="share" data-n="n"></div></div>
+        <div class="er-row"><span>AI shot you couldn't return</span><div class="er-meter" data-tone="ai" data-draw="meter" data-ds="insights" data-k="{L}|lost|aiWinner" data-f="share" data-n="n"></div></div>
+        <div class="er-row"><span>AI serve you couldn't return</span><div class="er-meter" data-tone="ai" data-draw="meter" data-ds="insights" data-k="{L}|lost|aiAce" data-f="share" data-n="n"></div></div>
+      </div>
+    </div>
+    <div class="er-card" id="how-won">
+      <h3>How you win points</h3>
+      <p class="er-muted">Share of the points you won, and how many</p>
+      <div class="er-bars">
+        <div class="er-row"><span>Your shot the AI couldn't return</span><div class="er-meter" data-draw="meter" data-ds="insights" data-k="{L}|won|winner" data-f="share" data-n="n"></div></div>
+        <div class="er-row"><span>AI rally shot missed</span><div class="er-meter" data-draw="meter" data-ds="insights" data-k="{L}|won|aiMiss" data-f="share" data-n="n"></div></div>
+        <div class="er-row"><span>AI return missed</span><div class="er-meter" data-draw="meter" data-ds="insights" data-k="{L}|won|aiReturnMiss" data-f="share" data-n="n"></div></div>
+        <div class="er-row"><span>AI serve missed</span><div class="er-meter" data-draw="meter" data-ds="insights" data-k="{L}|won|aiServeMiss" data-f="share" data-n="n"></div></div>
+        <div class="er-row"><span>Your serve not returned</span><div class="er-meter" data-draw="meter" data-ds="insights" data-k="{L}|won|ace" data-f="share" data-n="n"></div></div>
+        <div class="er-row"><span>Other (ball touched something else)</span><div class="er-meter" data-draw="meter" data-ds="insights" data-k="{L}|won|other" data-f="share" data-n="n"></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="er-grid">
+    <div class="er-col">
+      <div class="er-card" id="rally-length">
+        <h3>Points won by length of point</h3>
+        <p class="er-muted">Top: the share of points you won, by the number of shots in the point, serve included. The line is your average for the level. Bottom: how many of all points end at each length.</p>
+        <div class="er-chart" id="chart-rally" data-draw="rally" data-source="insights levels"></div>
+      </div>
+      <div class="er-card" id="won-vs-lost">
+        <h3>Your numbers in matches won and lost</h3>
+        <div class="er-tablewrap"><table class="er-t"><thead><tr><th>At this level</th><th>Won</th><th>Lost</th></tr></thead><tbody>
+{{WVL_ROWS}}
+        </tbody></table></div>
+      </div>
+    </div>
+    <div class="er-col">
+      <div class="er-card" id="serve-zones">
+        <h3>Where serves land</h3>
+        <p class="er-muted">Share of points you won when a serve first landed in each zone, with the number of serves under it. Your serves land on the AI's half, its serves on yours. Stronger blue means you won more; zones with fewer than 30 serves stay grey. Seen from your end.</p>
+        <div class="er-chart" id="chart-zones" data-draw="zones" data-source="zones"></div>
+      </div>
+      <div class="er-card" id="shot-mix-level">
+        <h3>Rally shots by type</h3>
+        <div class="er-tablewrap"><table class="er-t"><thead><tr><th>Shot</th><th>Shots</th><th>Share</th><th>Landed</th><th>m/s</th><th>r/s</th><th>Winners</th></tr></thead><tbody data-draw="shots" data-scope="L{L}"></tbody></table></div>
+      </div>
+    </div>
+  </div>
+  <div class="er-card" id="metrics-level">
+    <h3>11hero metrics at this level</h3>
+    <p class="er-muted">Same definitions as the Metrics tab of an 11hero.com match page, over every point at this level.</p>
+    <div class="er-mgrid">
+{{METRICS_LEVEL}}
+    </div>
+  </div>
+</section>
+
+<details id="notes">
+  <summary>How these numbers are worked out</summary>
+  <ul>
+    <li>Everything comes from the game's own log files, copied from the Quest through Eleven's File Sharing. The Quest keeps only its most recent launches, so a copy of every log is kept on your computer. Nothing is sent anywhere: the numbers are worked out there, by code anyone can read.</li>
+    <li>A session is a run of AI matches with less than 45 minutes between one ending and the next starting.</li>
+    <li>The session report sets each session against all your earlier points at the same AI level. A change is called out when a session of that size would show a gap that large by chance only about one time in ten, so about one line in ten is still luck. The notes are written by the same code that builds the data.</li>
+    <li>The training plan is built for the AI level you played most in your last five sessions. Now is your latest sessions at that level, taken together until they hold 1,000 points. The target is the same number in the matches you won at that level. What an item is worth is the number of tries you get in a match, times the gap between now and the target, times what one more success has been worth in points over all your points at that level. That assumes the extra balls you land win as often as the ones you land today, and that the AI plays the same way, so read it as a ranking and not as a promise. An arrow marks a number that moved further from your earlier sessions than chance explains about nine times in ten. Speeds are the ball's speed just after the hit.</li>
+    <li>In Serves and returns, depth is where the serve first bounces on the receiver's half: short is within 50 cm of the net, half-long is 50 cm to 1 m from it, long is the last 37 cm. A serve has topspin or backspin when it carries more than 20 r/s of it, otherwise little spin. A point is won by the return when the AI does not reach it or misses its next shot; it is lost to the AI's next shot when you do not reach that shot or miss it. The same goes for your serve and third ball. Rows and serve types with fewer than 30 serves are left out, and the written notes use only groups of 50 or more.</li>
+    <li>The point replay moves the ball in straight lines between the contacts the game logged, at the logged times, so a ball that curved with sidespin is drawn straight. The ball is drawn larger the higher it is; its height between contacts is worked out from the contact heights and gravity. When the log stops with the ball in the air, the last stretch carries on the way the ball was going for 0.4 seconds.</li>
+    <li>Videos are the headset recording of a session, uploaded whole to YouTube as unlisted: only someone with the link can open one. A recording is lined up with the log by sound, sliding the log's contact times along the soundtrack until they sit on the clicks of the ball. A point's link starts two seconds before its toss. Sessions that were not recorded have no links.</li>
+    <li>The highlight reel is cut from the same recording by code, from the log alone. Each point scores two for every shot in the rally, one for every m/s over 10 on your winning shot, and extra for a point won at game point, late in a close game, or to win a match. Points you won need three shots or more; up to two rallies of six shots or more that you lost go in too. The best-scoring points are taken until the reel is about 90 seconds long, then shown in the order they were played, one rally fading into the next.</li>
+    <li>The metrics use 11hero.com's definitions. They were checked against 11hero on a real online match: all 42 numbers on its page came out the same, and so did the speed, spin and shot type of every hit.</li>
+    <li>Speed is the ball's speed just after the hit, in metres per second. Spin is in revolutions per second; topspin and backspin are the part of the spin that rolls the ball forward or back. Topspin and backspin averages count only hits with more than 20 r/s of it.</li>
+    <li>A shot landed when its first bounce was on the other side. A serve landed when it bounced on your side and then the other.</li>
+    <li>Shot types follow 11hero's rule: backspin over the table is a push, backspin away from it a chop; 50 r/s or more of spin is a loop (a fast loop at 10.5 m/s or more); anything else is a drive. An open-up is a drive or loop against a ball that had backspin.</li>
+    <li>Left and right are as you face the AI.<span data-showif data-ds="findings" data-k="main" data-f="hand" data-eq="right" hidden> You hold the paddle in your right hand, so your left is your backhand side.</span><span data-showif data-ds="findings" data-k="main" data-f="hand" data-eq="left" hidden> You hold the paddle in your left hand, so your right is your backhand side.</span> The game's paddle settings in the logs say which hand holds the paddle; <code translate="no">elevendash config hand=left</code> (or right) sets it instead. The direction was checked against a video recording.</li>
+    <li>The opening line, the second scoreboard and What decides your points cover your main level: the AI level with the most points in your last five sessions. The findings there are written by code with fixed rules. A headline calls one thing better than another only when the gap is at least 5 percentage points (3 for landing rates, which rest on thousands of shots, and 0.5 m/s for speed). A finding with fewer than 3 matches won and 3 lost, 30 serves or 50 shots of a type behind it is left out.</li>
+    <li>The AI level is the game's difficulty setting; 100 is legendary. On days you changed level, the progress chart labels the day with the higher one.</li>
+    <li>Lets are left out. Online matches appear in the match explorer but not in the AI totals.</li>
+    <li>Small groups swing a lot. The zone map and the rally-length chart show how many serves or points each number covers, and the zone map colours only zones with 30 serves or more.</li>
+  </ul>
+</details>
+
+</div>
+</div></div></div>
+
+<script>
+(() => {
+  const ER = (window.ER = {});
+  const fmt1 = d3.format(',.1f');
+  const fmtInt = d3.format(',');
+  const dayFmt = d3.utcFormat('%b %-d');
+  ER.fmt1 = fmt1;
+  // Language: the lang parameter, 'en' or 'zh' (Traditional Chinese). Words a script writes go through ER.tr, which
+  // looks them up in the page's Chinese word list (filled in from i18n/zh-Hant.json); {0}, {1} take the values given.
+  // Words the builder wrote come in both languages: a field and the same field with _zh (ER.tx).
+  ER.I18N = {{I18N_SCRIPT}};
+  ER.lang = () => (dash.params().lang === 'zh' ? 'zh' : 'en');
+  ER.tr = (key, ...args) => {
+    const s = (ER.lang() === 'zh' && ER.I18N[key]) || key;
+    return args.length ? s.replace(/\{(\d+)\}/g, (m, i) => (args[i] == null ? '' : String(args[i]))) : s;
+  };
+  ER.txf = (f) => (ER.lang() === 'zh' ? f + '_zh' : f);
+  ER.tx = (row, f) => (row ? (ER.lang() === 'zh' && row[f + '_zh'] != null ? row[f + '_zh'] : row[f]) : null);
+  const zhDate = (v) => `${Number(v.slice(5, 7))}月${Number(v.slice(8, 10))}日`;
+  ER.F = {
+    text: (v) => (v == null || v === '' ? '—' : String(v)),
+    int: (v) => (v == null ? '—' : fmtInt(v)),
+    n1: (v) => (v == null ? '—' : fmt1(v)),
+    pct: (v) => (v == null ? '—' : fmt1(v) + '%'),
+    date: (v) => (v ? (ER.lang() === 'zh' ? zhDate(String(v)) : dayFmt(new Date(v + 'T00:00:00Z'))) : '—'),
+    time: (v) => (v ? String(v).slice(0, 5) : '—'),
+  };
+  // ER.k marks a word for the word list (i18n check) where the word is kept to look up later
+  ER.k = (s) => s;
+  // A sentence with page elements in it: the words from the list, with {0}, {1} replaced by the nodes given.
+  ER.trn = (key, ...nodes) => ER.tr(key).split(/\{(\d+)\}/).map((t, i) => (i % 2 ? nodes[Number(t)] : t)).filter((x) => x !== '' && x != null);
+  // words that arrive in the data and are shown through ER.tr
+  ER.DATA_WORDS = [ER.k('your winner'), ER.k('AI error'), ER.k('your error'), ER.k('AI winner'), ER.k('other'), ER.k('Online'),
+    ER.k('topspin'), ER.k('backspin'), ER.k('little spin')];
+  ER.SHOT_NAMES = {Drive: ER.k('Drive'), SlowLoop: ER.k('Slow loop'), FastLoop: ER.k('Fast loop'), Push: ER.k('Push'), Chop: ER.k('Chop')};
+  ER.shot = (s) => ER.tr(ER.SHOT_NAMES[s] || s);
+  ER.SHOT_ORDER = ['Drive', 'SlowLoop', 'FastLoop', 'Push', 'Chop'];
+  ER.color = (i) => (dash.colors && dash.colors[i]) || 'currentColor';
+  ER.YOU = 'var(--er-you)';
+  ER.AI = 'var(--er-ai)';
+  ER.ALT = 'var(--er-alt)';
+  ER.mix = (c, p) => `color-mix(in oklab, ${c} ${Math.round(p)}%, var(--color-panel))`;
+
+  // Switches. ER.set(params, control, opts) changes the view. The dashboard redraws on its next frame, after the
+  // click. Right after that redraw, before the browser paints it, two things happen:
+  // - the page is scrolled so the control that was used stays exactly where it was on screen. Sections above it can
+  //   change height with the view (the level picker changes the whole page), and the page would move under the
+  //   pointer. Doing it before the paint means it never shows; a correction a moment later shows as a jump and back.
+  // - what changed in view fades in (er-in), over the time a typical shot takes from bat to bat in the replays
+  //   (about 0.67 s), so the page changes at the pace of the ball. Only drawings whose contents changed fade, so bars
+  //   and charts do and steady words do not. opts.whole fades the whole page instead (look and language). No fade if the reader's
+  //   system asks for reduced motion.
+  // opts.after (or a function as the third argument) runs once the new view is drawn.
+  // A view transition cannot do this: the browser holds back frames while one waits, and the redraw needs a frame.
+  const calmNow = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const scrollerOf = (el) => {
+    for (let p = el.parentElement; p; p = p.parentElement) {
+      const o = getComputedStyle(p).overflowY;
+      if ((o === 'auto' || o === 'scroll') && p.scrollHeight > p.clientHeight + 1) return p;
+    }
+    return document.scrollingElement || document.documentElement;
+  };
+  const viewOf = (sc) => {
+    if (sc === document.scrollingElement || sc === document.documentElement || sc === document.body) return {top: 0, bottom: window.innerHeight};
+    const r = sc.getBoundingClientRect();
+    return {top: Math.max(0, r.top), bottom: Math.min(window.innerHeight, r.bottom)};
+  };
+  // The redraw is one long frame, and an animation started in it counts from that frame's start, so most of it would
+  // be over before it shows. So the changed part is painted dim in the redraw frame (er-pre) and fades in from the
+  // next frame on (er-in).
+  let starting = [];
+  const fadeIn = (el) => {
+    el.classList.remove('er-in');
+    el.classList.add('er-pre');
+    if (!starting.length) {
+      requestAnimationFrame(() => {
+        const els = starting;
+        starting = [];
+        els.forEach((e) => {
+          e.classList.remove('er-pre');
+          e.classList.add('er-in');
+        });
+      });
+    }
+    starting.push(el);
+  };
+  document.addEventListener('animationend', (e) => {
+    if (e.animationName === 'er-in' && e.target.classList) e.target.classList.remove('er-in');
+  });
+  let job = null;
+  // the reader taking over (scrolling, pressing, typing) ends the hold on the page; so does any scroll the hold did
+  // not make (a dragged scrollbar sends none of the events above)
+  ['wheel', 'touchstart', 'pointerdown', 'keydown'].forEach((t) => window.addEventListener(t, () => {
+    if (job) job.el = null;
+  }, {passive: true, capture: true}));
+  window.addEventListener('scroll', (e) => {
+    if (!job || !job.el) return;
+    const t = e.target === document ? document.scrollingElement || document.documentElement : e.target;
+    if (t === job.sc && Math.abs(job.sc.scrollTop - job.expect) > 2) job.el = null;
+  }, {passive: true, capture: true});
+  // the dashboard runs its data listeners first in every redraw, so this says the redraw with the new view has begun
+  dash.onData(() => {
+    if (!job) return;
+    const now = dash.params();
+    if (Object.keys(job.p).every((k) => String(now[k]) === String(job.p[k]))) job.redrawn = true;
+  });
+  const done = (j, drawn) => {
+    if (j.drawn) return;
+    j.drawn = true;
+    if (drawn && j.whole && j.page) fadeIn(j.page);
+    if (j.after) j.after();
+  };
+  const step = (j) => {
+    if (job !== j) return;
+    if (j.el && !j.el.isConnected) j.el = null;
+    if (j.el) {
+      const d = j.el.getBoundingClientRect().top - j.top;
+      if (Math.abs(d) >= 0.5) j.sc.scrollTo({top: j.sc.scrollTop + d, behavior: 'instant'});
+      j.expect = j.sc.scrollTop;
+    }
+    if (!j.redrawn) return;
+    for (const [d, html] of j.before) {
+      if (d.isConnected && d.innerHTML !== html && !(d.parentElement && d.parentElement.closest('.er-pre,.er-in'))) fadeIn(d);
+    }
+    j.before.clear();
+    done(j, true);
+  };
+  ER.set = (p, anchor, opts) => {
+    const o = typeof opts === 'function' ? {after: opts} : opts || {};
+    const page = document.querySelector('.er-page');
+    const el = anchor && anchor.isConnected ? anchor : null;
+    if (job) job.end();
+    const sc = scrollerOf(el || page || document.body);
+    const fade = !calmNow();
+    // what is in view now, to tell afterwards which drawings changed
+    const before = new Map();
+    if (fade && !o.whole && page) {
+      const v = viewOf(sc);
+      page.querySelectorAll('[data-draw]').forEach((d) => {
+        const r = d.getBoundingClientRect();
+        if (r.bottom > v.top && r.top < v.bottom && (r.width > 0 || r.height > 0)) before.set(d, d.innerHTML);
+      });
+    }
+    const j = (job = {p, el, top: el ? el.getBoundingClientRect().top : 0, sc, expect: sc.scrollTop, page, before,
+      whole: fade && !!o.whole, after: o.after, redrawn: false, drawn: false});
+    const mo = new MutationObserver(() => step(j));
+    if (page) mo.observe(page, {subtree: true, childList: true, attributes: true, characterData: true});
+    // a view that does not change is not redrawn: `after` still runs
+    const late = setTimeout(() => done(j, false), 300);
+    const stop = setTimeout(() => j.end(), 1500);
+    j.end = () => {
+      clearTimeout(late);
+      clearTimeout(stop);
+      mo.disconnect();
+      if (job === j) job = null;
+    };
+    dash.setParams(p);
+  };
+  ER.rows = (id) => {
+    const d = dash.data(id);
+    return d.status === 'ok' && Array.isArray(d.data) ? d.data : null;
+  };
+  // Every switch redraws every drawing. One that depends on nothing a switch changes keeps what it drew:
+  // ER.same(el, deps) is true when el was last drawn with the same deps (language, width, data rows) and still holds
+  // that drawing. The slow charts use it, so a click on a level or a session redraws only what it changes.
+  const lastDeps = new WeakMap();
+  ER.same = (el, deps) => {
+    const prev = lastDeps.get(el);
+    lastDeps.set(el, deps);
+    return !!prev && el.childNodes.length > 0 && prev.length === deps.length && prev.every((d, i) => d === deps[i]);
+  };
+  ER.failed = (ids) => ids.some((id) => dash.data(id).status === 'error');
+  ER.enc = (v) => String(v).replace(/%/g, '%25').replace(/&/g, '%26').replace(/=/g, '%3D');
+  ER.where = (key) => 'key=' + ER.enc(key);
+  // The player's main level: the AI level with the most points in their last five sessions (the builder picks it).
+  ER.mainLevel = () => {
+    const m = ER.find('findings', 'main');
+    return m && m.level != null ? m.level : null;
+  };
+  ER.level = () => {
+    const v = Number(dash.params().level);
+    if (Number.isFinite(v) && v > 0) return v;
+    const m = ER.mainLevel();
+    return m != null ? m : 100;
+  };
+  ER.matchKey = () => {
+    const p = dash.params().match;
+    const rows = ER.rows('matches');
+    if (!rows || !rows.length) return p || '';
+    if (p && rows.some((r) => r.key === p)) return p;
+    const ai = rows.filter((r) => r.vs === 'AI');
+    return (ai[ai.length - 1] || rows[rows.length - 1]).key;
+  };
+  ER.matchRow = () => {
+    const rows = ER.rows('matches');
+    const k = ER.matchKey();
+    return rows ? rows.find((r) => r.key === k) || null : null;
+  };
+  ER.sessionKey = () => {
+    const p = dash.params().session;
+    const rows = ER.rows('sessions');
+    if (!rows || !rows.length) return p || '';
+    return p && rows.some((r) => r.key === p) ? p : rows[rows.length - 1].key;
+  };
+  ER.sessionRow = () => ER.find('sessions', ER.sessionKey());
+  ER.resolve = (tpl) => {
+    if (tpl == null) return null;
+    let out = String(tpl);
+    if (out.includes('{S}')) {
+      const k = ER.sessionKey();
+      if (!k) return null;
+      out = out.split('{S}').join(k);
+    }
+    if (out.includes('{ML}')) {
+      const m = ER.matchRow();
+      if (!m || m.level == null) return null;
+      out = out.split('{ML}').join(String(m.level));
+    }
+    if (out.includes('{M}')) {
+      const k = ER.matchKey();
+      if (!k) return null;
+      out = out.split('{M}').join(k);
+    }
+    if (out.includes('{TOP}')) {
+      const lv = ER.mainLevel();
+      if (lv == null) return null;
+      out = out.split('{TOP}').join(String(lv));
+    }
+    if (out.includes('{L}')) out = out.split('{L}').join(String(ER.level()));
+    return out;
+  };
+  ER.find = (src, key) => {
+    const rows = ER.rows(src);
+    if (!rows || key == null) return null;
+    return rows.find((r) => String(r.key) === String(key)) || null;
+  };
+  ER.el = (tag, cls, text) => {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  };
+  ER.span = (text, src, field, key, cls) => {
+    const s = ER.el('span', cls, text);
+    s.setAttribute('data-source', src);
+    s.setAttribute('data-field', field);
+    if (key != null) s.setAttribute('data-where', ER.where(key));
+    return s;
+  };
+  // A link that opens a session video on YouTube in a new tab, at second t. Every upload is unlisted.
+  ER.watch = (text, id, t, src, field, key) => {
+    const a = ER.el('a', 'er-watch', text);
+    a.href = 'https://youtu.be/' + encodeURIComponent(id) + (t > 0 ? '?t=' + Math.floor(t) : '');
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.setAttribute('data-source', src);
+    a.setAttribute('data-field', field);
+    if (key != null) a.setAttribute('data-where', ER.where(key));
+    return a;
+  };
+  ER.mmss = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+  ER.markSvg = (sel, src, field, key) =>
+    sel.attr('data-source', src).attr('data-field', field).attr('data-where', key == null ? null : ER.where(key));
+  ER.wait = (el, ids) => {
+    el.replaceChildren();
+    if (ER.failed(ids)) el.appendChild(ER.el('div', 'er-fail', ER.tr('Failed to load')));
+  };
+  ER.textW = (svg, s, cls) => {
+    const t = svg.append('text').attr('class', cls || null).text(s);
+    const w = t.node().getComputedTextLength() || String(s).length * 7;
+    t.remove();
+    return w;
+  };
+  ER.tip = (box) => {
+    const t = ER.el('div', 'er-tip');
+    t.hidden = true;
+    box.appendChild(t);
+    return {
+      show(evt, lines) {
+        t.replaceChildren(...lines.map((l, i) => ER.el('div', i === 0 ? 'er-tip-h' : null, l)));
+        t.hidden = false;
+        const r = box.getBoundingClientRect();
+        const px = evt.clientX - r.left, py = evt.clientY - r.top;
+        const w = t.offsetWidth, h = t.offsetHeight;
+        let x = px + 14, y = py + 14;
+        if (x + w > box.clientWidth) x = Math.max(0, px - w - 14);
+        if (y + h > box.clientHeight) y = Math.max(0, py - h - 14);
+        t.style.left = x + 'px';
+        t.style.top = y + 'px';
+      },
+      hide() {
+        t.hidden = true;
+      },
+    };
+  };
+  ER.day = (s) => new Date(s + 'T00:00:00Z');
+  ER.levelRuns = (rows) => {
+    const runs = [];
+    rows.forEach((r) => {
+      const last = runs[runs.length - 1];
+      if (last && last.level === r.level) last.to = r.date;
+      else runs.push({level: r.level, from: r.date, to: r.date});
+    });
+    return runs;
+  };
+  ER.svg = (el, W, H, label) =>
+    d3.select(el).append('svg').attr('width', W).attr('height', H).attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', label);
+  // A bar with a rounded data end and a square base. dir -1 grows up from y0, +1 grows down.
+  ER.barPath = (x, y0, w, h, dir) => {
+    const r = Math.min(4, w / 2, h);
+    const y1 = y0 + dir * h, yr = y1 - dir * r, s = dir < 0 ? 1 : 0;
+    return `M${x},${y0}V${yr}A${r},${r} 0 0 ${s} ${x + r},${y1}H${x + w - r}A${r},${r} 0 0 ${s} ${x + w},${yr}V${y0}Z`;
+  };
+  // Table seen from your end: your half at the bottom, +x to your right. Table is 1.525 m wide, 2.74 m long.
+  // Callers read the width before they empty the drawing and pass it in. A layout taken while a drawing is empty
+  // lets Firefox pick a new scroll anchor in the collapsed page, and it then moves the page when the drawing is back.
+  ER.tableFrame = (el, opt) => {
+    const W = Math.max(260, opt.width || el.clientWidth || 360);
+    const TH = Math.min(opt.maxTH || 440, Math.max(300, Math.round(W * 1.0)));
+    const TW = (TH * 1.525) / 2.74;
+    const top = opt.top, H = TH + opt.top + opt.bottom;
+    const svg = ER.svg(el, W, H, opt.label);
+    const x0 = Math.max(44, (W - TW) / 2);
+    const sx = (x) => x0 + ((x + 0.7625) / 1.525) * TW;
+    const sy = (z) => top + ((1.37 - z) / 2.74) * TH;
+    if (opt.court) {
+      svg.append('rect').attr('x', x0).attr('y', top).attr('width', TW).attr('height', TH).attr('rx', 4).style('fill', 'var(--er-court)');
+      svg.append('rect').attr('x', x0 + 3).attr('y', top + 3).attr('width', TW - 6).attr('height', TH - 6).attr('rx', 1.5)
+        .style('fill', 'none').style('stroke', '#fff').style('stroke-width', 2);
+      svg.append('line').attr('x1', sx(0)).attr('x2', sx(0)).attr('y1', top + 4).attr('y2', top + TH - 4)
+        .style('stroke', '#fff').style('stroke-opacity', 0.75);
+    }
+    const net = svg.append('g');
+    net.append('line').attr('x1', x0 - 9).attr('x2', x0 + TW + 9).attr('y1', sy(0)).attr('y2', sy(0))
+      .style('stroke', 'var(--color-fg)').style('stroke-width', opt.court ? 3 : 2).style('stroke-linecap', 'round');
+    svg.append('text').attr('x', x0 - 14).attr('y', sy(0.68)).attr('text-anchor', 'end').attr('dominant-baseline', 'middle').attr('class', 'er-strong').text(ER.tr('AI'));
+    svg.append('text').attr('x', x0 - 14).attr('y', sy(-0.68)).attr('text-anchor', 'end').attr('dominant-baseline', 'middle').attr('class', 'er-strong').text(ER.tr('You'));
+    return {svg, sx, sy, W, H, TW, TH, x0, top, net};
+  };
+  // The page's colours come from the dashboard's chart colours, so a change of look reaches every mark.
+  document.querySelectorAll('.er-shell,.er').forEach((e) => {
+    [0, 1, 2].forEach((i) => {
+      if (dash.colors && dash.colors[i]) e.style.setProperty('--er-c' + i, dash.colors[i]);
+    });
+  });
+})();
+</script>
+
+<script>
+// Older / Newer buttons step through the match list.
+document.querySelectorAll('[data-step]').forEach((b) => {
+  b.addEventListener('click', () => {
+    const rows = window.ER.rows('matches');
+    if (!rows || !rows.length) return;
+    const i = rows.findIndex((r) => r.key === window.ER.matchKey());
+    const j = Math.min(rows.length - 1, Math.max(0, i + Number(b.dataset.step)));
+    window.ER.set({match: rows[j].key}, b);
+  });
+});
+</script>
+
+<script>
+// Save as PDF: the PDF is made with each update, in each theme and language, and kept as the report_pdf sources
+// (report_pdf is dark and English; _light and _zh mark the others); this hands over the one matching the page.
+// A source is read only after a press, so the page does not load it otherwise.
+(() => {
+  const btn = document.getElementById('save-pdf');
+  if (!btn) return;
+  const states = ['note', 'busy', 'done', 'none', 'fail'];
+  const show = (k) => states.forEach((n) => {
+    const e = document.getElementById('save-' + n);
+    if (e) e.hidden = n !== k;
+  });
+  let want = false, busy = false, source = 'report_pdf';
+  const finish = (k) => {
+    busy = false;
+    want = false;
+    btn.setAttribute('aria-busy', 'false');
+    show(k);
+  };
+  const go = async () => {
+    const d = dash.data(source);
+    if (d.status === 'loading') return;   // onData calls again when it has loaded
+    if (!want) return;
+    want = false;
+    const row = d.status === 'ok' && Array.isArray(d.data) ? d.data[0] : null;
+    if (!row || !row.base64) return finish('fail');
+    try {
+      const downloads = window.claude && window.claude.use ? await window.claude.use('downloads') : null;
+      if (!downloads) return finish('none');
+      const bin = atob(row.base64);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      await downloads.save({filename: row.name || 'Eleven-vs-AI-Report.pdf', data: new Blob([bytes], {type: 'application/pdf'})});
+      finish('done');
+    } catch (e) {
+      const code = e && e.code;
+      finish(code === 'declined' ? 'note' : code === 'bad_request' || code === 'too_large' || code === 'rate_limited' ? 'fail' : 'none');
+    }
+  };
+  btn.addEventListener('click', () => {
+    // A host that can print (the standalone file) prints the page; the browser's print dialog saves it as a PDF.
+    if (typeof dash.print === 'function') return dash.print();
+    if (busy) return;
+    busy = true;
+    want = true;
+    source = 'report_pdf' + (window.ER.lang() === 'zh' ? '_zh' : '') + (dash.params().theme === 'light' ? '_light' : '');
+    btn.setAttribute('aria-busy', 'true');
+    show('busy');
+    go();
+  });
+  dash.onData(() => {
+    if (want) go();
+  });
+})();
+</script>
+
+<script>
+// Look and language: the theme and lang parameters, set by the switches in the masthead. A data listener (not a
+// drawing) applies them, as it may set classes, aria- and hidden anywhere on the page. It also shows the sentences
+// that only hold for some players (data-showif) and gives labels their words in the chosen language.
+(() => {
+  const ER = window.ER;
+  const each = (sel, fn) => document.querySelectorAll(sel).forEach(fn);
+  const shown = (el) => {
+    const row = ER.find(el.dataset.ds, ER.resolve(el.dataset.k));
+    const v = row ? row[el.dataset.f] : null;
+    return el.dataset.eq != null ? String(v) === el.dataset.eq : Number(v) > 0;
+  };
+  const apply = () => {
+    const light = dash.params().theme === 'light', zh = ER.lang() === 'zh';
+    // switches fade in over the time a typical shot takes to cross (the builder measures it from the replays)
+    const main = ER.find('findings', 'main');
+    const secs = main && Number(main.shotSecs) > 0.2 && Number(main.shotSecs) < 2 ? Number(main.shotSecs) : null;
+    each('.er-page', (el) => {
+      el.classList.toggle('er-light', light);
+      el.classList.toggle('er-dark', !light);
+      el.classList.toggle('er-zh', zh);
+      const fade = secs ? secs + 's' : '';
+      if (el.style.getPropertyValue('--er-fade') !== fade) {
+        if (fade) el.style.setProperty('--er-fade', fade);
+        else el.style.removeProperty('--er-fade');
+      }
+    });
+    each('#pref-theme', (b) => b.setAttribute('aria-label', ER.tr(light ? 'Switch to the dark look' : 'Switch to the light look')));
+    each('#pref-lang', (b) => b.setAttribute('aria-label', ER.tr(zh ? 'Switch to English' : 'Switch to Chinese')));
+    each('[data-aria-zh]', (el) => el.setAttribute('aria-label', zh ? el.dataset.ariaZh : el.dataset.ariaEn));
+    each('[data-showif]', (el) => {
+      el.hidden = !shown(el);
+    });
+  };
+  each('#pref-theme', (b) => b.addEventListener('click', () => ER.set({theme: dash.params().theme === 'light' ? 'dark' : 'light'}, b, {whole: true})));
+  each('#pref-lang', (b) => b.addEventListener('click', () => ER.set({lang: ER.lang() === 'zh' ? 'en' : 'zh'}, b, {whole: true})));
+  dash.onData(apply);
+})();
+</script>
+
+<script>
+// Older / Newer buttons step through the sessions.
+document.querySelectorAll('[data-sstep]').forEach((b) => {
+  b.addEventListener('click', () => {
+    const rows = window.ER.rows('sessions');
+    if (!rows || !rows.length) return;
+    const i = rows.findIndex((r) => r.key === window.ER.sessionKey());
+    const j = Math.min(rows.length - 1, Math.max(0, i + Number(b.dataset.sstep)));
+    window.ER.set({session: rows[j].key}, b);
+  });
+});
+</script>
+
+<script>
+(() => {
+  const ER = window.ER;
+  // One value from one row: data-ds (dataset), data-k (row key, may hold {L} {M} {ML}), data-f (field), data-fmt.
+  dash.draw('v', (el) => {
+    const src = el.dataset.ds, f = el.dataset.f;
+    const fmt = ER.F[el.dataset.fmt || 'text'] || ER.F.text;
+    const key = ER.resolve(el.dataset.k);
+    const row = ER.find(src, key);
+    if (!row) {
+      el.textContent = '—';
+      return;
+    }
+    let val = ER.tx(row, f);
+    if (el.hasAttribute('data-tr') && val != null) val = ER.tr(String(val));
+    el.replaceChildren(ER.span(fmt(val), src, f, key));
+  });
+
+  // A thin bar for one percentage, its value printed at the end. data-num / data-den add "3 of 7", data-n a count.
+  dash.draw('meter', (el) => {
+    const src = el.dataset.ds, f = el.dataset.f;
+    const key = ER.resolve(el.dataset.k);
+    const row = ER.find(src, key);
+    if (!row || row[f] == null) {
+      el.textContent = '—';
+      return;
+    }
+    const track = ER.el('span', 'er-track'), fill = ER.el('span', 'er-fill');
+    fill.style.width = Math.max(0, Math.min(100, row[f])) + '%';
+    track.appendChild(fill);
+    const val = ER.el('span', 'er-val');
+    val.appendChild(ER.span(ER.F.pct(row[f]), src, f, key));
+    const num = el.dataset.num, den = el.dataset.den, n = el.dataset.n;
+    if (num && den) {
+      const c = ER.el('span', 'er-cnt');
+      c.append(...ER.trn('{0} of {1}', ER.span(ER.F.int(row[num]), src, num, key), ER.span(ER.F.int(row[den]), src, den, key)));
+      val.appendChild(c);
+    } else if (n) {
+      val.appendChild(ER.span(ER.F.int(row[n]), src, n, key, 'er-cnt'));
+    }
+    el.replaceChildren(track, val);
+  });
+
+  // The findings at the player's main level. The builder writes each headline and sentence by fixed rules from the
+  // numbers; **…** in the text marks a number.
+  dash.draw('findings', (el) => {
+    const rows = ER.rows('findings');
+    if (!rows) {
+      ER.wait(el, ['findings']);
+      return;
+    }
+    const list = rows.filter((r) => r.key !== 'main').sort((a, b) => a.rank - b.rank);
+    if (!list.length) {
+      el.replaceChildren(ER.el('p', 'er-muted', ER.tr('Not enough matches at this level yet. Findings appear once there are enough matches and shots behind them.')));
+      return;
+    }
+    el.replaceChildren(...list.map((r) => {
+      const art = ER.el('article', 'er-find');
+      art.id = 'find-' + r.key;
+      const h = ER.el('h3');
+      h.appendChild(ER.span(ER.tx(r, 'title'), 'findings', 'title', r.key));
+      const p = ER.el('p');
+      const text = ER.span(null, 'findings', 'text', r.key);
+      String(ER.tx(r, 'text') || '').split(/\*\*(.*?)\*\*/).forEach((t, i) => {
+        if (t) text.append(i % 2 ? ER.el('b', null, t) : t);
+      });
+      p.appendChild(text);
+      // the bars are flat columns: bar1, bar1_label, bar1_tone, bar2 … (`bars` says how many)
+      const bars = ER.el('div', 'er-rows');
+      for (let i = 1; i <= (Number(r.bars) || 0); i += 1) {
+        const f = 'bar' + i, v = Number(r[f]);
+        if (r[f] == null || !Number.isFinite(v)) continue;
+        const row = ER.el('div', 'er-row');
+        const meter = ER.el('div', 'er-meter');
+        if (r[f + '_tone'] === 'ai') meter.dataset.tone = 'ai';
+        const track = ER.el('span', 'er-track'), fill = ER.el('span', 'er-fill');
+        fill.style.width = Math.max(0, Math.min(100, v)) + '%';
+        track.appendChild(fill);
+        const val = ER.el('span', 'er-val');
+        val.appendChild(ER.span(ER.F.pct(v), 'findings', f, r.key));
+        meter.append(track, val);
+        row.append(ER.el('span', null, ER.tx(r, f + '_label')), meter);
+        bars.appendChild(row);
+      }
+      art.append(h, p, bars);
+      return art;
+    }));
+  });
+
+  // A signed change in percentage points, coloured by whether it is good.
+  dash.draw('delta', (el) => {
+    const f = el.dataset.f, key = el.dataset.k;
+    const row = ER.find('summary', key);
+    el.classList.remove('up', 'down');
+    el.classList.add('er-delta');
+    if (!row || row[f] == null) {
+      el.textContent = '—';
+      return;
+    }
+    const v = row[f];
+    if (v > 0) el.classList.add('up');
+    if (v < 0) el.classList.add('down');
+    const arrow = ER.el('span', null, v > 0 ? '▲ ' : v < 0 ? '▼ ' : '');
+    arrow.setAttribute('aria-hidden', 'true');
+    el.replaceChildren(arrow, v > 0 ? ER.tr('up ') : v < 0 ? ER.tr('down ') : '', ER.span((v < 0 ? '-' : '') + ER.fmt1(Math.abs(v)), 'summary', f, key));
+  });
+
+  dash.draw('result', (el) => {
+    const m = ER.matchRow();
+    if (!m) {
+      el.replaceChildren();
+      return;
+    }
+    el.replaceChildren(ER.span(ER.tr(m.result), 'matches', 'result', m.key, 'er-pill ' + (m.result === 'Won' ? 'won' : 'lost')));
+  });
+
+  // The picked match in the session recording, when that session was recorded. The row is hidden otherwise.
+  dash.draw('match-video', (el) => {
+    const m = ER.matchRow();
+    const has = !!(m && m.video);
+    el.parentElement.hidden = !has;
+    el.replaceChildren(...(has ? [ER.watch(ER.tr('Watch this match'), m.video, m.videoT, 'matches', 'videoT', m.key)] : []));
+  });
+
+  // The picked session's videos on YouTube: the full recording, and the highlight reel when there is one.
+  dash.draw('session-videos', (el) => {
+    const rows = ER.rows('videos');
+    if (!rows) {
+      ER.wait(el, ['videos']);
+      return;
+    }
+    const k = ER.sessionKey();
+    el.replaceChildren(...rows.filter((r) => r.session === k).sort((a, b) => (a.kind === 'full') - (b.kind === 'full')).map((r) => {
+      const what = ER.tr(r.kind === 'full' ? 'Watch the full session' : 'Watch the highlights');
+      return ER.watch(r.duration ? `${what} · ${ER.mmss(r.duration)}` : what, r.key, 0, 'videos', 'url', r.key);
+    }));
+  });
+
+  // The game scores of the picked match, as scoreboard boxes: your score over the opponent's.
+  dash.draw('games', (el) => {
+    const m = ER.matchRow();
+    if (!m || !m.score) {
+      el.replaceChildren();
+      return;
+    }
+    el.setAttribute('data-source', 'matches');
+    el.setAttribute('data-field', 'score');
+    el.setAttribute('data-where', ER.where(m.key));
+    el.setAttribute('role', 'img');
+    el.setAttribute('aria-label', ER.tr('Game scores, yours first: {0}', m.score));
+    el.replaceChildren(...String(m.score).split(',').map((g) => {
+      const [a, b] = g.trim().split('-').map(Number);
+      const box = ER.el('div', 'er-game');
+      box.append(ER.el('span', 'you' + (a > b ? ' win' : ''), String(a)), ER.el('span', 'ai' + (b > a ? ' win' : ''), String(b)));
+      return box;
+    }));
+  });
+
+  dash.draw('level-tabs', (el) => {
+    const rows = ER.rows('levels');
+    if (!rows) {
+      el.replaceChildren();
+      return;
+    }
+    const L = ER.level();
+    const levels = rows.slice().sort((a, b) => a.level - b.level);
+    const label = (b, r) => {
+      b.setAttribute('aria-pressed', String(r.level === L));
+      b.setAttribute('aria-label', ER.tr(r.level === 100 ? 'Level {0} (legendary), {1} matches' : 'Level {0}, {1} matches', r.level, r.matches));
+    };
+    // the same levels as drawn before: keep the buttons (and the focus), change only what they say
+    const old = [...el.children];
+    if (old.length === levels.length && old.every((b, i) => b.dataset.level === String(levels[i].level))) {
+      old.forEach((b, i) => label(b, levels[i]));
+      return;
+    }
+    el.replaceChildren(...levels.map((r) => {
+      const b = ER.el('button', 'er-tab', String(r.level));
+      b.type = 'button';
+      b.dataset.level = String(r.level);
+      label(b, r);
+      b.addEventListener('click', () => ER.set({level: r.level}, el));
+      return b;
+    }));
+  });
+
+  dash.draw('match-select', (sel) => {
+    const rows = ER.rows('matches');
+    if (!rows) {
+      sel.replaceChildren();
+      return;
+    }
+    const groups = d3.groups(rows, (r) => r.date).reverse();
+    const els = groups.map(([date, ms]) => {
+      const g = document.createElement('optgroup');
+      g.label = ER.F.date(date);
+      ms.slice().reverse().forEach((r) => {
+        const who = r.vs === 'AI' ? ER.tr('level {0}', r.level) : ER.tr('online');
+        g.appendChild(new Option(`${ER.F.time(r.start)} · ${ER.tr(r.result === 'Won' ? 'Won' : 'Lost')} ${r.gamesWon}–${r.gamesLost} · ${who}`, r.key));
+      });
+      return g;
+    });
+    sel.replaceChildren(...els);
+    sel.value = ER.matchKey();
+    sel.onchange = () => ER.set({match: sel.value}, sel);
+  });
+})();
+</script>
+
+<script>
+(() => {
+  const ER = window.ER;
+  const MARK = {good: ['+', ER.k('Better')], bad: ['−', ER.k('Worse')], note: ['·', ER.k('Note')]};
+  // [field, label]; each is a percentage with base_<field> (your average before), d_<field> and m_<field> (1 better, -1 worse).
+  const CMP = [
+    ['pointRate', ER.k('Points won')],
+    ['servePointRate', ER.k('Points won on your serve')],
+    ['returnPointRate', ER.k("Points won on the AI's serve")],
+    ['servesLanded', ER.k('Serves that landed')],
+    ['returnsLanded', ER.k('Returns that landed')],
+    ['rallyLanded', ER.k('Rally shots that landed')],
+    ['reach3Rate', ER.k('Points won once a point reaches a third shot')],
+    ['missShare', ER.k('Lost points that ended on your own miss')],
+  ];
+
+  dash.draw('session-select', (sel) => {
+    const rows = ER.rows('sessions');
+    if (!rows) {
+      sel.replaceChildren();
+      return;
+    }
+    sel.replaceChildren(...rows.slice().reverse().map((r) =>
+      new Option(`${ER.tr('{0}, {1}', ER.F.date(r.date), ER.F.time(r.start))} · ${ER.tr('won {0} of {1}', r.wins, r.matches)} · ${ER.tr('level {0}', r.levels)}`, r.key)));
+    sel.value = ER.sessionKey();
+    sel.onchange = () => ER.set({session: sel.value}, sel);
+  });
+
+  // The written notes for the picked session, one line each, marked better, worse or plain.
+  dash.draw('session-notes', (el) => {
+    const rows = ER.rows('session_notes');
+    if (!rows) {
+      ER.wait(el, ['session_notes']);
+      return;
+    }
+    const k = ER.sessionKey();
+    el.replaceChildren(...rows.filter((r) => r.session === k).sort((a, b) => a.rank - b.rank).map((r) => {
+      const li = ER.el('li');
+      const [glyph, name] = MARK[r.tone] || MARK.note;
+      const mark = ER.el('span', 'er-mark ' + (r.tone || 'note'), glyph);
+      mark.setAttribute('role', 'img');
+      mark.setAttribute('aria-label', ER.tr(name));
+      li.append(mark, ER.span(ER.tx(r, 'text'), 'session_notes', 'text', r.key));
+      return li;
+    }));
+  });
+
+  // One chip per match of the picked session; a click opens it in the match explorer.
+  dash.draw('session-matches', (el) => {
+    const rows = ER.rows('matches');
+    if (!rows) {
+      ER.wait(el, ['matches']);
+      return;
+    }
+    const k = ER.sessionKey(), open = ER.matchKey();
+    el.replaceChildren(...rows.filter((r) => r.session === k).map((r) => {
+      const won = r.result === 'Won';
+      const b = ER.el('button', 'er-chip' + (won ? ' won' : ''), `${r.sessionMatch} · ${ER.tr(won ? 'Won' : 'Lost')} ${r.gamesWon}–${r.gamesLost}`);
+      b.type = 'button';
+      b.title = `${ER.F.time(r.start)}: ${String(r.score).replace(/-/g, '–')}`;
+      b.setAttribute('aria-pressed', String(r.key === open));
+      b.setAttribute('aria-label', ER.tr(won ? 'Match {0}, won {1} to {2}. Open in the match explorer' : 'Match {0}, lost {1} to {2}. Open in the match explorer',
+        r.sessionMatch, r.gamesWon, r.gamesLost));
+      b.setAttribute('data-source', 'matches');
+      b.setAttribute('data-field', 'result');
+      b.setAttribute('data-where', ER.where(r.key));
+      b.addEventListener('click', () => {
+        ER.set({match: r.key}, null, () => {
+          const target = document.getElementById('match');
+          if (target && target.scrollIntoView) target.scrollIntoView({behavior: 'smooth', block: 'start'});
+        });
+      });
+      return b;
+    }));
+  });
+
+  dash.draw('session-base', (el) => {
+    const s = ER.sessionRow();
+    if (!s) {
+      el.textContent = '';
+      return;
+    }
+    if (s.basePoints == null) {
+      el.textContent = ER.tr('Your first session at level {0} in the logs, so there is no earlier average to set it against.', s.level);
+      return;
+    }
+    el.replaceChildren(...ER.trn('Your average over the {0} level-{1} matches ({2} points) before this session.',
+      ER.span(ER.F.int(s.baseMatches), 'sessions', 'baseMatches', s.key), String(s.level), ER.span(ER.F.int(s.basePoints), 'sessions', 'basePoints', s.key)));
+  });
+
+  // A bar for the session's value with a tick at your earlier average, then the value and the change.
+  dash.draw('session-compare', (el) => {
+    const s = ER.sessionRow();
+    if (!s) {
+      ER.wait(el, ['sessions']);
+      return;
+    }
+    el.replaceChildren(...CMP.map(([f, label]) => {
+      const row = ER.el('div', 'er-row');
+      row.appendChild(ER.el('span', null, ER.tr(label)));
+      const meter = ER.el('div', 'er-meter');
+      const v = s[f], base = s['base_' + f], d = s['d_' + f], m = s['m_' + f];
+      if (v == null) {
+        meter.textContent = '—';
+        row.appendChild(meter);
+        return row;
+      }
+      const cmp = ER.el('span', 'er-cmp'), track = ER.el('span', 'er-track'), fill = ER.el('span', 'er-fill');
+      fill.style.width = Math.max(0, Math.min(100, v)) + '%';
+      track.appendChild(fill);
+      cmp.appendChild(track);
+      if (base != null) {
+        const ref = ER.el('span', 'er-ref');
+        ref.style.left = Math.max(0, Math.min(100, base)) + '%';
+        ref.title = ER.tr('Before: {0}', ER.F.pct(base));
+        cmp.appendChild(ref);
+      }
+      const val = ER.el('span', 'er-val');
+      val.appendChild(ER.span(ER.F.pct(v), 'sessions', f, s.key));
+      const chg = ER.el('span', 'er-chg' + (m > 0 ? ' good' : m < 0 ? ' bad' : ''));
+      if (d == null) chg.textContent = '';
+      else {
+        const arrow = ER.el('span', null, d > 0 ? '▲ ' : d < 0 ? '▼ ' : '');
+        arrow.setAttribute('aria-hidden', 'true');
+        chg.append(arrow, ER.span((d > 0 ? '+' : d < 0 ? '−' : '') + ER.fmt1(Math.abs(d)), 'sessions', 'd_' + f, s.key));
+        chg.title = ER.tr('Your average before: {0}', ER.F.pct(base)) + (m > 0 ? ER.tr('. Clearly better.') : m < 0 ? ER.tr('. Clearly worse.') : '');
+      }
+      val.appendChild(chg);
+      meter.append(cmp, val);
+      row.appendChild(meter);
+      return row;
+    }));
+  });
+})();
+</script>
+
+<script>
+// Training plan. The plan source holds the ranked items (evidence, drill, now, target, worth); plan_trend holds each
+// item's number in every session at the plan's level.
+(() => {
+  const ER = window.ER;
+  const KEEP_UNDER = 0.15;   // points a match: an item worth less than this counts as already working
+  const isKeep = (r) => r.status === 'reached' || (r.gain != null && r.gain < KEEP_UNDER);
+  const ranked = () => {
+    const rows = ER.rows('plan');
+    return rows ? rows.slice().sort((a, b) => a.rank - b.rank) : null;
+  };
+
+  dash.draw('plan-lead', (el) => {
+    const rows = ranked();
+    if (!rows || !rows.length) return ER.wait(el, ['plan']);
+    const r = rows[0];
+    const cell = (label, num, note) => {
+      const d = ER.el('div');
+      d.append(ER.el('div', 'er-label', label), num, ER.el('p', 'er-muted', note));
+      return d;
+    };
+    const num = (...parts) => {
+      const n = ER.el('div', 'er-pnum');
+      n.append(...parts);
+      return n;
+    };
+    const span = r.recentFrom === r.recentTo ? ER.F.date(r.recentTo) : ER.tr('{0} to {1}', ER.F.date(r.recentFrom), ER.F.date(r.recentTo));
+    const sessions = r.recentSessions === 1 ? ER.tr('your last session') : ER.tr('your last {0} sessions', r.recentSessions);
+    el.replaceChildren(
+      cell(ER.tr('Points you win a match'),
+        num(ER.span(ER.fmt1(r.wonPerMatch), 'plan', 'wonPerMatch', r.key), ER.el('small', null, ER.tr('of {0}', ER.fmt1(r.pointsPerMatch)))),
+        ER.tr('At level {0} over {1} ({2}, {3} points): {4} of points.', r.level, sessions, span, ER.F.int(r.recentPoints), ER.F.pct(r.recentRate))),
+      cell(ER.tr('Short of even'),
+        num(ER.span(ER.fmt1(r.shortBy), 'plan', 'shortBy', r.key), ER.el('small', null, ER.tr('points a match'))),
+        r.shortBy > 0 ? ER.tr('Half the points would be {0} a match.', ER.fmt1(r.pointsPerMatch / 2)) : ER.tr('You are winning half the points or more.')),
+      cell(ER.tr('The plan is worth'),
+        num(ER.span('+' + ER.fmt1(r.totalGain), 'plan', 'totalGain', r.key), ER.el('small', null, ER.tr('points a match'))),
+        ER.tr('If you reach every target below. An estimate from your own points, not a promise.')));
+  });
+
+  const trend = (box, r, pts) => {
+    if (!pts.length) return;
+    const W = Math.max(220, box.clientWidth || 320), H = 118;
+    const svg = ER.svg(box, W, H, ER.tr('{0}: line chart by session at level {1}', ER.tx(r, 'metric'), r.level));
+    const vals = pts.map((p) => p.value).concat(r.target == null ? [] : [r.target]);
+    const lo = d3.min(vals), hi = d3.max(vals), pad = (hi - lo) * 0.15 || 2;
+    const y = d3.scaleLinear().domain([Math.max(0, lo - pad), Math.min(100, hi + pad)]).nice(3);
+    const ticks = y.ticks(3), tf = (t) => t + '%';
+    const last = pts[pts.length - 1];
+    const ml = Math.ceil(d3.max(ticks, (t) => ER.textW(svg, tf(t)))) + 8;
+    const mr = Math.ceil(Math.max(ER.textW(svg, ER.F.pct(last.value), 'er-strong'), r.target == null ? 0 : ER.textW(svg, ER.tr('target')))) + 13;
+    const m = {t: 8, r: mr, b: 20, l: ml};
+    y.range([H - m.b, m.t]);
+    const x = d3.scalePoint().domain(pts.map((p) => p.session)).range([m.l + 4, W - m.r]);
+    const px = (p) => (pts.length === 1 ? (m.l + W - m.r) / 2 : x(p.session)), py = (p) => y(p.value);
+    ticks.forEach((t) => {
+      svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(t)).attr('y2', y(t)).style('stroke', 'var(--cds-chart-grid)');
+      svg.append('text').attr('x', m.l - 6).attr('y', y(t)).attr('text-anchor', 'end').attr('dominant-baseline', 'middle').attr('class', 'er-num').text(tf(t));
+    });
+    svg.append('text').attr('x', m.l).attr('y', H - 4).attr('text-anchor', 'start').text(ER.F.date(pts[0].date));
+    if (pts.length > 1) svg.append('text').attr('x', W - m.r).attr('y', H - 4).attr('text-anchor', 'end').text(ER.F.date(last.date));
+    if (r.target != null) {
+      svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(r.target)).attr('y2', y(r.target))
+        .style('stroke', 'var(--color-fg)').style('stroke-width', 1.5).style('stroke-dasharray', '5 4');
+      if (Math.abs(y(r.target) - py(last)) >= 13)
+        svg.append('text').attr('x', W - m.r + 9).attr('y', y(r.target)).attr('dominant-baseline', 'middle').text(ER.tr('target'));
+    }
+    svg.append('path').datum(pts).attr('d', d3.line().x(px).y(py))
+      .style('fill', 'none').style('stroke', ER.YOU).style('stroke-width', 2).style('stroke-linejoin', 'round').style('stroke-linecap', 'round');
+    pts.forEach((p) => {
+      svg.append('circle').attr('cx', px(p)).attr('cy', py(p)).attr('r', p.recent ? 4 : 3.5)
+        .style('fill', p.recent ? ER.YOU : 'var(--color-panel)').style('stroke', p.recent ? 'var(--color-panel)' : ER.YOU).style('stroke-width', p.recent ? 1.5 : 2);
+    });
+    ER.markSvg(svg.append('text').attr('x', px(last) + 9).attr('y', py(last)).attr('dominant-baseline', 'middle')
+      .attr('class', 'er-strong er-num').text(ER.F.pct(last.value)), 'plan_trend', 'value', last.key);
+    const tip = ER.tip(box);
+    const ring = svg.append('circle').attr('r', 6.5).style('fill', 'none').style('stroke', 'var(--color-fg)').style('stroke-width', 1.5).style('display', 'none');
+    svg.append('rect').attr('x', m.l).attr('y', 0).attr('width', Math.max(0, W - m.l - m.r + 8)).attr('height', H - m.b)
+      .style('fill', 'transparent')
+      .attr('data-source', 'plan_trend').attr('data-field', 'value')
+      .on('pointermove pointerdown', (evt) => {
+        const [qx] = d3.pointer(evt);
+        const p = d3.least(pts, (q) => Math.abs(px(q) - qx));
+        ring.attr('cx', px(p)).attr('cy', py(p)).style('display', null);
+        tip.show(evt, [`${ER.tr('Session {0}', p.session)} · ${ER.F.date(p.date)}`, ER.tr('{0} of {1} tries', ER.F.pct(p.value), ER.F.int(p.tries))]);
+      })
+      .on('pointerleave', () => {
+        tip.hide();
+        ring.style('display', 'none');
+      });
+  };
+
+  const item = (r, keep) => {
+    const li = ER.el('li', 'er-pitem');
+    li.id = 'plan-' + r.key;
+    const a = ER.el('div'), b = ER.el('div');
+    const head = ER.el('div', 'er-phead');
+    if (!keep) head.appendChild(ER.span(String(r.rank), 'plan', 'rank', r.key, 'er-prank'));
+    const h = ER.el('h3');
+    h.appendChild(ER.span(ER.tx(r, 'title'), 'plan', 'title', r.key));
+    head.appendChild(h);
+    const tag = ER.el('span', 'er-ptag' + (r.status === 'none' ? ' none' : keep ? ' ok' : ''));
+    if (r.status === 'none') tag.textContent = ER.tr('No matches won at this level yet, so no target');
+    else if (r.status === 'reached') tag.textContent = ER.tr('At the level of your matches won');
+    else if (keep) tag.textContent = ER.tr('Close to the level of your matches won');
+    else tag.append(...ER.trn(r.gain >= 0.95 && r.gain < 1.05 ? 'Worth about {0} point a match' : 'Worth about {0} points a match',
+      ER.span('+' + ER.fmt1(r.gain), 'plan', 'gain', r.key)));
+    const why = ER.el('p');
+    why.appendChild(ER.span(ER.tx(r, 'why'), 'plan', 'why', r.key));
+    a.append(head, tag, why);
+    if (!keep) {
+      const drill = ER.el('div', 'er-pdrill');
+      drill.append(ER.el('span', 'er-label', ER.tr('Drill')), ER.span(ER.tx(r, 'drill'), 'plan', 'drill', r.key));
+      a.appendChild(drill);
+    }
+    const metric = ER.el('p', 'er-pmetric');
+    metric.appendChild(ER.span(ER.tx(r, 'metric'), 'plan', 'metric', r.key));
+    const now = ER.el('div', 'er-pnow');
+    const big = ER.el('span', 'er-pnum');
+    big.appendChild(ER.span(ER.F.pct(r.now), 'plan', 'now', r.key));
+    now.appendChild(big);
+    const of = ER.el('span');
+    of.append(...ER.trn('now, over {0} tries', ER.span(ER.F.int(r.nowTries), 'plan', 'nowTries', r.key)));
+    now.appendChild(of);
+    if (r.target != null) {
+      const t = ER.el('span');
+      const tb = ER.el('b');
+      tb.appendChild(ER.span(ER.F.pct(r.target), 'plan', 'target', r.key));
+      t.append(...ER.trn('Target {0}', tb));
+      now.appendChild(t);
+    }
+    if (r.was != null) {
+      const chg = ER.el('span', 'er-chg' + (r.move > 0 ? ' good' : r.move < 0 ? ' bad' : ''));
+      if (r.move) {
+        const arrow = ER.el('span', null, r.move > 0 ? '▲ ' : '▼ ');
+        arrow.setAttribute('aria-hidden', 'true');
+        chg.append(arrow, ...ER.trn(r.move > 0 ? 'Up from {0} before' : 'Down from {0} before', ER.span(ER.F.pct(r.was), 'plan', 'was', r.key)));
+      } else chg.append(...ER.trn('No clear change from {0} before', ER.span(ER.F.pct(r.was), 'plan', 'was', r.key)));
+      now.appendChild(chg);
+    }
+    const box = ER.el('div', 'er-ptrend');
+    b.append(metric, now, box);
+    li.append(a, b);
+    return [li, box];
+  };
+
+  const list = (keep) => (el) => {
+    const rows = ranked();
+    if (!rows) return ER.wait(el, ['plan']);
+    if (ER.same(el, [ER.lang(), el.clientWidth, ER.rows('plan'), ER.rows('plan_trend')])) return;
+    const mine = rows.filter((r) => isKeep(r) === keep);
+    if (!mine.length) {
+      el.replaceChildren(ER.el('li', 'er-muted', ER.tr(keep ? 'Nothing here yet: every item above still has a gap to close.' : 'Every item is at the level of the matches you won. Time to move the targets.')));
+      return;
+    }
+    const built = mine.map((r) => item(r, keep));
+    el.replaceChildren(...built.map(([li]) => li));
+    const tr = ER.rows('plan_trend');
+    if (!tr) return;
+    built.forEach(([, box], i) => trend(box, mine[i], tr.filter((p) => p.item === mine[i].key && p.value != null).sort((p, q) => p.session - q.session)));
+  };
+  dash.draw('plan-items', list(false));
+  dash.draw('plan-keep', list(true));
+})();
+</script>
+
+<script>
+// Serves and returns, for the level picked in the tabs. serve_flow: where points ended, by kind of serve; serve_types:
+// side, spin and depth together; serve_next: the shot after the serve; serve_notes: sentences written with the data.
+(() => {
+  const ER = window.ER;
+  const STAGES = ['miss', 'next', 'lostLater', 'wonLater', 'early'];
+  const NAMES = {
+    recv: [ER.k('Return missed, or serve not touched'), ER.k("Lost to the AI's next shot"), ER.k('Lost later'), ER.k('Won later'), ER.k('Won by the return')],
+    serve: [ER.k('Serve missed'), ER.k('Lost on your third ball'), ER.k('Lost later'), ER.k('Won later'), ER.k('Won by the serve or the third ball')],
+  };
+  const GROUPS = {
+    recv: {side: ER.k('By the side it comes to'), spin: ER.k('By its spin'), depth: ER.k('By its depth')},
+    serve: {side: ER.k('By where it lands'), spin: ER.k('By its spin'), depth: ER.k('By its depth')},
+  };
+  const at = (src, who) => {
+    const rows = ER.rows(src);
+    const L = ER.level();
+    return rows ? rows.filter((r) => r.level === L && r.who === who) : null;
+  };
+  const none = (el, tag, cols) => {
+    if (tag === 'tr') {
+      const tr = ER.el('tr'), td = ER.el('td', 'er-muted', ER.tr('Too few serves at this level.'));
+      td.colSpan = cols;
+      td.style.textAlign = 'left';
+      tr.appendChild(td);
+      el.replaceChildren(tr);
+    } else el.replaceChildren(ER.el(tag, 'er-muted', ER.tr('Too few serves at this level.')));
+  };
+
+  dash.draw('sr-notes', (el) => {
+    const rows = at('serve_notes', el.dataset.who);
+    if (!rows) return ER.wait(el, ['serve_notes']);
+    el.replaceChildren(...rows.sort((a, b) => a.rank - b.rank).map((r) => {
+      const li = ER.el('li');
+      li.appendChild(ER.span(ER.tx(r, 'text'), 'serve_notes', 'text', r.key));
+      return li;
+    }));
+  });
+
+  dash.draw('sr-flow', (el) => {
+    const who = el.dataset.who;
+    const rows = at('serve_flow', who);
+    if (!rows) return ER.wait(el, ['serve_flow']);
+    if (!rows.length) return none(el, 'p');
+    const out = [];
+    const head = ER.el('div', 'er-frow er-fhead');
+    head.append(ER.el('span'), ER.el('span'), ER.el('span', null, ER.tr('Points won')));
+    out.push(head);
+    let g = 'all';
+    rows.sort((a, b) => a.order - b.order).forEach((r) => {
+      if (r.group !== g) out.push(ER.el('div', 'er-label er-fgroup', ER.tr(GROUPS[who][r.group] || r.group)));
+      g = r.group;
+      const row = ER.el('div', 'er-frow');
+      const label = ER.el('span', null, ER.tx(r, 'label'));
+      label.appendChild(ER.span(ER.F.int(r.n), 'serve_flow', 'n', r.key, 'er-cnt'));
+      const stack = ER.el('div', 'er-stack');
+      stack.setAttribute('role', 'img');
+      stack.setAttribute('aria-label', `${ER.tx(r, 'label')}: ` + STAGES.map((s, i) => `${ER.tr(NAMES[who][i])} ${ER.F.pct(r[s] || 0)}`).join(', '));
+      let lostSeen = false, divided = false;
+      STAGES.forEach((s, i) => {
+        const v = r[s];
+        if (!v) return;
+        if (i >= 3 && lostSeen && !divided) {
+          stack.appendChild(ER.el('i', 'er-fdiv'));
+          divided = true;
+        }
+        if (i < 3) lostSeen = true;
+        const seg = ER.span(v >= 7 ? Math.round(v) + '%' : '', 'serve_flow', s, r.key, 'er-seg s' + i);
+        seg.style.flexGrow = String(v);
+        seg.title = `${ER.tr(NAMES[who][i])}: ${ER.tr('{0} of {1} serves', ER.F.pct(v), ER.F.int(r.n))}`;
+        stack.appendChild(seg);
+      });
+      const val = ER.el('span', 'er-val');
+      val.appendChild(ER.span(ER.F.pct(r.pointRate), 'serve_flow', 'pointRate', r.key));
+      row.append(label, stack, val);
+      out.push(row);
+    });
+    el.replaceChildren(...out);
+  });
+
+  const COLS = {
+    recv: [['pointRate', 'pct'], ['n', 'int'], ['share', 'pct'], ['speed', 'n1'], ['returnsLanded', 'pct'], ['returnSpeed', 'n1']],
+    serve: [['pointRate', 'pct'], ['n', 'int'], ['share', 'pct'], ['speed', 'n1'], ['returnSpeed', 'n1'], ['thirdLanded', 'pct']],
+  };
+  const cells = (tr, r, src, cols) => cols.forEach(([f, k]) => {
+    const td = ER.el('td', f === 'pointRate' ? 'er-strongcell' : null);
+    td.appendChild(ER.span(ER.F[k](r[f]), src, f, r.key));
+    tr.appendChild(td);
+  });
+
+  dash.draw('sr-types', (tb) => {
+    const who = tb.dataset.who;
+    const rows = at('serve_types', who);
+    if (!rows) {
+      tb.replaceChildren();
+      return;
+    }
+    if (!rows.length) return none(tb, 'tr', 7);
+    tb.replaceChildren(...rows.sort((a, b) => a.rank - b.rank).map((r) => {
+      const tr = ER.el('tr');
+      const th = ER.el('th');
+      th.appendChild(ER.span(ER.tx(r, 'label'), 'serve_types', 'label', r.key));
+      tr.appendChild(th);
+      cells(tr, r, 'serve_types', COLS[who]);
+      return tr;
+    }));
+  });
+
+  const KIND = {'land-depth': ER.k('Depth'), 'land-side': ER.k('Side')};
+  dash.draw('sr-next', (tb) => {
+    const who = tb.dataset.who, kinds = tb.dataset.kinds.split(',');
+    const all = at('serve_next', who);
+    if (!all) {
+      tb.replaceChildren();
+      return;
+    }
+    const cols = [['n', 'int'], ['share', 'pct']].concat(kinds[0].startsWith('land') ? [] : [['landed', 'pct']], [['pointRate', 'pct']]);
+    const out = [];
+    kinds.forEach((kind) => {
+      const rows = all.filter((r) => r.kind === kind).sort((a, b) => a.order - b.order);
+      if (!rows.length) return;
+      if (kinds.length > 1) {
+        const g = ER.el('tr', 'er-group'), gh = ER.el('th', null, ER.tr(KIND[kind] || kind));
+        gh.colSpan = cols.length + 1;
+        g.appendChild(gh);
+        out.push(g);
+      }
+      rows.forEach((r) => {
+        const tr = ER.el('tr');
+        const th = ER.el('th');
+        th.appendChild(ER.span(ER.tx(r, 'label'), 'serve_next', 'label', r.key));
+        tr.appendChild(th);
+        cells(tr, r, 'serve_next', cols);
+        out.push(tr);
+      });
+    });
+    if (!out.length) return none(tb, 'tr', cols.length + 1);
+    tb.replaceChildren(...out);
+  });
+})();
+</script>
+
+<script>
+(() => {
+  const ER = window.ER;
+  const half = (d, h) => d3.utcHour.offset(ER.day(d), h);
+  dash.draw('progress', (el) => {
+    const rows = ER.rows('days');
+    if (!rows || !rows.length) return ER.wait(el, ['days']);
+    const W = Math.max(280, el.clientWidth || 600), H = 320;      // before emptying: see ER.tableFrame
+    if (ER.same(el, [ER.lang(), W, rows])) return;
+    el.replaceChildren();
+    const svg = ER.svg(el, W, H, ER.tr('Line chart of the share of points and games you won each day against the AI, with the AI level in a strip above'));
+    const series = [
+      {f: 'gameRate', name: 'Games won', c: ER.ALT},
+      {f: 'pointRate', name: 'Points won', c: ER.YOU, area: true},
+    ];
+    const y = d3.scaleLinear().domain([0, Math.max(50, d3.max(rows, (r) => Math.max(r.pointRate || 0, r.gameRate || 0)))]).nice();
+    const ticks = y.ticks(5);
+    const last = rows[rows.length - 1];
+    const ml = Math.ceil(Math.max(d3.max(ticks, (t) => ER.textW(svg, t + '%')), ER.textW(svg, ER.tr('Level')))) + 10;
+    const mr = Math.ceil(d3.max(series, (s) => ER.textW(svg, ER.F.pct(last[s.f]), 'er-strong'))) + 14;
+    const m = {t: 40, r: mr, b: 26, l: ml};
+    y.range([H - m.b, m.t]);
+    const x = d3.scaleUtc().domain([half(rows[0].date, -12), half(last.date, 12)]).range([m.l, W - m.r]);
+    // level strip
+    svg.append('text').attr('x', m.l - 8).attr('y', 15).attr('text-anchor', 'end').attr('dominant-baseline', 'middle').text(ER.tr('Level'));
+    ER.levelRuns(rows).forEach((run, i) => {
+      const x0 = x(half(run.from, -12)), x1 = x(half(run.to, 12));
+      svg.append('rect').attr('x', x0 + 1).attr('y', 6).attr('width', Math.max(0, x1 - x0 - 2)).attr('height', 18).attr('rx', 4)
+        .style('fill', run.level === 100 ? 'var(--er-you-tint)' : 'var(--er-track)');
+      if (x1 - x0 > 24) {
+        svg.append('text').attr('x', (x0 + x1) / 2).attr('y', 15.5).attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+          .attr('class', 'er-strong er-num').text(run.level);
+      }
+      if (i > 0) svg.append('line').attr('x1', x0).attr('x2', x0).attr('y1', m.t).attr('y2', H - m.b).style('stroke', 'var(--cds-chart-grid)');
+    });
+    ticks.forEach((t) => {
+      svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(t)).attr('y2', y(t))
+        .style('stroke', t === 0 ? 'var(--cds-chart-axis)' : 'var(--cds-chart-grid)');
+      svg.append('text').attr('x', m.l - 8).attr('y', y(t)).attr('text-anchor', 'end').attr('dominant-baseline', 'middle').attr('class', 'er-num').text(t + '%');
+    });
+    const nTicks = Math.max(2, Math.floor((W - m.l - m.r) / 90));
+    svg.append('g').attr('transform', `translate(0,${H - m.b})`)
+      .call(d3.axisBottom(x).ticks(nTicks).tickFormat((d) => ER.F.date(d3.utcFormat('%Y-%m-%d')(d))).tickSizeOuter(0).tickSize(4))
+      .call((g) => g.select('.domain').remove());
+    const ends = [];
+    series.forEach((s) => {
+      const pts = rows.filter((r) => r[s.f] != null);
+      const px = (r) => x(ER.day(r.date)), py = (r) => y(r[s.f]);
+      if (s.area) {
+        svg.append('path').datum(pts).attr('d', d3.area().x(px).y0(y(0)).y1(py)).style('fill', s.c).style('fill-opacity', 0.1);
+      }
+      svg.append('path').datum(pts).attr('d', d3.line().x(px).y(py))
+        .style('fill', 'none').style('stroke', s.c).style('stroke-width', 2).style('stroke-linejoin', 'round').style('stroke-linecap', 'round');
+      svg.append('g').selectAll('circle').data(pts).join('circle')
+        .attr('cx', px).attr('cy', py).attr('r', 3.5)
+        .style('fill', s.c).style('stroke', 'var(--color-panel)').style('stroke-width', 1.5)
+        .attr('data-source', 'days').attr('data-field', s.f).attr('data-where', (r) => ER.where(r.key));
+      const lp = pts[pts.length - 1];
+      if (lp) ends.push({s, lp, y: py(lp)});
+    });
+    // end labels, kept apart when the two lines finish close together
+    ends.sort((a, b) => a.y - b.y);
+    if (ends.length === 2 && ends[1].y - ends[0].y < 15) {
+      const mid = (ends[0].y + ends[1].y) / 2;
+      ends[0].y = mid - 7.5;
+      ends[1].y = mid + 7.5;
+    }
+    ends.forEach((e) => {
+      ER.markSvg(svg.append('text').attr('x', x(ER.day(e.lp.date)) + 9).attr('y', e.y).attr('dominant-baseline', 'middle')
+        .attr('class', 'er-strong er-num').text(ER.F.pct(e.lp[e.s.f])), 'days', e.s.f, e.lp.key);
+    });
+    const tip = ER.tip(el);
+    const rule = svg.append('line').attr('y1', m.t).attr('y2', H - m.b).style('stroke', 'var(--cds-chart-reference)').style('display', 'none');
+    svg.append('rect').attr('x', m.l).attr('y', m.t).attr('width', Math.max(0, W - m.l - m.r)).attr('height', H - m.t - m.b)
+      .style('fill', 'transparent').style('cursor', 'crosshair')
+      .on('pointermove pointerdown', (evt) => {
+        const [px] = d3.pointer(evt);
+        const d = x.invert(px);
+        const r = d3.least(rows, (q) => Math.abs(ER.day(q.date) - d));
+        rule.attr('x1', x(ER.day(r.date))).attr('x2', x(ER.day(r.date))).style('display', null);
+        tip.show(evt, [
+          `${ER.F.date(r.date)} · ${ER.tr('level {0}', r.levels)}`,
+          ER.tr('Matches won: {0} of {1}', r.wins, r.matches),
+          ER.tr('Games won: {0} of {1} ({2})', r.gamesWon, r.games, ER.F.pct(r.gameRate)),
+          ER.tr('Points won: {0} of {1}', ER.F.pct(r.pointRate), ER.F.int(r.points)),
+        ]);
+      })
+      .on('pointerleave', () => {
+        tip.hide();
+        rule.style('display', 'none');
+      });
+  });
+
+  dash.draw('mini', (el) => {
+    const rows = ER.rows('days');
+    if (!rows || !rows.length) return ER.wait(el, ['days']);
+    const cw = el.clientWidth;      // before emptying: see ER.tableFrame
+    if (ER.same(el, [ER.lang(), cw, rows, el.dataset.f])) return;
+    el.replaceChildren();
+    const f = el.dataset.f, fmt = ER.F[el.dataset.fmt] || ER.F.n1;
+    const pct = el.dataset.fmt === 'pct';
+    const pts = rows.filter((r) => r[f] != null);
+    if (!pts.length) return;
+    const W = Math.max(200, cw || 280), H = 120;
+    const head = el.parentElement && el.parentElement.querySelector('h3');
+    const name = head ? (head.querySelector(`[data-l="${ER.lang()}"]`) || head).textContent : f;
+    const svg = ER.svg(el, W, H, ER.tr('Line chart by day: {0}', name));
+    const lo = d3.min(pts, (r) => r[f]), hi = d3.max(pts, (r) => r[f]);
+    const pad = (hi - lo) * 0.15 || 1;
+    const y = d3.scaleLinear().domain([Math.max(0, lo - pad), pct ? Math.min(100, hi + pad) : hi + pad]).nice(3);
+    const ticks = y.ticks(3);
+    const tf = (t) => (pct ? t + '%' : d3.format('~g')(t));
+    const lastP = pts[pts.length - 1];
+    const ml = Math.ceil(d3.max(ticks, (t) => ER.textW(svg, tf(t)))) + 8;
+    const mr = Math.ceil(ER.textW(svg, fmt(lastP[f]), 'er-strong')) + 12;
+    const m = {t: 8, r: mr, b: 20, l: ml};
+    y.range([H - m.b, m.t]);
+    const x = d3.scaleUtc().domain([half(rows[0].date, -12), half(rows[rows.length - 1].date, 12)]).range([m.l, W - m.r]);
+    ticks.forEach((t) => {
+      svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(t)).attr('y2', y(t)).style('stroke', 'var(--cds-chart-grid)');
+      svg.append('text').attr('x', m.l - 6).attr('y', y(t)).attr('text-anchor', 'end').attr('dominant-baseline', 'middle').attr('class', 'er-num').text(tf(t));
+    });
+    svg.append('text').attr('x', m.l).attr('y', H - 4).attr('text-anchor', 'start').text(ER.F.date(rows[0].date));
+    svg.append('text').attr('x', W - m.r).attr('y', H - 4).attr('text-anchor', 'end').text(ER.F.date(rows[rows.length - 1].date));
+    const px = (r) => x(ER.day(r.date)), py = (r) => y(r[f]);
+    svg.append('path').datum(pts).attr('d', d3.area().x(px).y0(H - m.b).y1(py)).style('fill', ER.YOU).style('fill-opacity', 0.1);
+    svg.append('path').datum(pts).attr('d', d3.line().x(px).y(py))
+      .style('fill', 'none').style('stroke', ER.YOU).style('stroke-width', 2).style('stroke-linejoin', 'round').style('stroke-linecap', 'round');
+    svg.append('circle').attr('cx', px(lastP)).attr('cy', py(lastP)).attr('r', 4.5)
+      .style('fill', ER.YOU).style('stroke', 'var(--color-panel)').style('stroke-width', 2);
+    ER.markSvg(svg.append('text').attr('x', px(lastP) + 9).attr('y', py(lastP)).attr('dominant-baseline', 'middle')
+      .attr('class', 'er-strong er-num').text(fmt(lastP[f])), 'days', f, lastP.key);
+    const tip = ER.tip(el);
+    const dot = svg.append('circle').attr('r', 4).style('fill', ER.YOU).style('stroke', 'var(--color-panel)').style('stroke-width', 2).style('display', 'none');
+    svg.append('rect').attr('x', m.l).attr('y', m.t).attr('width', Math.max(0, W - m.l - m.r)).attr('height', H - m.t - m.b)
+      .style('fill', 'transparent')
+      .attr('data-source', 'days').attr('data-field', f)
+      .on('pointermove pointerdown', (evt) => {
+        const [qx] = d3.pointer(evt);
+        const d = x.invert(qx);
+        const r = d3.least(pts, (q) => Math.abs(ER.day(q.date) - d));
+        dot.attr('cx', px(r)).attr('cy', py(r)).style('display', null);
+        tip.show(evt, [`${ER.F.date(r.date)} · ${ER.tr('level {0}', r.levels)}`, fmt(r[f])]);
+      })
+      .on('pointerleave', () => {
+        tip.hide();
+        dot.style('display', 'none');
+      });
+  });
+})();
+</script>
+
+<script>
+(() => {
+  const ER = window.ER;
+  const ORDER = ['1', '2', '3', '4', '5-6', '7-9', '10+'];
+  dash.draw('rally', (el) => {
+    const rows = ER.rows('insights');
+    if (!rows) return ER.wait(el, ['insights', 'levels']);
+    const L = ER.level();
+    const data = ORDER.map((k) => rows.find((r) => r.key === `${L}|rally|${k}`)).filter(Boolean);
+    const cw = el.clientWidth;      // before emptying: see ER.tableFrame
+    el.replaceChildren();
+    if (!data.length) return;
+    const lvl = ER.find('levels', String(L));
+    const W = Math.max(260, cw || 360), H = 448;
+    const svg = ER.svg(el, W, H, ER.tr('Two column charts by number of shots in the point: the share of points you won, and the share of all points that ended at that length'));
+    const avg = lvl && lvl.pointRate != null ? lvl.pointRate : null;
+    const avgText = avg == null ? '' : ER.F.pct(avg);
+    const mr = avg == null ? 8 : Math.ceil(Math.max(ER.textW(svg, avgText, 'er-strong'), ER.textW(svg, ER.tr('average')))) + 10;
+    const m = {t: 22, r: mr, l: 4};
+    const yb = 250, y2t = 322, y2b = 404;
+    const x = d3.scaleBand().domain(data.map((d) => d.item)).range([m.l, W - m.r]).padding(0.2);
+    const y = d3.scaleLinear().domain([0, Math.max(60, d3.max(data, (d) => d.rate || 0) + 8)]).range([yb, m.t]);
+    const y2 = d3.scaleLinear().domain([0, d3.max(data, (d) => d.share || 0) || 1]).range([y2b, y2t]);
+    const bw = Math.min(24, x.bandwidth());
+    const bx = (d) => x(d.item) + (x.bandwidth() - bw) / 2;
+    svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', yb).attr('y2', yb).style('stroke', 'var(--cds-chart-axis)');
+    svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y2b).attr('y2', y2b).style('stroke', 'var(--cds-chart-axis)');
+    svg.selectAll('path.b').data(data).join('path').attr('class', 'b')
+      .attr('d', (d) => ER.barPath(bx(d), yb, bw, Math.max(1, yb - y(d.rate || 0)), -1))
+      .style('fill', ER.YOU);
+    svg.selectAll('path.s').data(data).join('path').attr('class', 's')
+      .attr('d', (d) => ER.barPath(bx(d), y2b, bw, Math.max(1, y2b - y2(d.share || 0)), -1))
+      .style('fill', 'var(--cds-chart-muted)');
+    svg.append('text').attr('x', m.l).attr('y', y2t - 26).text(ER.tr('Share of all points at this level'));
+    data.forEach((d) => {
+      const cx = x(d.item) + x.bandwidth() / 2;
+      svg.append('text').attr('x', cx).attr('y', y(d.rate || 0) - 6).attr('text-anchor', 'middle')
+        .attr('class', 'er-strong er-num').text(d.rate == null ? '—' : Math.round(d.rate) + '%');
+      svg.append('text').attr('x', cx).attr('y', yb + 16).attr('text-anchor', 'middle').attr('class', 'er-num').text(d.item);
+      svg.append('text').attr('x', cx).attr('y', y2(d.share || 0) - 6).attr('text-anchor', 'middle')
+        .attr('class', 'er-num').text(d.share == null ? '—' : Math.round(d.share) + '%');
+      svg.append('text').attr('x', cx).attr('y', y2b + 16).attr('text-anchor', 'middle').attr('class', 'er-num').text(d.item);
+    });
+    svg.append('text').attr('x', (m.l + W - m.r) / 2).attr('y', H - 6).attr('text-anchor', 'middle').text(ER.tr('shots in the point'));
+    if (avg != null) {
+      const yy = y(avg);
+      svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', yy).attr('y2', yy).style('stroke', 'var(--cds-chart-reference)');
+      svg.append('text').attr('x', W - m.r + 6).attr('y', yy - 7).attr('dominant-baseline', 'middle').text(ER.tr('average'));
+      ER.markSvg(svg.append('text').attr('x', W - m.r + 6).attr('y', yy + 8).attr('dominant-baseline', 'middle')
+        .attr('class', 'er-strong er-num').text(avgText), 'levels', 'pointRate', String(L));
+    }
+    const tip = ER.tip(el);
+    const lines = (d) => [
+      d.item === '1' ? ER.tr('1 shot') : ER.tr('{0} shots', d.item),
+      ER.tr('You won {0} of {1} points', ER.F.pct(d.rate), ER.F.int(d.n)),
+      ER.tr('{0} of all points at this level', ER.F.pct(d.share)),
+      lvl ? ER.tr('Your average: {0}', ER.F.pct(lvl.pointRate)) : '',
+    ].filter(Boolean);
+    [['rate', m.t, yb + 22], ['share', y2t - 14, y2b + 22]].forEach(([field, ya, yz]) => {
+      svg.append('g').selectAll('rect').data(data).join('rect')
+        .attr('x', (d) => x(d.item) - (x.step() - x.bandwidth()) / 2).attr('width', x.step())
+        .attr('y', ya).attr('height', yz - ya).style('fill', 'transparent')
+        .attr('data-source', 'insights').attr('data-field', field).attr('data-where', (d) => ER.where(d.key))
+        .on('pointermove pointerdown', (evt, d) => tip.show(evt, lines(d)))
+        .on('pointerleave', () => tip.hide());
+    });
+  });
+
+  const COLS = [['left', -0.7625, -0.25], ['middle', -0.25, 0.25], ['right', 0.25, 0.7625]];
+  const DEPTHS = [['short', 0, 0.5], ['mid', 0.5, 1.0], ['long', 1.0, 1.37]];
+  const MIN_N = 30, P_LO = 14, P_HI = 86;
+  const DEP_NAME = {short: ER.k('short'), mid: ER.k('half-long'), long: ER.k('long')};
+  const COL_NAME = {left: ER.k('your left'), middle: ER.k('middle'), right: ER.k('your right')};
+  dash.draw('zones', (el) => {
+    const rows = ER.rows('zones');
+    if (!rows) return ER.wait(el, ['zones']);
+    const L = ER.level();
+    const cw = el.clientWidth;
+    el.replaceChildren();
+    const T = ER.tableFrame(el, {width: cw, top: 30, bottom: 86, maxTH: 400, label: ER.tr('Table seen from your end, split into zones, with your share of points won when a serve lands in each zone')});
+    const tip = ER.tip(el);
+    const cells = [];
+    [['You', 1], ['AI', -1]].forEach(([server, sgn]) => {
+      COLS.forEach(([col, xa, xb]) => {
+        DEPTHS.forEach(([dep, za, zb]) => {
+          const key = `${L}|${server}|${col}|${dep}`;
+          cells.push({server, sgn, col, xa, xb, dep, za, zb, key, r: rows.find((q) => q.key === key)});
+        });
+      });
+    });
+    const solid = cells.filter((c) => c.r && c.r.serves >= MIN_N);
+    const lo = d3.min(solid, (c) => c.r.youWonRate), hi = d3.max(solid, (c) => c.r.youWonRate);
+    const depth = d3.scaleLinear().domain(lo === hi ? [lo - 1, hi + 1] : [lo, hi]).range([P_LO, P_HI]).clamp(true);
+    cells.forEach((c) => {
+      const x0 = T.sx(c.xa), x1 = T.sx(c.xb);
+      const ya = T.sy(c.sgn * c.za), yb = T.sy(c.sgn * c.zb);
+      const y0 = Math.min(ya, yb), y1 = Math.max(ya, yb);
+      const n = c.r ? c.r.serves : 0;
+      const p = n >= MIN_N ? depth(c.r.youWonRate) : null;
+      const cell = T.svg.append('rect').attr('x', x0 + 1).attr('y', y0 + 1).attr('width', Math.max(0, x1 - x0 - 2)).attr('height', Math.max(0, y1 - y0 - 2)).attr('rx', 3)
+        .style('fill', p == null ? 'var(--er-track)' : ER.mix(ER.YOU, p)).style('fill-opacity', c.r ? null : 0.45);
+      if (!c.r) return;
+      const base = rows.find((q) => q.key === `${L}|${c.server}|all|all`);
+      cell.attr('data-source', 'zones').attr('data-field', 'youWonRate').attr('data-where', ER.where(c.key))
+        .on('pointermove pointerdown', (evt) => tip.show(evt, [
+          ER.tr('{0}: {1}, {2}', ER.tr(c.server === 'You' ? 'Your serves' : "AI's serves"), ER.tr(DEP_NAME[c.dep]), ER.tr(COL_NAME[c.col])),
+          ER.tr('{0} serves landed here', ER.F.int(n)),
+          ER.tr('You won {0} of those points', ER.F.pct(c.r.youWonRate)),
+          base ? ER.tr('Average for this half: {0}', ER.F.pct(base.youWonRate)) : '',
+          n < MIN_N ? ER.tr('Too few serves to colour') : '',
+        ].filter(Boolean)))
+        .on('pointerleave', () => tip.hide());
+      if (n > 0 && y1 - y0 > 30) {
+        const on = p != null && p >= 78;
+        const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+        T.svg.append('text').attr('x', cx).attr('y', cy - 2).attr('text-anchor', 'middle')
+          .attr('class', (on ? 'er-on' : n >= MIN_N ? 'er-strong' : '') + ' er-num').style('pointer-events', 'none').text(Math.round(c.r.youWonRate) + '%');
+        T.svg.append('text').attr('x', cx).attr('y', cy + 13).attr('text-anchor', 'middle')
+          .attr('class', (on ? 'er-on' : '') + ' er-num').style('font-weight', 400)
+          .style('fill', on || p == null ? null : 'var(--color-fg)').style('fill-opacity', on ? 0.85 : p == null ? null : 0.72)
+          .style('pointer-events', 'none').text(ER.F.int(n));
+      }
+    });
+    T.net.raise();
+    // column totals outside the table: above for your serves, below for the AI's
+    [['You', T.top - 10], ['AI', T.top + T.TH + 18]].forEach(([server, ty]) => {
+      COLS.forEach(([col, xa, xb]) => {
+        const tk = `${L}|${server}|${col}|all`;
+        const tr = rows.find((q) => q.key === tk);
+        if (!tr) return;
+        ER.markSvg(T.svg.append('text').attr('x', (T.sx(xa) + T.sx(xb)) / 2).attr('y', ty).attr('text-anchor', 'middle')
+          .attr('class', 'er-strong er-num').text(ER.F.pct(tr.youWonRate)), 'zones', 'youWonRate', tk);
+      });
+      T.svg.append('text').attr('x', T.x0 - 14).attr('y', ty).attr('text-anchor', 'end').text(ER.tr('all'));
+    });
+    T.svg.append('text').attr('x', T.x0).attr('y', T.top + T.TH + 40).attr('text-anchor', 'start').text(ER.tr('← your left'));
+    T.svg.append('text').attr('x', T.x0 + T.TW).attr('y', T.top + T.TH + 40).attr('text-anchor', 'end').text(ER.tr('your right →'));
+    // scale key
+    if (solid.length) {
+      const ky = T.top + T.TH + 62, steps = 5, sw = 22;
+      const loT = Math.round(lo) + '%', hiT = ER.tr('{0} of points won', Math.round(hi) + '%');
+      const loW = ER.textW(T.svg, loT), total = loW + 6 + steps * sw + 6 + ER.textW(T.svg, hiT);
+      const kx = Math.max(2, Math.min(T.W - total - 2, T.x0 + (T.TW - total) / 2)) + loW + 6;
+      d3.range(steps).forEach((i) => {
+        T.svg.append('rect').attr('x', kx + i * sw + 1).attr('y', ky).attr('width', sw - 2).attr('height', 8).attr('rx', 2)
+          .style('fill', ER.mix(ER.YOU, P_LO + ((P_HI - P_LO) * i) / (steps - 1)));
+      });
+      T.svg.append('text').attr('x', kx - 6).attr('y', ky + 4).attr('text-anchor', 'end').attr('dominant-baseline', 'middle').attr('class', 'er-num').text(loT);
+      T.svg.append('text').attr('x', kx + steps * sw + 6).attr('y', ky + 4).attr('dominant-baseline', 'middle').attr('class', 'er-num').text(hiT);
+    }
+  });
+
+  dash.draw('shots', (tb) => {
+    const rows = ER.rows('shot_mix');
+    const scope = ER.resolve(tb.dataset.scope);
+    if (!rows || !scope) {
+      tb.replaceChildren();
+      return;
+    }
+    const out = [];
+    ['You', 'AI'].forEach((who) => {
+      const rs = ER.SHOT_ORDER.map((s) => rows.find((r) => r.key === `${scope}|${who}|${s}`)).filter(Boolean);
+      if (!rs.length) return;
+      const g = ER.el('tr', 'er-group');
+      const gh = ER.el('th', null, ER.tr(who === 'You' ? 'You' : 'AI'));
+      gh.colSpan = 7;
+      g.appendChild(gh);
+      out.push(g);
+      rs.forEach((r) => {
+        const tr = document.createElement('tr');
+        tr.appendChild(ER.el('th', null, ER.shot(r.shot)));
+        [['shots', 'int'], ['share', 'pct'], ['landed', 'pct'], ['speed', 'n1'], ['spin', 'n1'], ['winners', 'int']].forEach(([f, k]) => {
+          const td = document.createElement('td');
+          td.appendChild(ER.span(ER.F[k](r[f]), 'shot_mix', f, r.key));
+          tr.appendChild(td);
+        });
+        out.push(tr);
+      });
+    });
+    tb.replaceChildren(...out);
+  });
+})();
+</script>
+
+<script>
+(() => {
+  const ER = window.ER;
+  dash.draw('match-serves', (el) => {
+    const rows = ER.rows('serves');
+    if (!rows) return ER.wait(el, ['serves']);
+    const k = ER.matchKey();
+    const sv = rows.filter((r) => r.match === k && r.landed && r.x != null);
+    const cw = el.clientWidth;
+    el.replaceChildren();
+    const T = ER.tableFrame(el, {width: cw, top: 14, bottom: 30, court: true, label: ER.tr('Table seen from your end with a ball mark where each serve of the match first landed, white for points you won and orange for points you lost')});
+    T.svg.append('text').attr('x', T.x0).attr('y', T.H - 6).attr('text-anchor', 'start').text(ER.tr('← your left'));
+    T.svg.append('text').attr('x', T.x0 + T.TW).attr('y', T.H - 6).attr('text-anchor', 'end').text(ER.tr('your right →'));
+    const tip = ER.tip(el);
+    T.svg.append('g').selectAll('circle').data(sv).join('circle')
+      .attr('cx', (r) => T.sx(Math.max(-0.74, Math.min(0.74, r.x))))
+      .attr('cy', (r) => T.sy(Math.max(-1.35, Math.min(1.35, r.z))))
+      .attr('r', 6)
+      .style('fill', (r) => (r.youWon ? '#fff' : ER.AI))
+      .style('stroke', 'var(--er-court)').style('stroke-width', 2)
+      .attr('data-source', 'serves').attr('data-field', 'speed').attr('data-where', (r) => ER.where(r.key))
+      .on('pointermove pointerdown', (evt, r) => {
+        const [, g, p] = r.key.split('|');
+        tip.show(evt, [
+          `${ER.tr(r.server === 'You' ? 'Your serve' : "AI's serve")} · ${ER.tr('game {0}, point {1}', g, p)}`,
+          `${ER.tr(r.kind)}: ${ER.F.n1(r.speed)} m/s, ${ER.F.n1(r.spin)} r/s`,
+          ER.tr(r.youWon ? 'You won the point' : 'You lost the point'),
+        ]);
+      })
+      .on('pointerleave', () => tip.hide());
+    T.net.raise();
+  });
+
+  dash.draw('match-flow', (el) => {
+    const rows = ER.rows('points');
+    if (!rows) return ER.wait(el, ['points']);
+    const k = ER.matchKey();
+    const pts = rows.filter((r) => r.match === k);
+    const cw = el.clientWidth;      // before emptying: see ER.tableFrame
+    el.replaceChildren();
+    if (!pts.length) return;
+    const games = d3.groups(pts, (r) => r.game);
+    const W = Math.max(220, cw || 400);
+    const maxN = d3.max(games, ([, p]) => p.length), maxH = d3.max(pts, (r) => r.hits) || 1;
+    const arm = 38, rowH = arm * 2 + 26, labelW = W < 300 ? 52 : 62, H = games.length * rowH;
+    const svg = ER.svg(el, W, H, ER.tr('Bar chart of every point of the match by game: bars above the line are points you won, bars below are points you lost, and bar length is the number of shots. The outlined bar is the point on the table.'));
+    const x = d3.scaleBand().domain(d3.range(1, maxN + 1)).range([labelW, W - 2]).paddingInner(0.24);
+    const bw = Math.min(14, x.bandwidth());
+    const h = d3.scaleLinear().domain([0, maxH]).range([0, arm]);
+    const tip = ER.tip(el);
+    games.forEach(([g, ps], i) => {
+      const base = i * rowH + 12 + arm;
+      const won = ps.filter((r) => r.won).length;
+      svg.append('text').attr('x', 0).attr('y', base - 8).attr('class', 'er-strong').text(ER.tr('Game {0}', g));
+      svg.append('text').attr('x', 0).attr('y', base + 10).attr('class', 'er-num').text(`${won}–${ps.length - won}`);
+      svg.append('line').attr('x1', labelW - 6).attr('x2', W - 2).attr('y1', base).attr('y2', base).style('stroke', 'var(--cds-chart-axis)');
+      svg.append('g').selectAll('path').data(ps).join('path')
+        .attr('d', (r) => ER.barPath(x(r.point) + (x.bandwidth() - bw) / 2, base + (r.won ? -1 : 1), bw, Math.max(3, h(r.hits)), r.won ? -1 : 1))
+        .style('fill', (r) => (r.won ? ER.YOU : ER.AI));
+      svg.append('g').selectAll('rect').data(ps).join('rect')
+        .attr('x', (r) => x(r.point) - (x.step() - x.bandwidth()) / 2).attr('width', x.step())
+        .attr('y', base - arm - 3).attr('height', arm * 2 + 6).attr('rx', 3)
+        .attr('data-source', 'points').attr('data-field', 'hits').attr('data-where', (r) => ER.where(r.key))
+        .attr('class', 'er-hit').attr('data-pick', (r) => r.key)
+        .on('click', (evt, r) => ER.replay && ER.replay.show(r.key))
+        .on('pointermove pointerdown', (evt, r) => tip.show(evt, [
+          ER.tr('Game {0}, point {1} · {2}–{3} before', r.game, r.point, r.youBefore, r.aiBefore),
+          `${ER.tr(r.served === 'You' ? 'You served' : 'The AI served')} · ${r.hits === 1 ? ER.tr('1 shot') : ER.tr('{0} shots', r.hits)}`,
+          ER.tr('{0}: {1}', ER.tr(r.won ? 'Won' : 'Lost'), ER.tr(r.ending)),
+        ]))
+        .on('pointerleave', () => tip.hide());
+    });
+    if (ER.replay) ER.replay.mark();
+  });
+
+  // The five longest points of the match, as buttons that put the point on the table.
+  dash.draw('longest', (box) => {
+    const rows = ER.rows('points');
+    if (!rows) {
+      box.replaceChildren();
+      return;
+    }
+    const k = ER.matchKey();
+    const top = rows.filter((r) => r.match === k).slice().sort((a, b) => b.hits - a.hits || a.game - b.game || a.point - b.point).slice(0, 5);
+    box.replaceChildren(...top.map((r) => {
+      const b = ER.el('button', 'er-chip' + (r.won ? ' won' : ''));
+      b.type = 'button';
+      b.setAttribute('data-pick', r.key);
+      b.title = ER.tr('Game {0}, {1}–{2} before.', r.game, r.youBefore, r.aiBefore) + ' ' + ER.tr('{0}: {1}', ER.tr(r.won ? 'Won' : 'Lost'), ER.tr(r.ending));
+      const text = ER.el('span');
+      text.append(...ER.trn('{0} shots · G{1} {2}–{3}',
+        ER.span(String(r.hits), 'points', 'hits', r.key), ER.span(String(r.game), 'points', 'game', r.key),
+        ER.span(String(r.youBefore), 'points', 'youBefore', r.key), ER.span(String(r.aiBefore), 'points', 'aiBefore', r.key)));
+      b.appendChild(text);
+      b.addEventListener('click', () => ER.replay && ER.replay.show(r.key));
+      return b;
+    }));
+    if (ER.replay) ER.replay.mark();
+  });
+})();
+</script>
+
+<script>
+// Point replay. One row of `replay` is one point: every ball contact from the serve on (see the dataset's note for the
+// format). The point shown, the time and the speed are this card's own state, not dashboard settings.
+(() => {
+  const ER = window.ER;
+  const SHOT = {S: ER.k('Serve'), D: ER.k('Drive'), L: ER.k('Slow loop'), F: ER.k('Fast loop'), P: ER.k('Push'), C: ER.k('Chop')};
+  const X = 1.4, Z = 2.6, G = 9.81, HOLD = 0.35;
+  const HALL = 'color-mix(in oklab, var(--er-court) 30%, #0b111c)', MINE = '#fff';
+  const st = {match: null, key: null, t: 0, end: 0, rate: 1, playing: false, raf: 0, last: 0, ev: [], hits: [], g: null, rows: []};
+  const $ = (id) => document.getElementById(id);
+  const calm = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const opp = () => {
+    const m = ER.matchRow();
+    return m && m.vs !== 'AI' ? ER.k('Opponent') : ER.k('AI');
+  };
+
+  const parse = (track) => {
+    const hits = [];
+    const ev = track.split(';').map((s) => {
+      const f = s.split(',');
+      const e = {k: f[0], x: +f[1] / 100, z: +f[2] / 100, y: +f[3] / 100, t: +f[4] / 100};
+      if (e.k === 'h') {
+        Object.assign(e, {you: f[5] === 'y', speed: +f[6] / 10, top: +f[7], shot: f[8], ok: f[9] === '1', n: hits.length + 1});
+        hits.push(e);
+      }
+      e.by = hits.length - 1;
+      return e;
+    });
+    return {ev, hits};
+  };
+  const matchPoints = () => {
+    const rows = ER.rows('points');
+    const k = ER.matchKey();
+    return rows ? rows.filter((r) => r.match === k) : null;
+  };
+  const track = (key) => {
+    const rows = ER.rows('replay');
+    const r = rows && rows.find((x) => x.key === key);
+    return r ? r.track : null;
+  };
+  // The point to open a match on: its longest point that has a replay.
+  const pick = () => {
+    const k = ER.matchKey();
+    if (st.match === k && st.key) return;
+    const pts = matchPoints();
+    if (!pts || !ER.rows('replay')) return;
+    const best = pts.slice().sort((a, b) => b.hits - a.hits || a.game - b.game || a.point - b.point).find((r) => track(r.key));
+    st.match = k;
+    load(best ? best.key : null, false);
+  };
+  const load = (key, play) => {
+    stop();
+    st.key = key;
+    const tr = key && track(key);
+    const p = tr ? parse(tr) : {ev: [], hits: []};
+    st.ev = p.ev;
+    st.hits = p.hits;
+    st.end = p.ev.length ? p.ev[p.ev.length - 1].t + HOLD : 0;
+    st.t = play ? 0 : st.end;
+  };
+
+  // Where the ball is at time t: straight between contacts, with a height from gravity for its drawn size.
+  const at = (t) => {
+    const ev = st.ev;
+    if (!ev.length) return null;
+    if (t >= ev[ev.length - 1].t) return Object.assign({i: ev.length - 1}, ev[ev.length - 1]);
+    let i = 0;
+    while (i < ev.length - 2 && ev[i + 1].t <= t) i += 1;
+    const a = ev[i], b = ev[i + 1], dt = b.t - a.t;
+    const u = dt > 0 ? Math.max(0, Math.min(1, (t - a.t) / dt)) : 1;
+    return {i, x: a.x + (b.x - a.x) * u, z: a.z + (b.z - a.z) * u, y: a.y + (b.y - a.y) * u + 0.5 * G * dt * dt * u * (1 - u)};
+  };
+
+  const paint = () => {
+    const g = st.g;
+    if (!g || !st.ev.length) return;
+    const t = st.t, now = at(t), ev = st.ev;
+    const cur = now.i >= 0 ? ev[now.i].by : 0;
+    g.trails.forEach((path, s) => {
+      const chain = ev.filter((e, i) => (e.by === s || (e.k === 'h' && e.by === s + 1)) && e.t <= t && i <= now.i);
+      const pts = chain.map((e) => [g.sx(e.x), g.sy(e.z)]);
+      if (cur === s && now.i < ev.length - 1) pts.push([g.sx(now.x), g.sy(now.z)]);
+      path.setAttribute('d', pts.length > 1 ? 'M' + pts.map((p) => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join('L') : '');
+      path.style.opacity = s === cur ? 1 : s === cur - 1 ? 0.5 : 0.2;
+    });
+    g.marks.forEach(([node, e]) => {
+      node.style.display = e.t <= t ? '' : 'none';
+      node.style.opacity = e.by >= cur - 1 ? 1 : 0.35;
+    });
+    g.ball.setAttribute('cx', g.sx(now.x));
+    g.ball.setAttribute('cy', g.sy(now.z));
+    g.ball.setAttribute('r', (5 + Math.max(0, Math.min(0.7, now.y - 0.78)) * 5).toFixed(1));
+    st.rows.forEach((tr, i) => tr.classList.toggle('on', i === cur && t < st.end));
+    const seek = $('replay-seek');
+    if (seek) seek.value = st.end ? Math.round(1000 * t / st.end) : 1000;
+  };
+  const sync = () => {
+    const a = $('replay-play-go'), b = $('replay-play-stop');
+    if (a && b) {
+      a.hidden = st.playing;
+      b.hidden = !st.playing;
+    }
+  };
+  const stop = () => {
+    st.playing = false;
+    if (st.raf) cancelAnimationFrame(st.raf);
+    st.raf = 0;
+    sync();
+  };
+  const frame = (ms) => {
+    st.raf = 0;
+    if (!st.playing) return;
+    st.t = Math.min(st.end, st.t + Math.min(0.1, (ms - st.last) / 1000) * st.rate);
+    st.last = ms;
+    paint();
+    if (st.t >= st.end) return stop();
+    st.raf = requestAnimationFrame(frame);
+  };
+  const play = () => {
+    if (!st.ev.length) return;
+    if (st.t >= st.end) st.t = 0;
+    st.playing = true;
+    st.last = performance.now();
+    sync();
+    if (!st.raf) st.raf = requestAnimationFrame(frame);
+  };
+  // The bar and the button of the point on the table, in the picker beside the court.
+  const mark = () => document.querySelectorAll('[data-pick]').forEach((el) => el.classList.toggle('on', el.getAttribute('data-pick') === st.key));
+  const redraw = () => {
+    ['replay', 'replay-select', 'replay-result', 'replay-shots'].forEach((n) => {
+      document.querySelectorAll(`[data-draw="${n}"]`).forEach((el) => draws[n](el));
+    });
+    mark();
+  };
+  // Put a point on the table and play it. The page moves only if the court is not already on screen.
+  const show = (key) => {
+    if (!track(key)) return;
+    load(key, !calm());
+    redraw();
+    const court = $('chart-replay');
+    if (court) court.scrollIntoView({behavior: calm() ? 'auto' : 'smooth', block: 'nearest'});
+    if (!calm()) play();
+  };
+  const step = (d) => {
+    const pts = (matchPoints() || []).filter((r) => track(r.key));
+    const i = pts.findIndex((r) => r.key === st.key);
+    const n = pts[i + d];
+    if (n) show(n.key);
+  };
+  ER.replay = {show, mark};
+
+  const draws = {};
+  draws.replay = (el) => {
+    if (!ER.rows('replay') || !ER.rows('points')) return ER.wait(el, ['replay', 'points']);
+    pick();
+    // Width first, then empty and redraw with no layout in between. Firefox re-anchors the scroll position at every
+    // layout: read with the court emptied, it anchored on the collapsed page and then moved the page down by the
+    // court's height, just before the scroll back up to the court.
+    const cw = el.clientWidth;
+    el.replaceChildren();
+    st.g = null;
+    if (!st.ev.length) {
+      el.appendChild(ER.el('p', 'er-muted', ER.tr('No replay for this match: its points have no logged shots.')));
+      return;
+    }
+    const W = Math.max(200, Math.min(300, cw || 300)), H = Math.round(W * Z / X);
+    const sx = (x) => (x + X) / (2 * X) * W, sy = (z) => (Z - z) / (2 * Z) * H;
+    const svg = ER.svg(el, W, H, ER.tr("Table seen from above with you at the bottom: the path of the ball through the chosen point, white for your shots and orange for the opponent's"));
+    svg.attr('data-source', 'replay').attr('data-field', 'track').attr('data-where', ER.where(st.key));
+    svg.append('rect').attr('width', W).attr('height', H).style('fill', HALL);
+    const tx = sx(-0.7625), tw = sx(0.7625) - tx, ty = sy(1.37), th = sy(-1.37) - ty;
+    svg.append('rect').attr('x', tx).attr('y', ty).attr('width', tw).attr('height', th).attr('rx', 3)
+      .style('fill', 'var(--er-court)').style('stroke', '#fff').style('stroke-width', 2);
+    svg.append('line').attr('x1', sx(0)).attr('x2', sx(0)).attr('y1', ty).attr('y2', ty + th).style('stroke', '#fff').style('stroke-opacity', 0.45);
+    svg.append('line').attr('x1', sx(-0.915)).attr('x2', sx(0.915)).attr('y1', sy(0)).attr('y2', sy(0))
+      .style('stroke', '#fff').style('stroke-width', 3).style('stroke-linecap', 'round');
+    const label = (y, s) => svg.append('text').attr('x', 10).attr('y', y).style('fill', '#fff').style('fill-opacity', 0.75)
+      .style('font-size', '11px').style('letter-spacing', '.08em').text(s);
+    label(18, ER.tr(opp()).toUpperCase());
+    label(H - 10, ER.tr('You').toUpperCase());
+    const colour = (s) => (st.hits[s] && st.hits[s].you ? MINE : ER.AI);
+    const trails = st.hits.map((h, s) => svg.append('path').style('fill', 'none').style('stroke', colour(s)).style('stroke-width', 2)
+      .style('stroke-linejoin', 'round').style('stroke-linecap', 'round').node());
+    const marks = [];
+    const gm = svg.append('g');
+    st.ev.forEach((e, i) => {
+      const cx = sx(e.x), cy = sy(e.z), c = colour(e.by);
+      let node = null;
+      if (e.k === 'h') node = gm.append('circle').attr('cx', cx).attr('cy', cy).attr('r', 5).style('fill', HALL).style('stroke', c).style('stroke-width', 2).node();
+      else if (e.k === 'b') node = gm.append('circle').attr('cx', cx).attr('cy', cy).attr('r', 3).style('fill', c).node();
+      else if (e.k === 'n') node = gm.append('circle').attr('cx', cx).attr('cy', cy).attr('r', 3.5).style('fill', 'none').style('stroke', c).style('stroke-width', 1.5).node();
+      else if (e.k === 'o' && st.hits[e.by] && !st.hits[e.by].ok) {
+        node = gm.append('path').attr('d', `M${cx - 5},${cy - 5}L${cx + 5},${cy + 5}M${cx - 5},${cy + 5}L${cx + 5},${cy - 5}`)
+          .style('stroke', c).style('stroke-width', 2).style('stroke-linecap', 'round').node();
+      }
+      if (node) marks.push([node, e]);
+    });
+    const ball = svg.append('circle').attr('r', 6).style('fill', '#fff').style('stroke', 'var(--er-court)').style('stroke-width', 2).node();
+    st.g = {sx, sy, trails, marks, ball};
+    paint();
+    mark();
+  };
+
+  draws['replay-select'] = (sel) => {
+    const pts = matchPoints();
+    if (!pts || !ER.rows('replay')) {
+      sel.replaceChildren();
+      return;
+    }
+    pick();
+    sel.replaceChildren(...d3.groups(pts.filter((r) => track(r.key)), (r) => r.game).map(([g, ps]) => {
+      const og = document.createElement('optgroup');
+      og.label = ER.tr('Game {0}', g);
+      ps.forEach((r) => og.appendChild(new Option(`${r.youBefore}–${r.aiBefore} · ${r.hits === 1 ? ER.tr('1 shot') : ER.tr('{0} shots', r.hits)} · ${ER.tr(r.won ? 'Won' : 'Lost')}`, r.key)));
+      return og;
+    }));
+    sel.value = st.key || '';
+    sel.onchange = () => show(sel.value);
+  };
+
+  // The picker keeps its height from point to point. A page that changes height while the host is scrolling it makes
+  // the scroll stutter, and points have two to a dozen shots. The column only grows, and starts again for a new match or width.
+  const kept = new WeakMap();
+  let keeping = 0;
+  const keep = (el) => {
+    if (!el || keeping) return;
+    // measured once everything drawn in this frame is in place
+    keeping = requestAnimationFrame(() => {
+      keeping = 0;
+      const was = kept.get(el), w = el.clientWidth;
+      const same = was && was.match === st.match && was.w === w;
+      // What the column holds, from its last child: taking the minimum off to measure would be a layout with the
+      // column collapsed, and the browser may re-anchor the scroll position on it.
+      const last = el.lastElementChild;
+      const natural = last ? Math.ceil(last.getBoundingClientRect().bottom - el.getBoundingClientRect().top) : 0;
+      const h = Math.max(natural, same ? was.h : 0);
+      el.style.minHeight = h + 'px';
+      kept.set(el, {match: st.match, w, h});
+    });
+  };
+
+  draws['replay-result'] = (el) => {
+    pick();
+    const pts = matchPoints();
+    const r = pts && pts.find((x) => x.key === st.key);
+    if (!r) {
+      el.replaceChildren();
+      return;
+    }
+    const last = st.ev.length ? st.ev[st.ev.length - 1].t : 0;
+    const who = ER.tr(r.served === 'You' ? 'you served' : (opp() === 'AI' ? 'the AI served' : 'opponent served'));
+    el.replaceChildren(
+      ER.el('span', 'er-pill ' + (r.won ? 'won' : 'lost'), ER.tr(r.won ? 'Won' : 'Lost')),
+      ER.span(ER.tr(r.ending), 'points', 'ending', r.key, 'er-strong'),
+      ER.el('span', 'er-muted', `${ER.tr('Game {0}, point {1} · {2}–{3} before', r.game, r.point, r.youBefore, r.aiBefore)} · ${who} · ${ER.fmt1(last)} s`),
+      ...(r.video ? [ER.watch(ER.tr('Watch on YouTube'), r.video, r.videoT, 'points', 'videoT', r.key)] : []),
+    );
+    keep(el.closest('.er-rside'));
+  };
+
+  draws['replay-shots'] = (tb) => {
+    pick();
+    st.rows = [];
+    if (!st.ev.length) {
+      tb.replaceChildren();
+      return;
+    }
+    const hits = st.hits;
+    st.rows = hits.map((h, i) => {
+      const tr = ER.el('tr');
+      const th = ER.el('th');
+      const who = ER.el('span', 'er-rwho');
+      who.append(ER.el('i', 'er-sw ball' + (h.you ? '' : ' ai')), `${h.n} · ${ER.tr(h.you ? 'You' : opp())}`);
+      th.appendChild(who);
+      const spin = Math.abs(h.top) < 1 ? ER.tr('none') : ER.tr(h.top > 0 ? '{0} top' : '{0} back', Math.abs(h.top));
+      const res = ER.tr(h.ok ? (i === hits.length - 1 ? 'Landed, not returned' : 'Landed') : 'Missed');
+      tr.append(th, ER.el('td', null, ER.tr(SHOT[h.shot] || h.shot)), ER.el('td', null, ER.fmt1(h.speed)), ER.el('td', null, spin), ER.el('td', h.ok ? null : 'er-strongcell', res));
+      tr.addEventListener('click', () => {
+        stop();
+        st.t = Math.min(st.end, h.t + 0.001);
+        paint();
+      });
+      return tr;
+    });
+    tb.replaceChildren(...st.rows);
+    tb.setAttribute('data-field', 'track');
+    tb.setAttribute('data-where', ER.where(st.key));
+    keep(tb.closest('.er-rside'));
+    paint();
+  };
+
+  Object.keys(draws).forEach((n) => dash.draw(n, draws[n]));
+
+  const on = (id, type, fn) => {
+    const el = $(id);
+    if (el) el.addEventListener(type, fn);
+  };
+  on('replay-play', 'click', () => (st.playing ? stop() : play()));
+  on('replay-prev', 'click', () => step(-1));
+  on('replay-next', 'click', () => step(1));
+  on('replay-seek', 'input', (ev) => {
+    stop();
+    st.t = st.end * (+ev.target.value) / 1000;
+    paint();
+  });
+  on('replay-rate', 'click', (ev) => {
+    const b = ev.target.closest && ev.target.closest('[data-rate]');
+    if (!b) return;
+    st.rate = +b.dataset.rate;
+    document.querySelectorAll('#replay-rate [data-rate]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+  });
+})();
+</script>
+
+<script>
+// Section menu. Its text is fixed in the page; this only marks where you are and scrolls to a section on a click.
+// Beside the report it is a rail; where there is no room it is one button that opens the list.
+// The page may scroll itself, or sit in a frame as tall as its content that the host scrolls. In the second case no
+// scroll event arrives and sticky does nothing, so the visible part of the report is read from an IntersectionObserver:
+// `view` is the top of what is on screen, in this page's own coordinates (0 when the page scrolls itself).
+(() => {
+  const nav = document.getElementById('section-menu');
+  if (!nav) return;
+  const shell = nav.closest('.er-shell');
+  const list = nav.querySelector('ol');
+  const items = [...nav.querySelectorAll('a[href^="#"]')].map((a) => ({
+    a, li: a.parentElement, el: document.getElementById(a.getAttribute('href').slice(1)), top: a.parentElement.parentElement === list,
+  })).filter((x) => x.el);
+  if (!items.length) return;
+  const tops = items.filter((x) => x.top);
+  const owner = (x) => (x.top ? x : items.find((i) => i.top && i.li.contains(x.li)) || x);
+  const btn = document.getElementById('section-toggle');
+  const nows = [...nav.querySelectorAll('[data-now]')];
+  const low = new Map();
+  let now = null, raf = 0, view = 0, atEnd = false, hold = 0, shift = 0;
+
+  const set = (sec, sub) => {
+    const cur = sub || sec;
+    if (cur === now) return;
+    now = cur;
+    items.forEach((x) => {
+      x.li.classList.toggle('on', x === sec || x === sub);
+      if (x === cur) x.a.setAttribute('aria-current', 'true');
+      else x.a.removeAttribute('aria-current');
+    });
+    // The button carries one name per section; show the one you are in.
+    nows.forEach((n) => {
+      n.hidden = n.getAttribute('data-now') !== sec.el.id;
+    });
+  };
+  // The list under the button: no taller than what is left of the screen below it.
+  const open = (yes) => {
+    if (yes) {
+      const foot = low.size ? Math.max(...low.values()) : window.innerHeight;
+      nav.style.setProperty('--er-room', Math.max(170, Math.round(foot - nav.getBoundingClientRect().bottom - 18)) + 'px');
+    }
+    nav.classList.toggle('open', yes);
+    if (btn) btn.setAttribute('aria-expanded', String(yes));
+  };
+  if (btn) {
+    btn.addEventListener('click', () => open(!nav.classList.contains('open')));
+    document.addEventListener('pointerdown', (ev) => {
+      if (!nav.contains(ev.target)) open(false);
+    });
+    document.addEventListener('keydown', (ev) => {
+      if (ev.key !== 'Escape' || !nav.classList.contains('open')) return;
+      open(false);
+      btn.focus();
+    });
+  }
+  // Where sticky cannot hold the menu (the host scrolls the frame), carry it down the page by hand.
+  const pin = () => {
+    let want = 0;
+    if (view > 0 && shell) {
+      const gap = parseFloat(getComputedStyle(nav).top) || 0;
+      // offsetTop, not the drawn position: the menu may still be gliding to its last place.
+      const frame = shell.getBoundingClientRect(), natural = frame.top + nav.offsetTop;
+      want = Math.max(0, Math.min(view + gap - natural, frame.bottom - nav.offsetHeight - natural));
+    }
+    if (Math.abs(want - shift) < 0.5) return;
+    shift = want;
+    nav.style.transition = 'transform .12s linear';
+    nav.style.transform = shift ? `translateY(${shift.toFixed(1)}px)` : '';
+  };
+  const mark = () => {
+    raf = 0;
+    pin();
+    if (Date.now() < hold) return;
+    const line = view + (parseFloat(getComputedStyle(items[0].el).scrollMarginTop) || 0) + 16;
+    let sec = tops[0], sub = null;
+    items.forEach((x) => {
+      if (x.el.getBoundingClientRect().top > line) return;
+      if (x.top) {
+        sec = x;
+        sub = null;
+      } else sub = x;
+    });
+    const doc = document.documentElement;
+    const ownEnd = doc.scrollHeight > window.innerHeight + 4 && window.innerHeight + window.scrollY >= doc.scrollHeight - 4;
+    if (ownEnd || atEnd) {
+      sec = tops[tops.length - 1];
+      sub = null;
+    }
+    set(sec, sub);
+  };
+  // Run on the next frame, or shortly after if no frame comes.
+  const queue = () => {
+    if (raf) return;
+    raf = 1;
+    const run = () => {
+      if (raf) mark();
+    };
+    requestAnimationFrame(run);
+    setTimeout(run, 150);
+  };
+  window.addEventListener('scroll', queue, {passive: true, capture: true});
+  window.addEventListener('resize', queue);
+  if (shell && 'IntersectionObserver' in window) {
+    // A ruler down the side of the report: 240 px bands, each watched in 4 px steps. The band cut off by the top of
+    // the screen says exactly where the screen starts; a mark at the foot says when the end is in sight.
+    // The ruler is in the page's HTML (.er-ruler: one <i> per band, a <b> at the foot): a script may not add
+    // elements outside a drawing.
+    const ruler = shell.querySelector('.er-ruler');
+    const bands = ruler ? [...ruler.querySelectorAll('i')] : [];
+    const foot = ruler ? ruler.querySelector('b') : null;
+    const steps = [];
+    for (let i = 0; i <= 60; i += 1) steps.push(i / 60);
+    const cut = new Map();
+    let footSeen = false;
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (e.target === foot) {
+          footSeen = e.isIntersecting;
+          return;
+        }
+        const box = e.boundingClientRect, seen = e.intersectionRect;
+        if (e.isIntersecting && seen.top > box.top + 0.5) cut.set(e.target, seen.top);
+        else cut.delete(e.target);
+        // the band cut off by the foot of the screen says where the screen ends
+        if (e.isIntersecting && seen.bottom < box.bottom - 0.5) low.set(e.target, seen.bottom);
+        else low.delete(e.target);
+      });
+      view = cut.size ? Math.max(0, Math.min(...cut.values())) : 0;
+      atEnd = footSeen && cut.size > 0;
+      queue();
+    }, {threshold: steps});
+    bands.forEach((el) => io.observe(el));
+    if (foot) io.observe(foot);
+  }
+  nav.addEventListener('click', (ev) => {
+    const a = ev.target.closest && ev.target.closest('a[href^="#"]');
+    const x = a && items.find((i) => i.a === a);
+    if (!x) return;
+    ev.preventDefault();
+    open(false);
+    if (x.el.tagName === 'DETAILS') x.el.open = true;
+    // Mark the entry at once, and leave it alone while the page is still travelling there.
+    set(owner(x), x.top ? null : x);
+    hold = Date.now() + 1100;
+    setTimeout(queue, 1150);
+    const calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    x.el.scrollIntoView({behavior: calm ? 'auto' : 'smooth', block: 'start'});
+  });
+  mark();
+  setTimeout(queue, 1200);
+})();
+</script>
