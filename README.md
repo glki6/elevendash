@@ -21,6 +21,15 @@ elevendash demo
 
 This writes `elevendash-demo/`: four sessions of made-up matches against the AI, built into a dashboard at
 `elevendash-demo/site/index.html`. The logs are generated (`src/elevendash/sample.py`) and hold no account data.
+The same demo is online at https://glki6.github.io/elevendash/demo/.
+
+## Made for matches against the AI
+
+Against the AI, the game logs every ball contact by both players, so everything on the dashboard works: the replay,
+rally and serve analysis, the 11hero metrics for both sides and the training plan. Online matches against people are
+counted (who won, the scores), but for those the game logs only your own shots, so the shot-level analysis is
+one-sided there. So far elevendash has seen just one online match; its metrics for your own shots matched 11hero's
+exactly, and the rest of the online side is largely untested.
 
 ## Privacy first
 
@@ -133,10 +142,9 @@ it lists text with no Chinese yet, entries nothing uses any more, and placeholde
 
 Early, and so far tested on one player's logs (Quest 3S, AI levels 75 to 100, a few hundred matches), plus generated
 logs. The dashboard opens on your main level (the AI level with the most points in your last five sessions), and its
-findings are written from your numbers by fixed rules in `builddata.py`. Online matches are counted, but their logs
-hold only your own shots, so most analysis covers matches against the AI. Left-handed play is handled but has only
-been tested by forcing `hand=left` on right-handed logs. Logs from other headsets and game versions are welcome
-(redacted): see `CONTRIBUTING.md`.
+findings are written from your numbers by fixed rules in `builddata.py`. Online play: see "Made for matches against
+the AI" above. Left-handed play is handled but has only been tested by forcing `hand=left` on right-handed logs. Logs
+from other headsets, game versions and online matches are welcome (redacted): see `CONTRIBUTING.md`.
 
 ## Licence
 
