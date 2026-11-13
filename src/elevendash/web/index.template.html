@@ -518,7 +518,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
     <p class="er-muted">One bar per point, in order: bars above the line are points you won, bars below are points you lost, and a longer bar is a longer point. Click a bar to watch that point from above, you at the bottom, drawn from every contact the game logged: bat, table, net and floor.</p>
     <div class="er-replay">
       <div class="er-rstage">
-        <div class="er-chart er-rcourt" id="chart-replay" data-draw="replay" data-source="replay" data-fetchpriority="low"></div>
+        <div class="er-chart er-rcourt" id="chart-replay" data-draw="replay" data-nomorph data-source="replay" data-fetchpriority="low"></div>
         <div class="er-rbar">
           <button class="er-btn er-rplay" type="button" id="replay-play"><span id="replay-play-go">Play</span><span id="replay-play-stop" hidden>Pause</span></button>
           <input type="range" id="replay-seek" min="0" max="1000" step="1" value="1000" aria-label="Position in the point">
@@ -787,10 +787,10 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
   // - the page is scrolled so the control that was used stays exactly where it was on screen. Sections above it can
   //   change height with the view (the level picker changes the whole page), and the page would move under the
   //   pointer. Doing it before the paint means it never shows; a correction a moment later shows as a jump and back.
-  // - what changed in view fades in (er-in), over the time a typical shot takes from bat to bat in the replays
-  //   (about 0.67 s), so the page changes at the pace of the ball. Only drawings whose contents changed fade, so bars
-  //   and charts do and steady words do not. opts.whole fades the whole page instead (look and language). No fade if the reader's
-  //   system asks for reduced motion.
+  // - what changed in view moves to its new state over the time a typical shot takes from bat to bat in the replays
+  //   (about 0.67 s), so the page changes at the pace of the ball: bars and chart marks glide from their old size and
+  //   place to the new one, and words whose text changed fade in (er-in). Steady words stay put. opts.whole fades the
+  //   whole page instead (look and language). Nothing moves if the reader's system asks for reduced motion.
   // opts.after (or a function as the third argument) runs once the new view is drawn.
   // A view transition cannot do this: the browser holds back frames while one waits, and the redraw needs a frame.
   const calmNow = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -828,6 +828,190 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
   document.addEventListener('animationend', (e) => {
     if (e.animationName === 'er-in' && e.target.classList) e.target.classList.remove('er-in');
   });
+
+  // Glide. Drawings are rebuilt on every switch, so just before a switch each drawing in view is read (snap): the
+  // shape of every mark (SVG rect, path, line, circle: their geometry attributes; an HTML bar: its inline width, left
+  // or flex-grow), the colour of each bar, and each element's own words. After the redraw (morph), old and new elements
+  // are paired by their place in the drawing (the n-th element of its tag under the same parent), so the third bar of
+  // game 2 becomes the third bar of game 2. A paired mark is set back to its old shape and colour in the redraw frame
+  // and moves to the new one from the next frame on; a word whose text changed fades in; an element with no partner
+  // fades in whole. A drawing marked data-nomorph (the replay, which animates itself) fades in whole.
+  const GEO = {rect: ['x', 'y', 'width', 'height', 'rx', 'ry'], path: ['d'], line: ['x1', 'y1', 'x2', 'y2'],
+    circle: ['cx', 'cy', 'r'], ellipse: ['cx', 'cy', 'rx', 'ry'], polyline: ['points'], polygon: ['points'],
+    text: ['x', 'y', 'transform'], g: ['transform']};
+  const BOX = ['width', 'height', 'left', 'top', 'right', 'bottom', 'flexGrow'];
+  const EASE = 'cubic-bezier(.3,.45,.4,1)';
+  const ease = ((x1, y1, x2, y2) => {
+    const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx, cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+    const fx = (t) => ((ax * t + bx) * t + cx) * t, dx = (t) => (3 * ax * t + 2 * bx) * t + cx;
+    return (x) => {
+      let t = x;
+      for (let i = 0; i < 8; i++) {
+        const e = fx(t) - x, d = dx(t);
+        if (Math.abs(e) < 1e-5 || !d) break;
+        t -= e / d;
+      }
+      t = Math.max(0, Math.min(1, t));
+      return ((ay * t + by) * t + cy) * t;
+    };
+  })(0.3, 0.45, 0.4, 1);
+  const isSvg = (el) => el instanceof SVGElement;
+  const tagOf = (el) => el.tagName.toLowerCase();
+  const ownText = (el) => {
+    let s = '';
+    for (const n of el.childNodes) if (n.nodeType === 3) s += n.nodeValue;
+    return s.trim();
+  };
+  const shapeOf = (el) => {
+    const a = {};
+    let any = false;
+    if (isSvg(el)) (GEO[tagOf(el)] || []).forEach((k) => {
+      const v = el.getAttribute(k);
+      if (v != null) (a[k] = v), (any = true);
+    });
+    else BOX.forEach((k) => {
+      const v = el.style[k];
+      if (v) (a[k] = v), (any = true);
+    });
+    return any ? a : null;
+  };
+  // a bar: an SVG mark, or an HTML element sized by an inline style; words and groups are not
+  const isBar = (el, shape) => !!shape && !(isSvg(el) && (tagOf(el) === 'text' || tagOf(el) === 'g'));
+  const colorOf = (el) => {
+    if (isSvg(el) && tagOf(el) === 'line') return null;
+    const cs = getComputedStyle(el);
+    return isSvg(el) ? cs.fill : cs.backgroundColor;
+  };
+  // every element of a drawing by its place: "/svg0/g2/path3" is the fourth path in the third group of the svg
+  const places = (root) => {
+    const out = new Map();
+    const walk = (el, sig) => {
+      const seen = {};
+      for (const c of el.children) {
+        const t = tagOf(c);
+        seen[t] = (seen[t] || 0) + 1;
+        const s = sig + '/' + t + (seen[t] - 1);
+        out.set(s, c);
+        walk(c, s);
+      }
+    };
+    walk(root, '');
+    return out;
+  };
+  const snap = (root) => {
+    const m = new Map();
+    for (const [s, el] of places(root)) {
+      const shape = shapeOf(el);
+      m.set(s, {tag: el.tagName, shape, text: ownText(el), color: isBar(el, shape) ? colorOf(el) : null});
+    }
+    return {text: ownText(root), els: m};
+  };
+  // Interpolators from one attribute or style value to another, or null when the two cannot be blended (then the
+  // new value is shown at once).
+  const NUM = /-?(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?/gi;
+  const r2 = (v) => String(Math.round(v * 100) / 100);
+  const blendText = (a, b) => {
+    const na = a.match(NUM) || [], nb = b.match(NUM) || [];
+    if (na.length !== nb.length || a.replace(NUM, '#') !== b.replace(NUM, '#')) return null;
+    const parts = b.split(NUM), fa = na.map(Number), fb = nb.map(Number);
+    return (e) => parts.reduce((s, p, i) => s + p + (i < fb.length ? r2(fa[i] + (fb[i] - fa[i]) * e) : ''), '');
+  };
+  // paths: same commands with the same number of values; arc flags switch halfway instead of blending
+  const PARAMS = {m: 2, l: 2, h: 1, v: 1, c: 6, s: 4, q: 4, t: 2, a: 7, z: 0};
+  const parsePath = (d) => {
+    const toks = d.match(/[a-df-z]|-?(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?/gi) || [];
+    const out = [];
+    let cmd = '', i = 0;
+    for (const t of toks) {
+      if (/[a-df-z]/i.test(t)) {
+        cmd = t;
+        i = 0;
+        out.push(t);
+      } else {
+        const n = PARAMS[cmd.toLowerCase()] || 2;
+        const k = i % n;
+        out.push({v: Number(t), flag: cmd.toLowerCase() === 'a' && (k === 3 || k === 4)});
+        i++;
+      }
+    }
+    return out;
+  };
+  const blendPath = (a, b) => {
+    const pa = parsePath(a), pb = parsePath(b);
+    if (pa.length !== pb.length || pa.some((t, i) => (typeof t === 'string') !== (typeof pb[i] === 'string') || (typeof t === 'string' && t !== pb[i]))) return null;
+    return (e) => pb.map((t, i) => (typeof t === 'string' ? t : ' ' + (t.flag ? (e < 0.5 ? pa[i].v : t.v) : r2(pa[i].v + (t.v - pa[i].v) * e)))).join('');
+  };
+  const blend = (name, a, b) => (name === 'd' ? blendPath(a, b) : blendText(a, b));
+  let batches = [], raf = 0;
+  const tick = (now) => {
+    raf = 0;
+    batches = batches.filter((b) => {
+      if (b.start == null) {
+        b.start = now;
+        b.anims.forEach((a) => a.play());
+      }
+      const p = Math.min(1, (now - b.start) / b.dur);
+      b.items.forEach((it) => it.el.isConnected && it.set(p >= 1 ? null : ease(p)));
+      return p < 1;
+    });
+    if (batches.length) raf = requestAnimationFrame(tick);
+  };
+  // finish whatever is still moving (a new switch reads the page first, so it starts from where things are)
+  const settle = () => {
+    batches.forEach((b) => {
+      b.items.forEach((it) => it.set(null));
+      b.anims.forEach((a) => a.finish());
+    });
+    batches = [];
+  };
+  const morph = (root, old, batch) => {
+    if (root.hasAttribute('data-nomorph') || !old || ownText(root) !== old.text) return fadeIn(root);
+    const now = places(root);
+    // read everything first, then write: a write between reads would make the browser restyle for every read
+    const fades = [], moves = [], tints = [];
+    for (const [s, el] of now) {
+      const o = old.els.get(s);
+      if (!o || o.tag !== el.tagName) {
+        // new: only the outermost new element fades, with all it holds
+        const up = s.slice(0, s.lastIndexOf('/'));
+        const po = up ? old.els.get(up) : null;
+        if (!up || (po && po.tag === now.get(up).tagName)) fades.push(el);
+        continue;
+      }
+      const shape = shapeOf(el);
+      if (shape && o.shape) {
+        Object.keys(shape).forEach((k) => {
+          const a = o.shape[k], b = shape[k];
+          if (a == null || a === b) return;
+          const f = blend(k, a, b);
+          if (f) moves.push({el, k, b, f});
+        });
+      }
+      if (isBar(el, shape)) {
+        const c = o.color ? colorOf(el) : null;
+        if (c && c !== o.color) tints.push({el, from: o.color, to: c});
+      } else if (ownText(el) !== o.text && ownText(el)) fades.push(el);
+    }
+    moves.forEach(({el, k, b, f}) => {
+      const set = isSvg(el)
+        ? (e) => el.setAttribute(k, e == null ? b : f(e))
+        : (e) => (el.style[k] = e == null ? b : f(e));
+      set(0);
+      batch.items.push({el, set});
+    });
+    tints.forEach(({el, from, to}) => {
+      const anim = el.animate({[isSvg(el) ? 'fill' : 'backgroundColor']: [from, to]}, {duration: batch.dur, easing: EASE});
+      anim.pause();
+      anim.currentTime = 0;
+      batch.anims.push(anim);
+    });
+    fades.forEach(fadeIn);
+  };
+  const fadeMs = (page) => {
+    const v = page ? getComputedStyle(page).getPropertyValue('--er-fade').trim() : '';
+    const s = parseFloat(v);
+    return (Number.isFinite(s) && s > 0 ? (v.endsWith('ms') ? s / 1000 : s) : 0.67) * 1000;
+  };
   let job = null;
   // the reader taking over (scrolling, pressing, typing) ends the hold on the page; so does any scroll the hold did
   // not make (a dragged scrollbar sends none of the events above)
@@ -860,8 +1044,21 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
       j.expect = j.sc.scrollTop;
     }
     if (!j.redrawn) return;
-    for (const [d, html] of j.before) {
-      if (d.isConnected && d.innerHTML !== html && !(d.parentElement && d.parentElement.closest('.er-pre,.er-in'))) fadeIn(d);
+    const changed = [...j.before].filter(([d, b]) => d.isConnected && d.innerHTML !== b.html);
+    const set = new Set(changed.map(([d]) => d));
+    const within = (d) => {
+      for (let p = d.parentElement; p; p = p.parentElement) if (set.has(p)) return true;
+      return false;
+    };
+    const batch = {items: [], anims: [], dur: fadeMs(j.page), start: null};
+    changed.forEach(([d, b]) => {
+      // a drawing inside another that changed moves with it
+      if (within(d) || (d.parentElement && d.parentElement.closest('.er-pre,.er-in'))) return;
+      morph(d, b.old, batch);
+    });
+    if (batch.items.length || batch.anims.length) {
+      batches.push(batch);
+      if (!raf) raf = requestAnimationFrame(tick);
     }
     j.before.clear();
     done(j, true);
@@ -879,9 +1076,10 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
       const v = viewOf(sc);
       page.querySelectorAll('[data-draw]').forEach((d) => {
         const r = d.getBoundingClientRect();
-        if (r.bottom > v.top && r.top < v.bottom && (r.width > 0 || r.height > 0)) before.set(d, d.innerHTML);
+        if (r.bottom > v.top && r.top < v.bottom && (r.width > 0 || r.height > 0)) before.set(d, {html: d.innerHTML, old: snap(d)});
       });
     }
+    settle();
     const j = (job = {p, el, top: el ? el.getBoundingClientRect().top : 0, sc, expect: sc.scrollTop, page, before,
       whole: fade && !!o.whole, after: o.after, redrawn: false, drawn: false});
     const mo = new MutationObserver(() => step(j));
