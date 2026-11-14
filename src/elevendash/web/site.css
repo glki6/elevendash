@@ -24,7 +24,9 @@ html.pdf #dash-root{box-sizing:content-box;width:968px;padding:34px 36px;margin:
 html.pdf .er-page{border-radius:0}
 html.pdf .er{gap:40px}
 html.pdf .er-nav,html.pdf .er-ruler,html.pdf .er-rbar,html.pdf .er-rside>.er-muted,html.pdf .er-btn,html.pdf .er-save,html.pdf .er-smatches .er-muted{display:none}
-html.pdf .er-card,html.pdf .er-find,html.pdf .er-pitem,html.pdf .er-keephead,html.pdf .er-board,html.pdf .er-multi,html.pdf .er-sechead,html.pdf .er-mgrid>div,html.pdf .er-t tr{break-inside:avoid}
+html.pdf .er-how>summary,html.pdf .er-more>summary,html.pdf .er-fold>summary::after{display:none}
+html.pdf .er-how>p,html.pdf .er-more>p{margin-top:0}
+html.pdf .er-card,html.pdf .er-key,html.pdf .er-find,html.pdf .er-pitem,html.pdf .er-keephead,html.pdf .er-board,html.pdf .er-multi,html.pdf .er-sechead,html.pdf .er-mgrid>div,html.pdf .er-t tr{break-inside:avoid}
 html.pdf .er-sechead{break-after:avoid}
 html.pdf #match{break-before:page}
 /* "Matches you pick" and the match card are tools to use on the page, and your notes are yours alone: the file keeps
