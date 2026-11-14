@@ -149,6 +149,13 @@
 .er-plist .er-chip[aria-pressed=false]{background-color:transparent;border-color:var(--er-line);box-shadow:none;color:var(--color-fg-muted)}
 .er-plist .er-chip[aria-pressed=true]{border-color:var(--color-fg-muted);box-shadow:none}
 .er-plist .er-chip[aria-pressed=true]:not(.won){background-color:var(--er-track)}
+/* match card: a picture of the match, drawn while its box is open */
+.er .er-mcard{border-top:1px solid var(--er-line);padding-top:18px}
+.er-mcard>summary{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px}
+.er-mcard>summary .er-muted{font-weight:400}
+.er-mcbody{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:16px 24px;align-items:start;margin-top:6px}
+.er-mcprev svg{display:block;width:100%;height:auto;border-radius:10px;box-shadow:0 0 0 1px var(--er-line)}
+.er-mcside{display:grid;gap:10px;align-content:start}
 .er-cmprows{display:grid;gap:13px;--er-rowlabel:13rem;--er-valw:8.2em;margin-top:6px}
 .er-cmp{position:relative;display:block}
 .er-ref{position:absolute;top:-4px;bottom:-4px;width:2px;margin-left:-1px;border-radius:1px;background:var(--color-fg);box-shadow:0 0 0 1.5px var(--color-panel)}
@@ -367,6 +374,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
   .er-bars .er-row,.er-find .er-row,.er-cmprows .er-row{grid-template-columns:minmax(0,1fr)}
   .er-frow{grid-template-columns:minmax(0,1fr) 5.8em}
   .er-frow .er-stack{grid-column:1 / -1;grid-row:2}
+  .er-mcbody{grid-template-columns:minmax(0,1fr)}
   .er-fhead span:first-child{display:none}
 }
 @media (prefers-reduced-motion:no-preference){
@@ -532,6 +540,22 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
       </dl>
     </div>
   </div>
+  <details class="er-card er-mcard" id="match-card">
+    <summary>Match card <span class="er-muted">A picture of this match to send or post.</span></summary>
+    <div class="er-mcbody">
+      <div class="er-mcprev" data-draw="match-card" data-nomorph data-source="points"></div>
+      <div class="er-mcside">
+        <p class="er-muted">The card shows the match picked above, in this page's look and language: the result, every point, a few numbers and you against the AI. It has no names, links or videos in it.</p>
+        <p id="card-online" hidden>Cards are for matches against the AI. In an online match the game's log holds only your own shots, so a card's numbers would be wrong.</p>
+        <div id="card-act"><button class="er-btn" type="button" id="card-save" aria-describedby="card-note"><svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true"><path d="M6.5 1v7.2M3.4 5.6l3.1 3.1 3.1-3.1M1.5 11.5h10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Save picture</button></div>
+        <p class="er-muted" id="card-note">A PNG picture, 1080 by 1350 pixels.</p>
+        <p class="er-muted" id="card-busy" role="status" hidden>Making the picture…</p>
+        <p class="er-muted" id="card-done" role="status" hidden>Saved.</p>
+        <p class="er-muted" id="card-none" role="status" hidden>Saving a file is not available in this view.</p>
+        <p class="er-muted" id="card-fail" role="status" hidden>The picture could not be made. Try again.</p>
+      </div>
+    </div>
+  </details>
   <div class="er-card" id="match-replay">
     <h3>Point by point</h3>
     <p class="er-muted">One bar per point, in order: bars above the line are points you won, bars below are points you lost, and a longer bar is a longer point. Click a bar to watch that point from above, you at the bottom, drawn from every contact the game logged: bat, table, net and floor.</p>
@@ -2888,6 +2912,263 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       return b;
     }));
     if (ER.replay) ER.replay.mark();
+  });
+})();
+</script>
+
+<script>
+// Match card: the match picked in the match explorer as a picture to send or post, 1080 by 1350, in the page's look
+// and language: the result and game scores, every point, six numbers, how the points ended and you against your
+// opponent. Nothing on it says who the player is (no names, links or videos). It is drawn only while its box is open,
+// as SVG; Save picture turns that SVG into a PNG and hands it over (the standalone file's own download, or the
+// dashboard's downloads prompt).
+(() => {
+  const ER = window.ER;
+  const W = 1080, H = 1350, P = 64, R = W - P;
+  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  // The page's colours and faces as plain values: a picture made from SVG cannot read the page's CSS.
+  const look = () => {
+    const page = document.querySelector('.er') || document.body;
+    const probe = document.createElement('span');
+    page.appendChild(probe);
+    const cv = document.createElement('canvas');
+    cv.width = cv.height = 1;
+    const ctx = cv.getContext('2d', {willReadFrequently: true});
+    const col = (v) => {
+      probe.style.color = v;
+      ctx.clearRect(0, 0, 1, 1);
+      ctx.fillStyle = getComputedStyle(probe).color;
+      ctx.fillRect(0, 0, 1, 1);
+      const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data;
+      return a === 255 ? `rgb(${r},${g},${b})` : `rgba(${r},${g},${b},${(a / 255).toFixed(3)})`;
+    };
+    const c = {bg: col('var(--color-bg)'), panel: col('var(--color-panel)'), fg: col('var(--color-fg)'), muted: col('var(--color-fg-muted)'),
+      line: col('var(--er-line)'), track: col('var(--er-track)'), you: col('var(--er-you)'), ai: col('var(--er-ai)'),
+      youTint: col('var(--er-you-tint)'), aiTint: col('var(--er-ai-tint)')};
+    probe.style.fontFamily = 'var(--er-display)';
+    c.display = getComputedStyle(probe).fontFamily;
+    c.text = getComputedStyle(page).fontFamily;
+    probe.remove();
+    // text widths, to place one piece of text after another
+    c.width = (s, size, font, weight) => {
+      ctx.font = `${weight || 400} ${size}px ${font || c.text}`;
+      return ctx.measureText(String(s)).width;
+    };
+    return c;
+  };
+  // Text is styled inline, not with attributes: in the preview the page's own `.er svg text` rule would win over
+  // attributes and draw every word in the caption size and colour.
+  let face = 'sans-serif';
+  const style = (o) => `font-size:${o.size}px;fill:${o.fill};font-family:${esc(o.font || face)}`
+    + (o.weight ? `;font-weight:${o.weight}` : '') + (o.ls ? `;letter-spacing:${o.ls}px` : '');
+  const text = (x, y, s, o) => `<text x="${x}" y="${y}"` + (o.anchor ? ` text-anchor="${o.anchor}"` : '') + ` style="${style(o)}">${esc(s)}</text>`;
+  const rect = (x, y, w, h, r, fill, more) => `<rect x="${x}" y="${y}" width="${Math.max(0, w)}" height="${h}" rx="${r}" fill="${fill}"${more || ''}/>`;
+  const pct = (a, b) => (b ? Math.round((1000 * a) / b) / 10 : null);
+  const longDate = (d) => (ER.lang() === 'zh' ? `${d.slice(0, 4)}年${Number(d.slice(5, 7))}月${Number(d.slice(8, 10))}日`
+    : d3.utcFormat('%b %-d, %Y')(new Date(d + 'T00:00:00Z')));
+
+  // The match's points in order, and what the card counts from them.
+  const pointsOf = (k) => {
+    const rows = ER.rows('points');
+    return rows ? rows.filter((r) => r.match === k).sort((a, b) => a.game - b.game || a.point - b.point) : null;
+  };
+  const facts = (pts) => {
+    let run = 0, best = 0;
+    pts.forEach((r) => {
+      run = r.won ? run + 1 : 0;
+      best = Math.max(best, run);
+    });
+    const sv = pts.filter((r) => r.served === 'You'), rv = pts.filter((r) => r.served !== 'You');
+    const ends = {};
+    pts.forEach((r) => (ends[r.ending] = (ends[r.ending] || 0) + 1));
+    return {n: pts.length, won: pts.filter((r) => r.won).length, sv: sv.length, svWon: sv.filter((r) => r.won).length,
+      rv: rv.length, rvWon: rv.filter((r) => r.won).length, longest: d3.max(pts, (r) => r.hits) || 0, best, ends};
+  };
+
+  const build = (m, pts, c) => {
+    const f = facts(pts), won = m.result === 'Won', o = [];
+    const D = {font: c.display, weight: 600};
+    face = c.text;
+    o.push(rect(0, 0, W, H, 0, c.bg));
+
+    // the top: what match, and when
+    o.push(`<circle cx="${P + 9}" cy="84" r="9" fill="${c.ai}"/>`);
+    o.push(text(P + 30, 92, ER.tr('Eleven Table Tennis').toUpperCase(), {size: 22, fill: c.muted, ls: 3}));
+    o.push(text(R, 92, `${longDate(m.date)} · ${ER.F.time(m.start)}`, {size: 22, fill: c.muted, anchor: 'end'}));
+    o.push(text(P, 150, ER.tr('Match against the AI, level {0}', m.level), {size: 40, fill: c.fg, ...D}));
+
+    // the result and the game scores
+    o.push(rect(P, 186, R - P, 224, 28, c.panel));
+    const word = ER.tr(won ? 'Won' : 'Lost'), ww = c.width(word, 26, c.text, 600);
+    o.push(rect(P + 40, 220, ww + 40, 46, 23, won ? c.youTint : c.aiTint));
+    o.push(text(P + 60, 251, word, {size: 26, fill: c.fg, weight: 600}));
+    o.push(`<text x="${P + 34}" y="382" style="${style({size: 132, fill: c.fg, ...D})}">${m.gamesWon}`
+      + `<tspan fill="${c.muted}" font-weight="300" dx="8">–</tspan><tspan fill="${c.muted}" dx="8">${m.gamesLost}</tspan></text>`);
+    const games = String(m.score || '').split(',').map((s) => s.trim().split('-').map(Number)).filter((g) => g.length === 2);
+    const gh = Math.min(52, 160 / Math.max(1, games.length)), gy = 222 + (172 - gh * games.length) / 2;
+    games.forEach(([a, b], i) => {
+      const y = gy + gh * i + gh / 2;
+      o.push(`<circle cx="${560}" cy="${y}" r="6" fill="${a > b ? c.you : c.ai}"/>`);
+      o.push(text(580, y + 8, ER.tr('Game {0}', i + 1), {size: 24, fill: c.muted}));
+      o.push(text(R - 40, y + 11, `${a}–${b}`, {size: 34, fill: a > b ? c.fg : c.muted, anchor: 'end', ...D}));
+    });
+
+    // every point: up for a point won, down for one lost, longer for more shots; a gap between games
+    o.push(rect(P, 430, R - P, 290, 28, c.panel));
+    o.push(text(P + 40, 478, ER.tr('Point by point'), {size: 24, fill: c.fg, weight: 600}));
+    const lw = ER.tr('Lost'), wl = c.width(lw, 20), wword = ER.tr('Won'), wwd = c.width(wword, 20);
+    o.push(text(R - 40, 476, lw, {size: 20, fill: c.muted, anchor: 'end'}));
+    o.push(rect(R - 40 - wl - 22, 462, 14, 14, 3, c.ai));
+    o.push(text(R - 40 - wl - 40, 476, wword, {size: 20, fill: c.muted, anchor: 'end'}));
+    o.push(rect(R - 40 - wl - 40 - wwd - 22, 462, 14, 14, 3, c.you));
+    const byGame = d3.groups(pts, (r) => r.game), GAP = 18, X0 = P + 40, X1 = R - 40, AX = 596, ARM = 78;
+    const slot = (X1 - X0 - GAP * Math.max(0, byGame.length - 1)) / Math.max(1, pts.length);
+    const bw = Math.max(2, Math.min(14, slot * 0.7)), maxH = Math.max(1, f.longest);
+    let x = X0;
+    byGame.forEach(([g, ps], gi) => {
+      const x0 = x;
+      ps.forEach((r) => {
+        const h = Math.max(4, (ARM * r.hits) / maxH);
+        o.push(`<path d="${ER.barPath(x + (slot - bw) / 2, AX + (r.won ? -1 : 1), bw, h, r.won ? -1 : 1)}" fill="${r.won ? c.you : c.ai}"/>`);
+        x += slot;
+      });
+      o.push(`<line x1="${x0}" x2="${x}" y1="${AX}" y2="${AX}" stroke="${c.line}" stroke-width="2"/>`);
+      const sc = games[gi] ? `${games[gi][0]}–${games[gi][1]}` : '';
+      const label = `${ER.tr('G{0}', g)} ${sc}`;
+      if (x - x0 >= c.width(label, 20) + 4) o.push(text((x0 + x) / 2, 708, label, {size: 20, fill: c.muted, anchor: 'middle'}));
+      else o.push(text((x0 + x) / 2, 708, ER.tr('G{0}', g), {size: 20, fill: c.muted, anchor: 'middle'}));
+      x += GAP;
+    });
+
+    // six numbers
+    const of = (a, b) => ER.tr('{0} of {1}', a, b);
+    const tiles = [
+      [ER.tr('Points won'), ER.F.pct(pct(f.won, f.n)), of(f.won, f.n)],
+      [ER.tr('On your serve'), ER.F.pct(pct(f.svWon, f.sv)), of(f.svWon, f.sv)],
+      [ER.tr("On the AI's serve"), ER.F.pct(pct(f.rvWon, f.rv)), of(f.rvWon, f.rv)],
+      [ER.tr('Longest point'), String(f.longest), ER.tr('shots')],
+      [ER.tr('Best run'), String(f.best), ER.tr('points in a row')],
+      [ER.tr('Rally speed'), ER.F.n1(m.you_rallySpeed), 'm/s'],
+    ];
+    const tw = (R - P - 32) / 3;
+    tiles.forEach(([label, v, sub], i) => {
+      const tx = P + (i % 3) * (tw + 16), ty = 740 + Math.floor(i / 3) * 118;
+      o.push(rect(tx, ty, tw, 102, 22, c.panel));
+      o.push(text(tx + 26, ty + 36, label, {size: 20, fill: c.muted}));
+      o.push(text(tx + 26, ty + 86, v, {size: 44, fill: c.fg, ...D}));
+      o.push(text(tx + 26 + c.width(v, 44, c.display, 600) + 10, ty + 85, sub, {size: 20, fill: c.muted}));
+    });
+
+    // how the points ended: one bar, points won in blue, points lost in orange
+    o.push(text(P, 1000, ER.tr('How the points ended'), {size: 22, fill: c.fg, weight: 600}));
+    const ENDS = [
+      ['your winner', ER.tr('Your winners'), c.you, ''], ['AI error', ER.tr('AI errors'), c.you, ' fill-opacity=".5"'],
+      ['your error', ER.tr('Your errors'), c.ai, ''], ['AI winner', ER.tr('AI winners'), c.ai, ' fill-opacity=".5"'],
+    ];
+    const other = f.n - ENDS.reduce((s, [k]) => s + (f.ends[k] || 0), 0);
+    const parts = ENDS.map(([k, label, fill, op]) => [f.ends[k] || 0, label, fill, op]).concat(other > 0 ? [[other, ER.tr('Other'), c.track, '']] : []);
+    const used = parts.filter(([n]) => n > 0), span = R - P - 3 * Math.max(0, used.length - 1);
+    let bx = P;
+    used.forEach(([n, , fill, op]) => {
+      const w = (span * n) / Math.max(1, f.n);
+      o.push(rect(bx, 1018, w, 24, 5, fill, op));
+      bx += w + 3;
+    });
+    const lx = (R - P) / 4;
+    parts.slice(0, 4).forEach(([n, label, fill, op], i) => {
+      const x0 = P + i * lx;
+      o.push(rect(x0, 1060, 14, 14, 3, fill, op));
+      o.push(`<text x="${x0 + 22}" y="1074" style="${style({size: 20, fill: c.muted})}">${esc(label)} <tspan fill="${c.fg}" font-weight="600">${n}</tspan></text>`);
+    });
+
+    // you against the AI: a bar each way from the middle, the larger value full length
+    o.push(text(P, 1116, ER.tr('You'), {size: 22, fill: c.you, weight: 600}));
+    o.push(text(R, 1116, ER.tr('AI'), {size: 22, fill: c.ai, weight: 600, anchor: 'end'}));
+    const VS = [
+      [ER.tr('Serve speed (m/s)'), 'serveSpeed', ER.F.n1], [ER.tr('Rally speed (m/s)'), 'rallySpeed', ER.F.n1],
+      [ER.tr('Serves landed'), 'serveSuccess', ER.F.pct], [ER.tr('Returns landed'), 'returnSuccess', ER.F.pct],
+    ];
+    // the bars stop short of the widest value ("100.0%") at each edge
+    const MID = W / 2, GAPM = 150, VAL = 112, BAR = MID - GAPM - P - VAL;
+    VS.forEach(([label, k, fmt], i) => {
+      const y = 1146 + i * 32, a = m['you_' + k], b = m['ai_' + k], top = Math.max(a || 0, b || 0) || 1;
+      o.push(text(MID, y + 7, label, {size: 19, fill: c.muted, anchor: 'middle'}));
+      if (a != null) o.push(rect(MID - GAPM - (BAR * a) / top, y - 6, (BAR * a) / top, 12, 6, c.you));
+      if (b != null) o.push(rect(MID + GAPM, y - 6, (BAR * b) / top, 12, 6, c.ai));
+      o.push(text(P, y + 9, fmt(a), {size: 26, fill: c.fg, ...D}));
+      o.push(text(R, y + 9, fmt(b), {size: 26, fill: c.fg, anchor: 'end', ...D}));
+    });
+
+    o.push(rect(P, 1274, R - P, 1, 0, c.line));
+    o.push(text(P, 1306, ER.tr("Made with elevendash from the game's own logs"), {size: 18, fill: c.muted}));
+    const label = `${ER.tr('Match against the AI, level {0}', m.level)}, ${longDate(m.date)}: ${word} ${m.gamesWon}–${m.gamesLost}`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)}"`
+      + ` font-family="${esc(c.text)}">${o.join('')}</svg>`;
+  };
+
+  const box = document.getElementById('match-card');
+  let drawnKey = null;          // the match the card was last drawn for: a new match clears the last save's status
+  const draw = (el) => {
+    if (box && !box.open) return el.replaceChildren();
+    const m = ER.matchRow(), pts = m ? pointsOf(m.key) : null;
+    if (!m || !pts) return ER.wait(el, ['matches', 'points']);
+    // online, the log holds only your own shots: no card (the serve split, the endings and the comparison need both)
+    const ai = m.vs === 'AI', $ = (id) => document.getElementById(id);
+    el.hidden = !ai;
+    if ($('card-online')) $('card-online').hidden = ai;
+    if ($('card-act')) $('card-act').hidden = !ai;
+    if (m.key !== drawnKey || !ai) {
+      drawnKey = m.key;
+      ['note', 'busy', 'done', 'none', 'fail'].forEach((n) => $('card-' + n) && ($('card-' + n).hidden = !(ai && n === 'note')));
+    }
+    if (!ai) return el.replaceChildren();
+    el.innerHTML = build(m, pts, look());
+  };
+  dash.draw('match-card', draw);
+  if (box) box.addEventListener('toggle', () => box.querySelectorAll('[data-draw="match-card"]').forEach(draw));
+
+  // Save picture: the SVG drawn on a canvas, as a PNG
+  const btn = document.getElementById('card-save');
+  if (!btn) return;
+  const show = (k) => ['note', 'busy', 'done', 'none', 'fail'].forEach((n) => {
+    const e = document.getElementById('card-' + n);
+    if (e) e.hidden = n !== k;
+  });
+  const png = (svg) => new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => {
+      const cv = document.createElement('canvas');
+      cv.width = W;
+      cv.height = H;
+      cv.getContext('2d').drawImage(img, 0, 0, W, H);
+      cv.toBlob((b) => (b ? res(b) : rej(new Error('no picture'))), 'image/png');
+    };
+    img.onerror = () => rej(new Error('the picture could not be drawn'));
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  });
+  let busy = false;
+  btn.addEventListener('click', async () => {
+    if (busy) return;
+    const m = ER.matchRow(), pts = m ? pointsOf(m.key) : null;
+    if (!m || !pts || m.vs !== 'AI') return show('fail');
+    busy = true;
+    btn.setAttribute('aria-busy', 'true');
+    show('busy');
+    try {
+      const blob = await png(build(m, pts, look()));
+      const filename = `Eleven-match-${m.date}-${ER.F.time(m.start).replace(':', '')}.png`;
+      let saver = typeof dash.save === 'function' ? dash : null;
+      if (!saver && window.claude && window.claude.use) saver = await window.claude.use('downloads');
+      if (!saver) show('none');
+      else {
+        await saver.save({filename, data: blob});
+        show('done');
+      }
+    } catch (e) {
+      show(e && e.code === 'declined' ? 'note' : 'fail');
+    }
+    busy = false;
+    btn.setAttribute('aria-busy', 'false');
   });
 })();
 </script>

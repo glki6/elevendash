@@ -156,6 +156,18 @@
       enterPrint();
       setTimeout(() => window.print(), 30);
     },
+    // hand a file the page made (a Blob) to the browser's own download
+    save({filename, data}) {
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
+      return Promise.resolve();
+    },
   };
 
   window.__elevendash = {

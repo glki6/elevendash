@@ -3,8 +3,8 @@
 Match analysis for **Eleven Table Tennis** on Meta Quest, from the game's own log files. It copies the logs off your
 headset over Wi-Fi, works out every match, game, point and shot, and writes a dashboard you can open in any browser:
 win rates by session and AI level, a session report, a point-by-point replay of every match drawn from the ball
-contacts, serve and return breakdowns, your numbers over any matches you pick set against your other matches, and a
-training plan ranked by how many points each item is worth.
+contacts, serve and return breakdowns, your numbers over any matches you pick set against your other matches, a
+picture of any match to send or post, and a training plan ranked by how many points each item is worth.
 
 No account, no server, no AI service: everything runs on your computer with plain Python, and the dashboard is a
 single HTML file that works offline. Send it to a coach or a friend, or put it on any static host.
@@ -27,9 +27,9 @@ The same demo is online at https://glki6.github.io/elevendash/demo/.
 ## Made for matches against the AI
 
 Against the AI, the game logs every ball contact by both players, so everything on the dashboard works: the replay,
-rally and serve analysis, the 11hero metrics for both sides and the training plan. Online matches against people are
-counted (who won, the scores), but for those the game logs only your own shots, so the shot-level analysis is
-one-sided there. So far elevendash has seen just one online match; its metrics for your own shots matched 11hero's
+rally and serve analysis, the 11hero metrics for both sides, the match card and the training plan. Online matches
+against people are counted (who won, the scores), but for those the game logs only your own shots, so the shot-level
+analysis is one-sided there and the match card is left out. So far elevendash has seen just one online match; its metrics for your own shots matched 11hero's
 exactly, and the rest of the online side is largely untested.
 
 ## Privacy first

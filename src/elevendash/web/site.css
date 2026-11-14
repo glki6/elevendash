@@ -28,7 +28,7 @@ html.pdf .er-card,html.pdf .er-find,html.pdf .er-pitem,html.pdf .er-keephead,htm
 html.pdf .er-sechead{break-after:avoid}
 html.pdf #match{break-before:page}
 /* "Matches you pick" is a tool to use on the page; the file keeps to the report */
-html.pdf #pick{display:none}
+html.pdf #pick,html.pdf #match-card{display:none}
 /* a two-column block of cards never splits across pages (Chrome overlaps the cards when it does); each fits on one */
 html.pdf .er-grid{break-inside:avoid}
 /* a list laid out as a grid loses its height when it runs over a page: print the plan as plain blocks */
