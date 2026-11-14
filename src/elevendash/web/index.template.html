@@ -601,7 +601,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
         <div class="er-rbar"><span class="er-ctl" id="replay-view-label">View</span><div class="er-tabs" id="replay-view" role="group" aria-labelledby="replay-view-label"><button class="er-tab" type="button" data-view="2d" aria-pressed="true">2D</button><button class="er-tab" type="button" data-view="3d" aria-pressed="false">3D</button></div><button class="er-btn" type="button" id="replay-last" hidden>Deciding shot</button></div>
         <div class="er-rbar"><span class="er-ctl" id="replay-rate-label">Speed</span><div class="er-tabs" id="replay-rate" role="group" aria-labelledby="replay-rate-label"><button class="er-tab" type="button" data-rate="1" aria-pressed="true">Full</button><button class="er-tab" type="button" data-rate="0.5" aria-pressed="false">Half</button><button class="er-tab" type="button" data-rate="0.25" aria-pressed="false">Quarter</button></div></div>
         <div class="er-legend court"><span><i class="er-sw ball"></i>Your shots</span><span><i class="er-sw ball ai"></i>Opponent's shots</span><span><i class="er-sw rx"></i>Shot that missed</span></div>
-        <p class="er-muted" id="replay-3d-hint" hidden>Drag the table to turn it. Deciding shot replays the shot that ended the point at a tenth of real speed. The small ball shows the spin the shot left the bat with, always turning at a tenth of real speed.</p>
+        <p class="er-muted" id="replay-3d-hint" hidden>Drag the table to turn it. Deciding shot replays the shot that ended the point at a tenth of real speed: the camera moves in as the bat meets the ball, follows the ball, and comes to rest where it lands. Turn the table or press Play to see the whole table again. The small ball shows the spin the shot left the bat with, always turning at a tenth of real speed.</p>
       </div>
       <div class="er-rside">
         <div class="er-legend"><span><i class="er-sw"></i>You won the point</span><span><i class="er-sw ai"></i>You lost it</span></div>
@@ -3442,10 +3442,12 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   const TW = 0.7625, TL = 1.37, TY = 0.76, NH = 0.1525, NW = 0.915, BR = 0.02;
   const HALL = 'color-mix(in oklab, var(--er-court) 30%, #0b111c)', MINE = '#fff';
   const st = {match: null, key: null, t: 0, end: 0, rate: 1, playing: false, raf: 0, last: 0, ev: [], hits: [], g: null, rows: [],
-    view: '2d', slow: false, fl: [], seg: []};
+    view: '2d', slow: false, fl: [], seg: [], chase: null};
   // where the 3D view is seen from: turned round the table (0 is behind you) and raised above it, in radians
   const CAM = {yaw: 0.3, pitch: 0.55};
   const cam = Object.assign({}, CAM);
+  // the whole-table view looks at the middle of the table top from DIST metres
+  const DIST = 5, CENTRE = [0, TY, 0];
   try {
     if (localStorage.getItem('elevendash.replay.view') === '3d') st.view = '3d';
   } catch (e) { /* no storage here: the view starts from above */ }
@@ -3495,6 +3497,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   };
   const load = (key, play) => {
     stop();
+    st.chase = null;
     st.key = key;
     const tr = key && track(key);
     const p = tr ? parse(tr) : {ev: [], hits: []};
@@ -3586,69 +3589,156 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
   // Point the camera: work out where every fixed thing sits on screen. The picture is scaled so the table and the
   // room just round it, where nearly every shot is hit, always fit, from any side.
+  // A camera looking at T from D metres, turned and raised like the whole-table view. at() gives a point as the
+  // camera has it: metres to its right, metres below its line of sight, metres in front (less than NEAR: too close
+  // or behind, and not drawn).
+  const NEAR = 0.3;
+  const lens = (yaw, pitch, D, T) => {
+    const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
+    const c = [T[0] + D * sy * cp, T[1] + D * sp, T[2] - D * cy * cp], f = [-sy * cp, -sp, cy * cp], r = [cy, 0, sy], u = cross(f, r);
+    return {r, u, f, at: (p) => {
+      const v = [p[0] - c[0], p[1] - c[1], p[2] - c[2]];
+      return [dot(v, r), -dot(v, u), dot(v, f)];
+    }};
+  };
+  // The tracking camera of the deciding shot, the way a line-call replay is filmed: it moves in behind the ball as
+  // the bat meets it, rides along with the ball from one steady angle, and comes to rest on the spot where the ball
+  // first meets the table or the floor. a to b: the stretch of the point over which it moves in; tl: the landing.
+  const chase = (h, t0) => {
+    // the landing: the first time the ball meets the table or anything else but the net. A serve bounces on the
+    // server's own half first: that is not it (you are at z below 0, so your shots land at z above 0)
+    const after = st.ev.filter((e) => e.t > h.t), over = (e) => (e.z > 0) === h.you;
+    const land = after.find((e) => e.k === 'o' || (e.k === 'b' && (h.shot !== 'S' || over(e)))) || after[after.length - 1] || h;
+    let dx = land.x - h.x, dz = land.z - h.z;
+    if (Math.hypot(dx, dz) < 0.3) {
+      dx = 0;
+      dz = h.you ? 1 : -1;
+    }
+    // behind the shot and half a radian to one side, so the curve of the flight shows: the side nearer the present view
+    const along = Math.atan2(-dx, dz), near = (a) => a + 2 * Math.PI * Math.round((cam.yaw - a) / (2 * Math.PI));
+    const yaw = [near(along - 0.5), near(along + 0.5)].sort((a, b) => Math.abs(a - cam.yaw) - Math.abs(b - cam.yaw))[0];
+    const a = Math.max(t0, h.t - 0.15);
+    return {a, b: a + 0.15, tl: land.t, w: Math.max(0, Math.min(0.12, (land.t - h.t) / 2)), yaw, pitch: 0.4, D: 2.4};
+  };
+  // Where the camera is at time t of the point. k is how far it has moved in: 0 the whole table, 1 on the ball.
+  // Over the last stretch before the landing it runs a little ahead of the ball and slows, so it settles on the
+  // landing spot as the ball arrives instead of stopping dead.
+  const pose = (t) => {
+    const c = st.chase;
+    if (!c || t <= c.a) return {yaw: cam.yaw, pitch: cam.pitch, D: DIST, T: CENTRE, k: 0};
+    const u = Math.min(1, (t - c.a) / (c.b - c.a)), k = u * u * (3 - 2 * u);
+    let s = Math.min(t, c.tl);
+    if (c.w > 0 && s > c.tl - c.w) {
+      const v = (s - c.tl + c.w) / c.w;
+      s = c.tl - c.w + c.w * (v + v * v - v * v * v);
+    }
+    const b = at3(s).p;
+    return {yaw: cam.yaw + (c.yaw - cam.yaw) * k, pitch: cam.pitch + (c.pitch - cam.pitch) * k, D: DIST + (c.D - DIST) * k,
+      T: CENTRE.map((x, i) => x + (b[i] - x) * k), k};
+  };
   const look = (g) => {
-    const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw), cp = Math.cos(cam.pitch), sp = Math.sin(cam.pitch), D = 5;
-    const c = [D * sy * cp, TY + D * sp, -D * cy * cp], f = [-sy * cp, -sp, cy * cp], r = [cy, 0, sy], u = cross(f, r);
-    const raw = (p) => {
-      const v = [p[0] - c[0], p[1] - c[1], p[2] - c[2]], zc = dot(v, f);
-      return [dot(v, r) / zc, -dot(v, u) / zc, zc];
-    };
+    const wide = lens(cam.yaw, cam.pitch, DIST, CENTRE), v = pose(st.t), L = v.k ? lens(v.yaw, v.pitch, v.D, v.T) : wide;
+    const {r, u, f} = L, D = v.D;
     let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
     [-0.92, 0.92].forEach((bx) => [0.25, 1.25].forEach((by) => [-1.8, 1.8].forEach((bz) => {
-      const q = raw([bx, by, bz]);
-      x0 = Math.min(x0, q[0]);
-      x1 = Math.max(x1, q[0]);
-      y0 = Math.min(y0, q[1]);
-      y1 = Math.max(y1, q[1]);
+      const q = wide.at([bx, by, bz]);
+      x0 = Math.min(x0, q[0] / q[2]);
+      x1 = Math.max(x1, q[0] / q[2]);
+      y0 = Math.min(y0, q[1] / q[2]);
+      y1 = Math.max(y1, q[1] / q[2]);
     })));
     const F = Math.min((g.W - 12) / (x1 - x0), (g.H - 12) / (y1 - y0));
-    const ox = g.W / 2 - F * (x0 + x1) / 2, oy = g.H / 2 - F * (y0 + y1) / 2;
-    Object.assign(g, {F, r, u, f});
-    g.pr = (p) => {
-      const q = raw(p);
-      return [ox + F * q[0], oy + F * q[1], q[2]];
-    };
-    const P = (p) => {
-      const q = g.pr(p);
+    // the whole table sits in the middle of the picture; the tracking camera keeps what it looks at there instead
+    const ox = g.W / 2 - F * (x0 + x1) / 2 * (1 - v.k), oy = g.H / 2 - F * (y0 + y1) / 2 * (1 - v.k) + g.H * 0.04 * v.k;
+    Object.assign(g, {F, r, u, f, pitch: v.pitch});
+    const edge = (x) => Math.max(-30000, Math.min(30000, x));
+    const xy = (c) => [edge(ox + F * c[0] / c[2]), edge(oy + F * c[1] / c[2])];
+    const str = (c) => {
+      const q = xy(c);
       return q[0].toFixed(1) + ',' + q[1].toFixed(1);
     };
-    const quad = (y, x, z) => `M${P([-x, y, -z])}L${P([x, y, -z])}L${P([x, y, z])}L${P([-x, y, z])}Z`;
+    // on screen: [x, y, metres in front of the camera]; null for a point too close to the camera or behind it
+    g.pr = (p) => {
+      const c = L.at(p);
+      return c[2] < NEAR ? null : xy(c).concat(c[2]);
+    };
+    // The drawing tools. P: a point as "x,y" (null if not drawn). line and shape: a line and a filled outline, with
+    // whatever part of them lies behind the camera cut away.
+    const P = (p) => {
+      const c = L.at(p);
+      return c[2] < NEAR ? null : str(c);
+    };
+    const cut = (a, b) => {
+      const k = (NEAR - a[2]) / (b[2] - a[2]);
+      return [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, NEAR];
+    };
+    const line = (p0, p1) => {
+      const a = L.at(p0), b = L.at(p1);
+      if (a[2] < NEAR && b[2] < NEAR) return '';
+      return 'M' + str(a[2] < NEAR ? cut(a, b) : a) + 'L' + str(b[2] < NEAR ? cut(a, b) : b);
+    };
+    const shape = (pts) => {
+      const cs = pts.map(L.at), out = [];
+      cs.forEach((a, i) => {
+        const b = cs[(i + 1) % cs.length];
+        if (a[2] >= NEAR) out.push(a);
+        if ((a[2] >= NEAR) !== (b[2] >= NEAR)) out.push(cut(a, b));
+      });
+      return out.length > 2 ? 'M' + out.map(str).join('L') + 'Z' : '';
+    };
+    const quad = (y, x, z) => shape([[-x, y, -z], [x, y, -z], [x, y, z], [-x, y, z]]);
     const d = (node, v) => node.setAttribute('d', v);
+    // a faint grid of metre squares on the floor, for the tracking camera only: something to see the ball move
+    // against once it has left the table
+    g.grid.style.opacity = (0.1 * v.k).toFixed(3);
+    d(g.grid, v.k ? d3.range(-4, 5).map((x) => line([x, 0, -6], [x, 0, 6])).concat(d3.range(-6, 7).map((z) => line([-4, 0, z], [4, 0, z]))).join('') : '');
     d(g.floor, quad(0, TW, TL));
-    d(g.legs, [[-0.6, -1.05], [0.6, -1.05], [0.6, 1.05], [-0.6, 1.05]].map(([x, z]) => `M${P([x, TY, z])}L${P([x, 0, z])}`).join(''));
+    d(g.legs, [[-0.6, -1.05], [0.6, -1.05], [0.6, 1.05], [-0.6, 1.05]].map(([x, z]) => line([x, TY, z], [x, 0, z])).join(''));
     const lo = TY - 0.06, cs = [[-TW, -TL], [TW, -TL], [TW, TL], [-TW, TL]];
     d(g.sides, cs.map((a, i) => {
       const b = cs[(i + 1) % 4];
-      return `M${P([a[0], TY, a[1]])}L${P([b[0], TY, b[1]])}L${P([b[0], lo, b[1]])}L${P([a[0], lo, a[1]])}Z`;
+      return shape([[a[0], TY, a[1]], [b[0], TY, b[1]], [b[0], lo, b[1]], [a[0], lo, a[1]]]);
     }).join(''));
     d(g.top, quad(TY, TW, TL));
-    d(g.mid, `M${P([0, TY, -TL])}L${P([0, TY, TL])}`);
-    d(g.net, `M${P([-NW, TY, 0])}L${P([NW, TY, 0])}L${P([NW, TY + NH, 0])}L${P([-NW, TY + NH, 0])}Z`);
-    d(g.tape, `M${P([-NW, TY + NH, 0])}L${P([NW, TY + NH, 0])}`);
+    d(g.mid, line([0, TY, -TL], [0, TY, TL]));
+    d(g.net, shape([[-NW, TY, 0], [NW, TY, 0], [NW, TY + NH, 0], [-NW, TY + NH, 0]]));
+    d(g.tape, line([-NW, TY + NH, 0], [NW, TY + NH, 0]));
     g.names.forEach(([node, z]) => {
       const q = g.pr([0, TY, z]);
-      // kept inside the picture, and out from under the spin ball in its corner
+      if (!q) {
+        node.style.display = 'none';
+        return;
+      }
+      // kept inside the picture, and out from under the spin ball in its corner; the tracking camera, close in,
+      // shows a name only while its end of the table is in the picture
       const x = Math.max(28, Math.min(g.W - 28, q[0])), y = Math.max(16, Math.min(g.H - 8, q[1] + (q[2] < D ? 16 : -6)));
       const s = g.spin, under = x < s.cx + s.R + 30 && y < s.cy + s.R + 24;
+      node.style.display = v.k && (q[0] < 0 || q[0] > g.W || q[1] < 0 || q[1] > g.H) ? 'none' : '';
       node.setAttribute('x', x.toFixed(1));
       node.setAttribute('y', (under ? s.cy + s.R + 34 : y).toFixed(1));
     });
-    g.marks.forEach((m) => m[2](P));
+    g.marks.forEach((m) => m[2]({P, line, shape}));
     st.seg.forEach((sg) => {
       sg.S = sg.P.map(P);
     });
   };
   const paint3 = (g) => {
+    if (st.chase) look(g);      // the tracking camera moves with the time
     const t = st.t, ev = st.ev, now = at3(t), cur = ev[now.i].by, flying = now.i < ev.length - 1;
     const q = g.pr(now.p);
     g.trails.forEach((path, s) => {
-      let dd = '';
+      // the pen lifts wherever the trail passes behind the camera
+      let dd = '', pen = false;
+      const to = (xy) => {
+        if (xy) dd += (pen ? 'L' : 'M') + xy;
+        pen = !!xy;
+      };
       if (s <= cur) {
         st.seg.forEach((sg, i) => {
           if (sg.by !== s || i > now.i) return;
           const upto = i < now.i ? sg.n : Math.floor(sg.n * Math.max(0, Math.min(1, (t - sg.t0) / sg.dt)) + 1e-6);
-          for (let j = dd ? 1 : 0; j <= upto; j += 1) dd += (dd ? 'L' : 'M') + sg.S[j];
-          if (i === now.i && flying) dd += 'L' + q[0].toFixed(1) + ',' + q[1].toFixed(1);
+          for (let j = 0; j <= upto; j += 1) to(sg.S[j]);
+          if (i === now.i && flying) to(q && q[0].toFixed(1) + ',' + q[1].toFixed(1));
         });
       }
       path.setAttribute('d', dd);
@@ -3658,16 +3748,23 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       node.style.display = e.t <= t ? '' : 'none';
       node.style.opacity = e.by >= cur - 1 ? 1 : 0.35;
     });
-    g.ball.setAttribute('cx', q[0].toFixed(1));
-    g.ball.setAttribute('cy', q[1].toFixed(1));
-    g.ball.setAttribute('r', Math.max(3.5, g.F * BR * 2.2 / q[2]).toFixed(1));
+    g.ball.style.display = q ? '' : 'none';
+    if (q) {
+      g.ball.setAttribute('cx', q[0].toFixed(1));
+      g.ball.setAttribute('cy', q[1].toFixed(1));
+      g.ball.setAttribute('r', Math.max(3.5, g.F * BR * 2.2 / q[2]).toFixed(1));
+    }
     // its shadow, straight below on the table or the floor
     const p = now.p, over = Math.abs(p[0]) <= TW && Math.abs(p[2]) <= TL && p[1] >= TY;
-    const qs = g.pr([p[0], over ? TY : 0, p[2]]), rs = Math.max(3, g.F * 0.032 / qs[2]);
-    g.shade.setAttribute('cx', qs[0].toFixed(1));
-    g.shade.setAttribute('cy', qs[1].toFixed(1));
-    g.shade.setAttribute('rx', rs.toFixed(1));
-    g.shade.setAttribute('ry', (rs * Math.max(0.22, Math.sin(cam.pitch))).toFixed(1));
+    const qs = g.pr([p[0], over ? TY : 0, p[2]]);
+    g.shade.style.display = qs ? '' : 'none';
+    if (qs) {
+      const rs = Math.max(3, g.F * 0.032 / qs[2]);
+      g.shade.setAttribute('cx', qs[0].toFixed(1));
+      g.shade.setAttribute('cy', qs[1].toFixed(1));
+      g.shade.setAttribute('rx', rs.toFixed(1));
+      g.shade.setAttribute('ry', (rs * Math.max(0.22, Math.sin(g.pitch))).toFixed(1));
+    }
     spin3(g, st.hits[cur], t);
     return cur;
   };
@@ -3713,6 +3810,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     svg.append('rect').attr('width', W).attr('height', H).style('fill', HALL);
     const path = (parent) => parent.append('path').style('fill', 'none');
     const g = {three: true, W, H, marks: [], names: []};
+    g.grid = path(svg).style('stroke', '#fff').style('stroke-width', 1).node();
     g.floor = path(svg).style('fill', '#000').style('fill-opacity', 0.28).node();
     g.legs = path(svg).style('stroke', '#000').style('stroke-opacity', 0.55).style('stroke-width', 3).style('stroke-linecap', 'round').node();
     g.sides = path(svg).style('fill', 'color-mix(in oklab, var(--er-court) 45%, #000)').node();
@@ -3729,8 +3827,8 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     const inAir = svg.append('g');
     st.ev.forEach((e) => {
       const c = colour(e.by), at = [e.x, e.y, e.z];
-      const spot = (node) => (P) => {
-        const [x, y] = P(at).split(',');
+      const spot = (node) => (k) => {
+        const [x, y] = (k.P(at) || '-9999,-9999').split(',');
         node.setAttribute('cx', x);
         node.setAttribute('cy', y);
       };
@@ -3742,10 +3840,10 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
         g.marks.push([node, e, spot(node)]);
       } else if (e.k === 'b') {       // where it bounced: a spot lying flat on the table
         const node = onTable.append('path').style('fill', c).node(), y = e.y - BR + 0.002;
-        g.marks.push([node, e, (P) => node.setAttribute('d', 'M' + d3.range(12).map((j) => P([e.x + 0.034 * Math.cos(j * Math.PI / 6), y, e.z + 0.034 * Math.sin(j * Math.PI / 6)])).join('L') + 'Z')]);
+        g.marks.push([node, e, (k) => node.setAttribute('d', k.shape(d3.range(12).map((j) => [e.x + 0.034 * Math.cos(j * Math.PI / 6), y, e.z + 0.034 * Math.sin(j * Math.PI / 6)])))]);
       } else if (e.k === 'o' && st.hits[e.by] && !st.hits[e.by].ok) {      // a miss: a cross lying where it came down
         const node = path(inAir).style('stroke', c).style('stroke-width', 2).style('stroke-linecap', 'round').node(), y = Math.max(0, e.y - BR) + 0.002, k = 0.07;
-        g.marks.push([node, e, (P) => node.setAttribute('d', `M${P([e.x - k, y, e.z - k])}L${P([e.x + k, y, e.z + k])}M${P([e.x - k, y, e.z + k])}L${P([e.x + k, y, e.z - k])}`)]);
+        g.marks.push([node, e, (c) => node.setAttribute('d', c.line([e.x - k, y, e.z - k], [e.x + k, y, e.z + k]) + c.line([e.x - k, y, e.z + k], [e.x + k, y, e.z - k]))]);
       }
     });
     g.ball = svg.append('circle').style('fill', '#fff').style('stroke', 'var(--er-court)').style('stroke-width', 1.5).node();
@@ -3761,6 +3859,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     look(g);
     // turn it: drag, or the arrow keys; a double click puts the camera back
     const node = svg.node(), turn = (yaw, pitch) => {
+      st.chase = null;        // turning it by hand takes the camera back from the deciding shot
       cam.yaw = yaw;
       cam.pitch = Math.max(0.08, Math.min(1.5, pitch));
       look(g);
@@ -3769,6 +3868,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     let drag = null;
     node.addEventListener('pointerdown', (ev) => {
       if (ev.pointerType === 'mouse' && ev.button !== 0) return;
+      if (st.chase) turn(cam.yaw, cam.pitch);
       drag = {x: ev.clientX, y: ev.clientY, yaw: cam.yaw, pitch: cam.pitch};
       try {
         node.setPointerCapture(ev.pointerId);
@@ -3812,6 +3912,12 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     paint();
     if (st.t >= st.end) return stop();
     st.raf = requestAnimationFrame(frame);
+  };
+  // Back to the whole table from the deciding shot's camera.
+  const whole = () => {
+    if (!st.chase) return;
+    st.chase = null;
+    if (st.g && st.g.three) look(st.g);
   };
   const play = () => {
     if (!st.ev.length) return;
@@ -3980,6 +4086,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       tr.append(th, ER.el('td', null, ER.tr(SHOT[h.shot] || h.shot)), ER.el('td', null, ER.fmt1(h.speed)), ER.el('td', null, spin), ER.el('td', h.ok ? null : 'er-strongcell', res));
       tr.addEventListener('click', () => {
         stop();
+        whole();
         st.t = Math.min(st.end, h.t + 0.001);
         paint();
       });
@@ -3998,7 +4105,11 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     const el = $(id);
     if (el) el.addEventListener(type, fn);
   };
-  on('replay-play', 'click', () => (st.playing ? stop() : play()));
+  on('replay-play', 'click', () => {
+    if (st.playing) return stop();
+    whole();
+    play();
+  });
   on('replay-prev', 'click', () => step(-1));
   on('replay-next', 'click', () => step(1));
   on('replay-seek', 'input', (ev) => {
@@ -4009,6 +4120,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   // The view: from above, or 3D. The 3D view has one more button, for the shot that ended the point.
   const view = (v, keep) => {
     st.view = v;
+    st.chase = null;
     document.querySelectorAll('#replay-view [data-view]').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.view === v)));
     ['replay-last', 'replay-3d-hint'].forEach((id) => {
       const el = $(id);
@@ -4027,13 +4139,16 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     view(b.dataset.view, true);
     document.querySelectorAll('[data-draw="replay"]').forEach((el) => draws.replay(el));
   });
-  // The deciding shot: the last shot of the point in slow motion, from just before the bat meets the ball.
+  // The deciding shot: the last shot of the point in slow motion, from just before the bat meets the ball, with the
+  // camera tracking the ball (not for someone who has asked their device for less motion: the table then stays put).
   on('replay-last', 'click', () => {
     const h = st.hits[st.hits.length - 1];
     if (!h) return;
     stop();
+    whole();
     const before = st.ev.filter((e) => e.t < h.t).pop();
     st.t = Math.max(before ? before.t : 0, h.t - 0.25);
+    st.chase = st.view === '3d' && !calm() ? chase(h, st.t) : null;
     st.slow = true;
     play();
   });

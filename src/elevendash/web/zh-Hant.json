@@ -41,7 +41,7 @@
   "Click a session to pick or drop all its matches, or a match to pick or drop just that one.": "點一節可選取或取消該節的所有比賽，點一場比賽則只選取或取消那一場。",
   "Click a shot to jump to it.": "點選一板即可跳到該處。",
   "Deciding shot": "關鍵一板",
-  "Drag the table to turn it. Deciding shot replays the shot that ended the point at a tenth of real speed. The small ball shows the spin the shot left the bat with, always turning at a tenth of real speed.": "拖曳球桌可以轉動視角。「關鍵一板」會以十分之一的速度重播結束這一分的那一板。小球顯示這一板離開球拍時的旋轉，一律以十分之一的速度轉動。",
+  "Drag the table to turn it. Deciding shot replays the shot that ended the point at a tenth of real speed: the camera moves in as the bat meets the ball, follows the ball, and comes to rest where it lands. Turn the table or press Play to see the whole table again. The small ball shows the spin the shot left the bat with, always turning at a tenth of real speed.": "拖曳球桌可以轉動視角。「關鍵一板」會以十分之一的速度重播結束這一分的那一板：鏡頭在球拍觸球時拉近，跟著球飛，並停在球的落點。轉動球桌或按「播放」就會回到整張球桌。小球顯示這一板離開球拍時的旋轉，一律以十分之一的速度轉動。",
   "Each bar is all the AI's serves of one kind, split by where the point ended. Orange is lost, blue is won, and the dark ends are points settled by your return. The line marks where lost turns to won.": "每條長條是 AI 某一類發球的全部，按該分在哪一板結束拆分。橙色是失分，藍色是得分，深色的兩端是由你的接發球決定的分。直線標出失分與得分的分界。",
   "Each bar is all your serves of one kind, split by where the point ended. Rows by side and depth count only serves that landed, since a missed serve has neither.": "每條長條是你某一類發球的全部，按該分在哪一板結束拆分。按方向和深度的列只計上桌的發球，因為失誤的發球兩者都沒有。",
   "Earlier sessions": "較早的節",
