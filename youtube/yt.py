@@ -5,7 +5,7 @@ and an upload that does not come back unlisted is reported as a failure.
 
     yt.py auth                      one-time sign-in in the browser; saves a token on this PC
     yt.py whoami                    which channel the saved token uploads to
-    yt.py upload FILE --title T [--description D | --description-file F] [--kind full|highlights|test] [--session S]
+    yt.py upload FILE --title T [--description D | --description-file F] [--kind full|highlights|mistakes|test] [--session S]
     yt.py status VIDEO_ID           how YouTube is getting on with a video (processing, privacy)
 
 Run it with the environment beside it:  youtube\\.venv\\Scripts\\python.exe -I youtube\\yt.py ...
@@ -259,7 +259,7 @@ def main():
     up.add_argument('--title', required=True)
     up.add_argument('--description')
     up.add_argument('--description-file')
-    up.add_argument('--kind', choices=['full', 'highlights', 'test'], default='full')
+    up.add_argument('--kind', choices=['full', 'highlights', 'mistakes', 'test'], default='full')
     up.add_argument('--session', help='session key this video belongs to, for the dashboard links')
     up.add_argument('--again', action='store_true', help='upload even if this file is already in videos.json')
     up.set_defaults(fn=upload)

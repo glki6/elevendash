@@ -956,7 +956,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
     <li>The shot explorer lists every shot you hit, and every ball that landed on your half and you never touched. The ball that came at you is described by the shot before yours: its spin as it left the bat (topspin or backspin above 20 r/s, otherwise little spin), fast when it left the bat at 10 m/s or more, its side by where it bounced on your half (the middle is the 50 cm down the centre of the table; a ball that did not bounce is placed where you met it), and its depth as for serves. A miss is into the net when the ball never got over it, long when the line of the shot passes the end of the table between its sides, and wide otherwise. Where your misses pile up is worked out for the level of the training plan.</li>
     <li>Rolling results take your matches at one AI level in the order you played them. The band is the range a share sits in 9 times in 10 (the Wilson interval), counting each match, or each point, as a separate try; points inside one match are not quite separate tries, so the band for points is a little too narrow. From the first match of a session to the last uses sessions with three or more matches at one level, and sets each match against the others of that session and level; a place in the session is called clearly better or worse when a gap that large would turn up by chance about one time in ten.</li>
     <li>Videos are the headset recording of a session, uploaded whole to YouTube as unlisted: only someone with the link can open one. A recording is lined up with the log by sound, sliding the log's contact times along the soundtrack until they sit on the clicks of the ball. A point's link starts two seconds before its toss. Sessions that were not recorded have no links.</li>
-    <li>The highlight reel is cut from the same recording by code, from the log alone. Each point scores two for every shot in the rally, one for every m/s over 10 on your winning shot, and extra for a point won at game point, late in a close game, or to win a match. Points you won need three shots or more; up to two rallies of six shots or more that you lost go in too. The best-scoring points are taken until the reel is about 90 seconds long, then shown in the order they were played, one rally fading into the next.</li>
+    <li>The highlight reel is cut from the same recording by code, from the log alone. Each point scores two for every shot in the rally, one for every m/s over 10 on your winning shot, and extra for a point won at game point, late in a close game, or to win a match. Points you won need three shots or more; up to two rallies of six shots or more that you lost go in too. The best-scoring points are taken until the reel is about 90 seconds long, then shown in the order they were played, one rally fading into the next. The misses reel is cut the same way. Your shots are grouped by the ball that came at you, as in the shot explorer, and the kinds of ball you missed or did not reach most often in that session come first. For each kind it shows up to four of the misses, spread over the session, and then up to two occasions when your shot against the same ball landed.</li>
     <li>The metrics use 11hero.com's definitions. They were checked against 11hero on a real online match, with both players read from the game's log: every hit came out the same (speed, spin, shot type, whether it landed and whether it won the point), and so did 37 of the 42 numbers on its page. The other five are the shares of points won by each kind of shot, which move a little because 11hero counts one more, empty point at the end of the match.</li>
     <li>Speed is the ball's speed just after the hit, in metres per second. Spin is in revolutions per second; topspin and backspin are the part of the spin that rolls the ball forward or back. Topspin and backspin averages count only hits with more than 20 r/s of it.</li>
     <li>A shot landed when its first bounce was on the other side. A serve landed when it bounced on your side and then the other.</li>
@@ -1905,7 +1905,8 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     el.replaceChildren(...(has ? [ER.watch(ER.tr('Watch this match'), m.video, m.videoT, 'matches', 'videoT', m.key)] : []));
   });
 
-  // The picked session's videos on YouTube: the full recording, and the highlight reel when there is one.
+  // The picked session's videos on YouTube: the full recording, and the highlight and misses reels when there are any.
+  const VIDEO_ORDER = ['highlights', 'mistakes', 'full'];
   dash.draw('session-videos', (el) => {
     const rows = ER.rows('videos');
     if (!rows) {
@@ -1913,8 +1914,9 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       return;
     }
     const k = ER.sessionKey();
-    el.replaceChildren(...rows.filter((r) => r.session === k).sort((a, b) => (a.kind === 'full') - (b.kind === 'full')).map((r) => {
-      const what = ER.tr(r.kind === 'full' ? 'Watch the full session' : 'Watch the highlights');
+    el.replaceChildren(...rows.filter((r) => r.session === k).sort((a, b) => VIDEO_ORDER.indexOf(a.kind) - VIDEO_ORDER.indexOf(b.kind)).map((r) => {
+      const isFull = r.kind === 'full', isMisses = r.kind === 'mistakes';
+      const what = ER.tr(isFull ? 'Watch the full session' : isMisses ? 'Watch the misses to work on' : 'Watch the highlights');
       return ER.watch(r.duration ? `${what} · ${ER.mmss(r.duration)}` : what, r.key, 0, 'videos', 'url', r.key);
     }));
   });

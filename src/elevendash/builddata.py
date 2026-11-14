@@ -252,7 +252,7 @@ def read_videos(path):
         return json.load(f)
 
 
-VIDEOS = [v for v in read_videos(videos_path) if v.get('kind') in ('full', 'highlights') and v.get('privacy') == 'unlisted']
+VIDEOS = [v for v in read_videos(videos_path) if v.get('kind') in ('full', 'highlights', 'mistakes') and v.get('privacy') == 'unlisted']
 video_matches = defaultdict(list)       # video id -> the match rows it shows
 
 

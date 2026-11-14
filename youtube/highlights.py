@@ -164,11 +164,11 @@ def cut(src, parts, total, out):
             cmd += ['-hwaccel', 'd3d11va', '-ss', f"{g['a']:.3f}", '-t', f"{g['d'] + 0.5:.3f}", '-i', src]
             text = ''
             for k, c in enumerate(g['clips']):
-                with open(os.path.join(work, f'c{i}_{k}.txt'), 'w', encoding='utf-8') as f:
+                with open(os.path.join(work, f'c{i}_{k}.txt'), 'w', encoding='utf-8', newline='\n') as f:
                     f.write(c['caption'])
                 a0 = c['a'] - g['a']
                 b0 = g['clips'][k + 1]['a'] - g['a'] if k + 1 < len(g['clips']) else g['d'] + 1
-                text += (f",drawtext=fontfile=font.ttf:textfile=c{i}_{k}.txt:expansion=none:x=48:y=44:fontsize=34:"
+                text += (f",drawtext=fontfile=font.ttf:textfile=c{i}_{k}.txt:expansion=none:x=48:y=44:fontsize=34:line_spacing=10:"
                          f"fontcolor=white:box=1:boxcolor=black@0.5:boxborderw=14:enable='between(t,{a0:.3f},{b0:.3f})'")
             graph.append(f"[{i}:v]fps={FPS},trim=duration={g['d']:.4f},setpts=PTS-STARTPTS,scale=1920:1080,setsar=1{text},"
                          f"format=yuv420p,settb=AVTB[v{i}]")

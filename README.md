@@ -112,9 +112,9 @@ address, or `elevendash config theme=light lang=zh`, changes what it opens with.
 
 ## Optional: session videos on YouTube
 
-`youtube/` uploads a session's headset recording and an automatic highlight reel to your own YouTube channel, always
-as unlisted, and lines the recording up with the log by the sound of the ball, so every point on the dashboard gets a
-"watch" link. It needs `pip install -e ".[youtube]"`, ffmpeg on the PATH, and your own Google Cloud OAuth client
+`youtube/` uploads a session's headset recording, an automatic highlight reel and a reel of the balls you missed most
+(a few of the misses, then the same ball landed) to your own YouTube channel, always as unlisted, and lines the
+recording up with the log by the sound of the ball, so every point on the dashboard gets a "watch" link. It needs `pip install -e ".[youtube]"`, ffmpeg on the PATH, and your own Google Cloud OAuth client
 (Desktop app, YouTube Data API v3). See the top of `youtube/yt.py`. The reel's captions use a Windows font for now.
 
 ## How it works
