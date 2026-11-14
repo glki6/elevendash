@@ -2,5 +2,13 @@
 # Refuse a push that would publish private data from the workspace (game logs, tokens, video ids, your own words).
 # Turn it on once per clone:  git config core.hooksPath tools/hooks
 root="$(git rev-parse --show-toplevel)"
-if command -v python3 >/dev/null 2>&1; then py=python3; else py=python; fi
+# the first Python that really runs (on Windows, "python3" can be a shortcut to the Store that runs nothing)
+py=""
+for c in python3 python py; do
+  if "$c" -c "" >/dev/null 2>&1; then py="$c"; break; fi
+done
+if [ -z "$py" ]; then
+  echo "pre-push: no Python found, so the leak check could not run. Nothing was pushed." >&2
+  exit 1
+fi
 exec "$py" -I "$root/tools/prepush/check.py" --hook
