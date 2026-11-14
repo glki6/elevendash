@@ -1018,8 +1018,12 @@ for lvl in sorted(level_items):
             r.update({'level': lvl, 'who': who, 'order': i + 1})
         serve_next.extend(nxt)
 
-        # ---- notes: each is written only when its numbers are there and say what the sentence says
+        # ---- notes: each is written only when its numbers are there and say what the sentence says. On the page a
+        # note is a headline, one measure and its bars: (value, label) or (value, label, 'lost') for the losing colour.
+        # The sentence is there to open.
         notes = []
+        note = lambda head, measure, bars, text, unit='pct': notes.append((head, measure, bars, text, unit))
+        POINTS = W('Points won')
         big = lambda g, v: (g, v) in flow and flow[g, v]['n'] >= MIN_NOTE
         f = lambda g, v: flow[g, v]
         best = [r for r in types if r['n'] >= MIN_NOTE]
@@ -1029,74 +1033,114 @@ for lvl in sorted(level_items):
                 bh, fh, mid = f('side', BH), f('side', FH), f('side', 'middle')
                 kw = dict(bh=p1(bh['pointRate']), mid=p1(mid['pointRate']), fh=p1(fh['pointRate']))
                 if max(miss) - min(miss) <= 8 and fh['early'] - bh['early'] >= 10:
-                    notes.append(T('From the forehand side your return settles the point at once: it wins it {fh_early} of the time and '
-                                   'misses {fh_miss}. From the backhand side it misses about as often ({bh_miss}) but wins the point only '
-                                   '{bh_early} of the time{rallies}. Points won: {bh} from the backhand side, {mid} from the middle, {fh} '
-                                   'from the forehand side.',
-                                   fh_early=p1(fh['early']), fh_miss=p1(fh['miss']), bh_miss=p1(bh['miss']), bh_early=p1(bh['early']),
-                                   rallies=T(', and the rallies that follow go against you') if bh['next'] + bh['lostLater'] > bh['wonLater'] else '',
-                                   **kw))
+                    note(T('Your return scores far more from the forehand side'), W('Won by the return'),
+                         [(fh['early'], RECV_SIDE[FH]), (bh['early'], RECV_SIDE[BH])],
+                         T('From the forehand side your return settles the point at once: it wins it {fh_early} of the time and '
+                           'misses {fh_miss}. From the backhand side it misses about as often ({bh_miss}) but wins the point only '
+                           '{bh_early} of the time{rallies}. Points won: {bh} from the backhand side, {mid} from the middle, {fh} '
+                           'from the forehand side.',
+                           fh_early=p1(fh['early']), fh_miss=p1(fh['miss']), bh_miss=p1(bh['miss']), bh_early=p1(bh['early']),
+                           rallies=T(', and the rallies that follow go against you') if bh['next'] + bh['lostLater'] > bh['wonLater'] else '',
+                           **kw))
                 else:
-                    notes.append(T('You win {bh} of points when the serve comes to your backhand side, {mid} from the middle and {fh} '
-                                   'from the forehand side.', **kw))
+                    note(T('Points won by the side the serve comes to'), POINTS,
+                         [(r['pointRate'], RECV_SIDE[s]) for s, r in ((BH, bh), ('middle', mid), (FH, fh))],
+                         T('You win {bh} of points when the serve comes to your backhand side, {mid} from the middle and {fh} '
+                           'from the forehand side.', **kw))
             if big('depth', 'long') and big('depth', 'half-long') and f('depth', 'long')['miss'] - f('depth', 'half-long')['miss'] >= 5:
-                notes.append(T("Long serves are the ones you miss: {long} of them, against {half} of half-long ones. {share} of the AI's "
-                               "serves are long.", long=p1(f('depth', 'long')['miss']), half=p1(f('depth', 'half-long')['miss']),
-                               share=p1(pc(f('depth', 'long')['n'], landed))))
+                note(T('Long serves are the ones you miss'), W('Serves you miss'),
+                     [(f('depth', 'long')['miss'], W('Long serves'), 'lost'), (f('depth', 'half-long')['miss'], W('Half-long serves'), 'lost')],
+                     T("Long serves are the ones you miss: {long} of them, against {half} of half-long ones. {share} of the AI's "
+                       "serves are long.", long=p1(f('depth', 'long')['miss']), half=p1(f('depth', 'half-long')['miss']),
+                       share=p1(pc(f('depth', 'long')['n'], landed))))
             if big('spin', 'topspin') and big('spin', 'little spin') and f('spin', 'topspin')['early'] - f('spin', 'little spin')['early'] >= 5:
-                notes.append(T('Against its serves with little spin your return wins the point only {little} of the time, against {top} '
-                               'on its topspin serves.', little=p1(f('spin', 'little spin')['early']), top=p1(f('spin', 'topspin')['early'])))
+                note(T('Your return scores less against little spin'), W('Won by the return'),
+                     [(f('spin', 'little spin')['early'], W('Little-spin serves')), (f('spin', 'topspin')['early'], W('Topspin serves'))],
+                     T('Against its serves with little spin your return wins the point only {little} of the time, against {top} '
+                       'on its topspin serves.', little=p1(f('spin', 'little spin')['early']), top=p1(f('spin', 'topspin')['early'])))
             dl, dh = ST[who, 'land-depth', 'long'], ST[who, 'land-depth', 'half-long']
             if dl['n'] >= MIN_NOTE and dh['n'] >= MIN_NOTE and dl['won'] / dl['n'] - dh['won'] / dh['n'] >= 0.05:
-                notes.append(T('A return that lands long wins you {long} of points, a half-long one {half}.',
-                               long=p1(pc(dl['won'], dl['n'])), half=p1(pc(dh['won'], dh['n']))))
+                note(T('A long return wins more points'), POINTS,
+                     [(pc(dl['won'], dl['n']), W('Return lands long')), (pc(dh['won'], dh['n']), W('Return lands half-long'))],
+                     T('A return that lands long wins you {long} of points, a half-long one {half}.',
+                       long=p1(pc(dl['won'], dl['n'])), half=p1(pc(dh['won'], dh['n']))))
             if tot['untouched'] and pc(tot['untouched'], tot['n']) >= 2:
-                notes.append(T('On {share} of its serves ({n}) you did not get a bat on the ball.',
-                               share=p1(pc(tot['untouched'], tot['n'])), n=f"{tot['untouched']:,}"))
+                note(T('Serves you did not touch'), W("Share of the AI's serves"),
+                     [(pc(tot['untouched'], tot['n']), T('{n} serves', n=f"{tot['untouched']:,}"), 'lost')],
+                     T('On {share} of its serves ({n}) you did not get a bat on the ball.',
+                       share=p1(pc(tot['untouched'], tot['n'])), n=f"{tot['untouched']:,}"))
             if len(best) >= 2:
-                notes.append(T('Hardest serve to face: {hard}, {hard_rate} of points won over {hard_n} serves. Easiest: {easy}, {easy_rate} '
-                               'over {easy_n}.', hard=lower(rbi(best[-1], 'label')), hard_rate=p1(best[-1]['pointRate']),
-                               hard_n=f"{best[-1]['n']:,}", easy=lower(rbi(best[0], 'label')), easy_rate=p1(best[0]['pointRate']),
-                               easy_n=f"{best[0]['n']:,}"))
+                note(T('Hardest and easiest serve to face'), POINTS,
+                     [(best[-1]['pointRate'], rbi(best[-1], 'label')), (best[0]['pointRate'], rbi(best[0], 'label'))],
+                     T('Hardest serve to face: {hard}, {hard_rate} of points won over {hard_n} serves. Easiest: {easy}, {easy_rate} '
+                       'over {easy_n}.', hard=lower(rbi(best[-1], 'label')), hard_rate=p1(best[-1]['pointRate']),
+                       hard_n=f"{best[-1]['n']:,}", easy=lower(rbi(best[0], 'label')), easy_rate=p1(best[0]['pointRate']),
+                       easy_n=f"{best[0]['n']:,}"))
         else:
             a = f('all', 'all')
             if a['next'] + a['early'] >= 40:
-                notes.append(T('On your serve the third ball decides most points: you lose {next} of your service points on it and win '
-                               '{early} with it or with the serve itself. Your serve misses {miss} of the time.',
-                               next=p1(a['next']), early=p1(a['early']), miss=p1(a['miss'])))
+                note(T('The third ball decides most points'), W('Share of your service points'),
+                     [(a['next'], W('Lost on your third ball'), 'lost'), (a['early'], W('Won by the serve or the third ball'))],
+                     T('On your serve the third ball decides most points: you lose {next} of your service points on it and win '
+                       '{early} with it or with the serve itself. Your serve misses {miss} of the time.',
+                       next=p1(a['next']), early=p1(a['early']), miss=p1(a['miss'])))
             lo, hi = ST[who, 'pace', 0], ST[who, 'pace', len(bands) - 1]
             if lo['third'] >= MIN_NOTE and hi['third'] >= MIN_NOTE and lo['thirdOk'] / lo['third'] - hi['thirdOk'] / hi['third'] >= 0.1:
-                notes.append(T("The pace of the AI's return sets up your third ball. When the return comes at under {slow} m/s you land "
-                               '{lo_land} of third balls and win {lo_won} of points; at {fast} m/s or more, {hi_land} and {hi_won}.',
-                               slow=bands[0][1], fast=bands[-1][0], lo_land=p1(pc(lo['thirdOk'], lo['third'])), lo_won=p1(pc(lo['won'], lo['n'])),
-                               hi_land=p1(pc(hi['thirdOk'], hi['third'])), hi_won=p1(pc(hi['won'], hi['n']))))
+                note(T('A slow return sets up your third ball'), W('Third balls landed'),
+                     [(pc(lo['thirdOk'], lo['third']), T('Return under {v} m/s', v=bands[0][1])),
+                      (pc(hi['thirdOk'], hi['third']), T('Return at {v} m/s or more', v=bands[-1][0]))],
+                     T("The pace of the AI's return sets up your third ball. When the return comes at under {slow} m/s you land "
+                       '{lo_land} of third balls and win {lo_won} of points; at {fast} m/s or more, {hi_land} and {hi_won}.',
+                       slow=bands[0][1], fast=bands[-1][0], lo_land=p1(pc(lo['thirdOk'], lo['third'])), lo_won=p1(pc(lo['won'], lo['n'])),
+                       hi_land=p1(pc(hi['thirdOk'], hi['third'])), hi_won=p1(pc(hi['won'], hi['n']))))
             zs = sorted(((c['won'] / c['n'], v, c) for (w, g, v), c in ST.items() if w == who and g == 'zone' and c['n'] >= MIN_NOTE), key=lambda t: t[0])
             if len(zs) >= 2 and zs[-1][0] - zs[0][0] >= 0.1:
                 (_, wv, wc), (_, bv, bc) = zs[0], zs[-1]
-                notes.append(T("Where the AI's return lands decides a lot: {worst}, and you win {worst_rate} of points ({worst_n} returns); "
-                               '{best}, and you win {best_rate} ({best_n}).',
-                               worst=join(', ', [LAND_SIDE[wv[0]], DEPTH_WORD[wv[1]]], '、'), worst_rate=p1(pc(wc['won'], wc['n'])),
-                               worst_n=f"{wc['n']:,}", best=join(', ', [LAND_SIDE[bv[0]], DEPTH_WORD[bv[1]]], '、'),
-                               best_rate=p1(pc(bc['won'], bc['n'])), best_n=f"{bc['n']:,}"))
+                note(T("Where the AI's return lands decides a lot"), POINTS,
+                     [(pc(wc['won'], wc['n']), join(', ', [LAND_SIDE_CAP[wv[0]], DEPTH_WORD[wv[1]]], '、')),
+                      (pc(bc['won'], bc['n']), join(', ', [LAND_SIDE_CAP[bv[0]], DEPTH_WORD[bv[1]]], '、'))],
+                     T("Where the AI's return lands decides a lot: {worst}, and you win {worst_rate} of points ({worst_n} returns); "
+                       '{best}, and you win {best_rate} ({best_n}).',
+                       worst=join(', ', [LAND_SIDE[wv[0]], DEPTH_WORD[wv[1]]], '、'), worst_rate=p1(pc(wc['won'], wc['n'])),
+                       worst_n=f"{wc['n']:,}", best=join(', ', [LAND_SIDE[bv[0]], DEPTH_WORD[bv[1]]], '、'),
+                       best_rate=p1(pc(bc['won'], bc['n'])), best_n=f"{bc['n']:,}"))
             if big('depth', 'long') and big('depth', 'half-long') and f('depth', 'long')['returnSpeed'] - f('depth', 'half-long')['returnSpeed'] >= 0.5:
-                notes.append(T('Your long serves come back faster: {long} m/s on average, against {half} for half-long ones. You land '
-                               '{long_land} of third balls after a long serve and {half_land} after a half-long one.',
-                               long=f('depth', 'long')['returnSpeed'], half=f('depth', 'half-long')['returnSpeed'],
-                               long_land=p1(f('depth', 'long')['thirdLanded']), half_land=p1(f('depth', 'half-long')['thirdLanded'])))
+                note(T('Your long serves come back faster'), W("Speed of the AI's return, m/s"),
+                     [(f('depth', 'long')['returnSpeed'], W('After a long serve')), (f('depth', 'half-long')['returnSpeed'], W('After a half-long serve'))],
+                     T('Your long serves come back faster: {long} m/s on average, against {half} for half-long ones. You land '
+                       '{long_land} of third balls after a long serve and {half_land} after a half-long one.',
+                       long=f('depth', 'long')['returnSpeed'], half=f('depth', 'half-long')['returnSpeed'],
+                       long_land=p1(f('depth', 'long')['thirdLanded']), half_land=p1(f('depth', 'half-long')['thirdLanded'])),
+                     unit='ms')
             if big('spin', 'topspin') and big('spin', 'little spin') and abs(f('spin', 'topspin')['pointRate'] - f('spin', 'little spin')['pointRate']) >= 3:
-                notes.append(T('Topspin serves win {top} of points, serves with little spin {little}.',
-                               top=p1(f('spin', 'topspin')['pointRate']), little=p1(f('spin', 'little spin')['pointRate'])))
+                top, little = f('spin', 'topspin')['pointRate'], f('spin', 'little spin')['pointRate']
+                note(T('Topspin serves win more points') if top > little else T('Little-spin serves win more points'), POINTS,
+                     [(top, W('Topspin serves')), (little, W('Little-spin serves'))],
+                     T('Topspin serves win {top} of points, serves with little spin {little}.', top=p1(top), little=p1(little)))
             rare = [s for s in SIDE_ORDER if ST[who, 'side', s]['n'] < 0.05 * landed]
             if rare and landed >= 200:
-                notes.append(join(' ', [T('You have served {where} only {n} times in {total}.', where=SERVE_SIDE_LOW[s],
-                                          n=f"{ST[who, 'side', s]['n']:,}", total=f'{landed:,}') for s in rare], ''))
+                note(T('You rarely serve {where}', where=bilist([SERVE_SIDE_LOW[s] for s in rare])), W('Share of your serves'),
+                     [(pc(ST[who, 'side', s]['n'], landed), SERVE_SIDE[s]) for s in rare],
+                     join(' ', [T('You have served {where} only {n} times in {total}.', where=SERVE_SIDE_LOW[s],
+                                  n=f"{ST[who, 'side', s]['n']:,}", total=f'{landed:,}') for s in rare], ''))
             if len(best) >= 2:
-                notes.append(T('Best serve: {best}, {best_rate} of points won over {best_n} serves. Weakest: {worst}, {worst_rate} over '
-                               '{worst_n}.', best=lower(rbi(best[0], 'label')), best_rate=p1(best[0]['pointRate']),
-                               best_n=f"{best[0]['n']:,}", worst=lower(rbi(best[-1], 'label')), worst_rate=p1(best[-1]['pointRate']),
-                               worst_n=f"{best[-1]['n']:,}"))
-        for i, text in enumerate(notes):
-            serve_notes.append(put({'key': f'{lvl}|{who}|{i + 1}', 'level': lvl, 'who': who, 'rank': i + 1}, 'text', text))
+                note(T('Best and weakest serve'), POINTS,
+                     [(best[0]['pointRate'], rbi(best[0], 'label')), (best[-1]['pointRate'], rbi(best[-1], 'label'))],
+                     T('Best serve: {best}, {best_rate} of points won over {best_n} serves. Weakest: {worst}, {worst_rate} over '
+                       '{worst_n}.', best=lower(rbi(best[0], 'label')), best_rate=p1(best[0]['pointRate']),
+                       best_n=f"{best[0]['n']:,}", worst=lower(rbi(best[-1], 'label')), worst_rate=p1(best[-1]['pointRate']),
+                       worst_n=f"{best[-1]['n']:,}"))
+        for i, (head, measure, bars, text, unit) in enumerate(notes):
+            row = {'key': f'{lvl}|{who}|{i + 1}', 'level': lvl, 'who': who, 'rank': i + 1, 'unit': unit, 'bars': len(bars)}
+            put(row, 'head', head)
+            put(row, 'measure', measure)
+            put(row, 'text', text)
+            for j, (v, label, *tone) in enumerate(bars):
+                row[f'bar{j + 1}'] = v
+                put(row, f'bar{j + 1}_label', label)
+                if tone:
+                    row[f'bar{j + 1}_tone'] = tone[0]
+            serve_notes.append(row)
 write('serve_flow', serve_flow)
 write('serve_types', serve_types)
 write('serve_next', serve_next)

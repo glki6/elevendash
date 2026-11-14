@@ -220,6 +220,33 @@
 .er-notes.plain{border-top:0;padding-top:0;margin:0}
 .er-notes.plain li{grid-template-columns:8px minmax(0,1fr);gap:12px;max-width:78ch}
 .er-notes.plain li::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--er-you);margin-top:.5em}
+/* Tidy pieces. er-how: a reading note that stays shut until asked for. er-fold: a card of reference numbers, shut
+   until asked for. er-keys: findings as a headline, one measure and its bars, with the sentence there to open. */
+.er details.er-how,.er details.er-more{border-top:0;padding-top:0}
+.er-how>summary,.er-more>summary{display:inline-flex;align-items:center;gap:6px;font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);font-weight:400;list-style:none;border-radius:4px}
+.er-how>summary::-webkit-details-marker,.er-more>summary::-webkit-details-marker,.er-fold>summary::-webkit-details-marker{display:none}
+.er-how>summary::before{content:"?";display:inline-grid;place-items:center;width:15px;height:15px;border-radius:50%;border:1px solid currentColor;font-size:10px;line-height:1;font-weight:600}
+.er-more>summary::after,.er-fold>summary::after{content:"";flex:none;width:6px;height:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:translateY(-2px) rotate(45deg);transition:transform .15s}
+.er-more[open]>summary::after,.er-fold[open]>summary::after{transform:translateY(1px) rotate(225deg)}
+.er-how>summary:hover,.er-more>summary:hover{color:var(--color-fg)}
+.er-how>p,.er-more>p{margin:7px 0 0;max-width:64ch}
+.er-more>p{font-size:var(--cds-font-size-caption);line-height:1.5;color:var(--color-fg-muted)}
+.er details.er-fold{display:block;padding:0;border-top:1px solid var(--er-line)}
+.er-fold>summary{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 12px;padding:15px 20px;list-style:none;border-radius:var(--cds-radius)}
+.er-fold>summary .er-muted{flex:1 1 12rem;min-width:0;font-weight:400}
+.er-fold>summary::after{align-self:center;width:7px;height:7px;color:var(--color-fg-muted);margin-right:3px}
+.er-fold>summary:hover::after{color:var(--color-fg)}
+.er-foldbody{display:grid;gap:10px;padding:0 20px 20px;min-width:0}
+.er-keys{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(250px,100%),1fr));gap:0 36px;min-width:0}
+.er-keys>p{grid-column:1 / -1}
+.er-key{display:grid;gap:9px;align-content:start;min-width:0;padding:16px 0 18px;border-top:1px solid var(--er-line)}
+.er-key h4{font-size:var(--cds-font-size-body);font-weight:var(--cds-font-weight-medium);line-height:1.3;margin:0;text-wrap:balance}
+.er-key .er-label{margin-top:1px}
+.er-kfig{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 14px;align-items:end;font-size:var(--cds-font-size-caption)}
+.er-kfig>span:first-child{grid-column:1;line-height:1.3}
+.er-kfig .er-track{grid-column:1;margin-bottom:4px}
+.er-kval{grid-column:2;grid-row:1 / span 2;min-width:3.6em;text-align:right;font-family:var(--er-display);font-weight:600;font-stretch:94%;font-size:20px;line-height:1;font-variant-numeric:tabular-nums}
+.er-kfig[data-tone=lost] .er-fill{background:var(--er-ai)}
 .er-flow{display:grid;gap:8px;margin-top:4px;min-width:0}
 .er-frow{display:grid;grid-template-columns:minmax(0,11.5rem) minmax(0,1fr) 5.8em;gap:4px 14px;align-items:center;font-size:var(--cds-font-size-caption)}
 .er-fhead{color:var(--color-fg-muted)}
@@ -444,6 +471,8 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
   .er-rbar{width:100%;max-width:300px}
   .er-multi{grid-template-columns:minmax(0,1fr)}
   .er-card{padding:16px 16px 18px}
+  .er-fold>summary{padding:14px 16px}
+  .er-foldbody{padding:0 16px 18px}
   .er-panel{padding:18px 16px 20px}
   .er-bars .er-row,.er-find .er-row,.er-cmprows .er-row{grid-template-columns:minmax(0,1fr)}
   .er-frow{grid-template-columns:minmax(0,1fr) 5.8em}
@@ -856,51 +885,59 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
 
 <section class="er-section" id="serve">
   <div class="er-sechead">
-    <div><h2>Serves and returns</h2><p class="er-muted">Every point starts with a serve. First what the AI sends you and what your return does with it, then your own serve and the third ball that follows. Over <span data-draw="v" data-ds="levels" data-k="{L}" data-f="matches" data-fmt="int">—</span> matches at this level.</p></div>
+    <div><h2>Serves and returns</h2><p class="er-muted">Over <span data-draw="v" data-ds="levels" data-k="{L}" data-f="matches" data-fmt="int">—</span> matches at this level.</p></div>
     <div class="er-controls"><span class="er-ctl" id="serve-level-label">AI level</span><div class="er-tabs" id="serve-level" role="group" aria-labelledby="serve-level-label" data-draw="level-tabs"></div></div>
   </div>
 
   <h3 class="er-subhead" id="recv">When the AI serves</h3>
-  <ul class="er-notes plain" id="recv-notes" data-draw="sr-notes" data-who="recv" data-source="serve_notes"></ul>
+  <div class="er-keys" id="recv-notes" data-draw="sr-notes" data-who="recv" data-source="serve_notes"></div>
   <div class="er-card" id="recv-flow">
     <h3>How points on the AI's serve end</h3>
-    <p class="er-muted">Each bar is all the AI's serves of one kind, split by where the point ended. Orange is lost, blue is won, and the dark ends are points settled by your return. The line marks where lost turns to won.</p>
+    <details class="er-how"><summary>How to read this</summary><p class="er-muted">Each bar is all the AI's serves of one kind, split by where the point ended. Orange is lost, blue is won, and the dark ends are points settled by your return. The line marks where lost turns to won.</p></details>
     <div class="er-legend"><span><i class="er-sw s0"></i>Return missed, or serve not touched</span><span><i class="er-sw s1"></i>Lost to the AI's next shot</span><span><i class="er-sw s2"></i>Lost later</span><span><i class="er-sw s3"></i>Won later</span><span><i class="er-sw s4"></i>Won by the return</span></div>
     <div class="er-flow" data-draw="sr-flow" data-who="recv" data-source="serve_flow"></div>
   </div>
-  <div class="er-card" id="recv-types">
-    <h3>The AI's serves, type by type</h3>
-    <p class="er-muted">Side, spin and depth together, easiest first. Only types with 30 serves or more.</p>
+  <details class="er-card er-fold" id="recv-types">
+    <summary><h3>The AI's serves, type by type</h3><span class="er-muted">Side, spin and depth together, easiest first.</span></summary>
+    <div class="er-foldbody">
     <div class="er-tablewrap"><table class="er-t types"><thead><tr><th>Serve</th><th>Points won</th><th>Serves</th><th>Share</th><th>m/s</th><th>Returns landed</th><th>Your return m/s</th></tr></thead><tbody data-draw="sr-types" data-who="recv" data-source="serve_types"></tbody></table></div>
-  </div>
-  <div class="er-card" id="recv-next">
-    <h3>Your return</h3>
+    <p class="er-muted">Only types with 30 serves or more.</p>
+    </div>
+  </details>
+  <details class="er-card er-fold" id="recv-next">
+    <summary><h3>Your return</h3><span class="er-muted">By its pace and by where it lands.</span></summary>
+    <div class="er-foldbody">
     <div class="er-mgrid">
       <div class="er-tablewrap"><table class="er-t"><thead><tr><th>By its pace</th><th>Returns</th><th>Share</th><th>Landed</th><th>Points won</th></tr></thead><tbody data-draw="sr-next" data-who="recv" data-kinds="pace" data-source="serve_next"></tbody></table></div>
       <div class="er-tablewrap"><table class="er-t"><thead><tr><th>By where it lands</th><th>Returns</th><th>Share</th><th>Points won</th></tr></thead><tbody data-draw="sr-next" data-who="recv" data-kinds="land-depth,land-side" data-source="serve_next"></tbody></table></div>
     </div>
-  </div>
+    </div>
+  </details>
 
   <h3 class="er-subhead" id="own-serve">When you serve</h3>
-  <ul class="er-notes plain" id="own-serve-notes" data-draw="sr-notes" data-who="serve" data-source="serve_notes"></ul>
+  <div class="er-keys" id="own-serve-notes" data-draw="sr-notes" data-who="serve" data-source="serve_notes"></div>
   <div class="er-card" id="own-serve-flow">
     <h3>How points on your serve end</h3>
-    <p class="er-muted">Each bar is all your serves of one kind, split by where the point ended. Rows by side and depth count only serves that landed, since a missed serve has neither.</p>
+    <details class="er-how"><summary>How to read this</summary><p class="er-muted">Each bar is all your serves of one kind, split by where the point ended. Rows by side and depth count only serves that landed, since a missed serve has neither.</p></details>
     <div class="er-legend"><span><i class="er-sw s0"></i>Serve missed</span><span><i class="er-sw s1"></i>Lost on your third ball</span><span><i class="er-sw s2"></i>Lost later</span><span><i class="er-sw s3"></i>Won later</span><span><i class="er-sw s4"></i>Won by the serve or the third ball</span></div>
     <div class="er-flow" data-draw="sr-flow" data-who="serve" data-source="serve_flow"></div>
   </div>
-  <div class="er-card" id="own-serve-types">
-    <h3>Your serves, type by type</h3>
-    <p class="er-muted">Where it lands, spin and depth together, best first. Only types with 30 serves or more.</p>
+  <details class="er-card er-fold" id="own-serve-types">
+    <summary><h3>Your serves, type by type</h3><span class="er-muted">Where it lands, spin and depth together, best first.</span></summary>
+    <div class="er-foldbody">
     <div class="er-tablewrap"><table class="er-t types"><thead><tr><th>Serve</th><th>Points won</th><th>Serves</th><th>Share</th><th>m/s</th><th>AI return m/s</th><th>Third balls landed</th></tr></thead><tbody data-draw="sr-types" data-who="serve" data-source="serve_types"></tbody></table></div>
-  </div>
-  <div class="er-card" id="own-serve-next">
-    <h3>The AI's return, and your third ball</h3>
+    <p class="er-muted">Only types with 30 serves or more.</p>
+    </div>
+  </details>
+  <details class="er-card er-fold" id="own-serve-next">
+    <summary><h3>The AI's return, and your third ball</h3><span class="er-muted">By its pace and by where it lands on your half.</span></summary>
+    <div class="er-foldbody">
     <div class="er-mgrid">
       <div class="er-tablewrap"><table class="er-t"><thead><tr><th>By its pace</th><th>Returns</th><th>Share</th><th>Third balls landed</th><th>Points won</th></tr></thead><tbody data-draw="sr-next" data-who="serve" data-kinds="pace" data-source="serve_next"></tbody></table></div>
       <div class="er-tablewrap"><table class="er-t"><thead><tr><th>By where it lands on your half</th><th>Returns</th><th>Share</th><th>Third balls landed</th><th>Points won</th></tr></thead><tbody data-draw="sr-next" data-who="serve" data-kinds="zone" data-source="serve_next"></tbody></table></div>
     </div>
-  </div>
+    </div>
+  </details>
 </section>
 
 <section class="er-section" id="by-level">
@@ -2792,7 +2829,8 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
 
 <script>
 // Serves and returns, for the level picked in the tabs. serve_flow: where points ended, by kind of serve; serve_types:
-// side, spin and depth together; serve_next: the shot after the serve; serve_notes: sentences written with the data.
+// side, spin and depth together; serve_next: the shot after the serve; serve_notes: findings written with the data,
+// each a headline, one measure, its bars (flat columns bar1, bar1_label, bar1_tone …, as in findings) and a sentence.
 (() => {
   const ER = window.ER;
   const STAGES = ['miss', 'next', 'lostLater', 'wonLater', 'early'];
@@ -2822,10 +2860,39 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   dash.draw('sr-notes', (el) => {
     const rows = at('serve_notes', el.dataset.who);
     if (!rows) return ER.wait(el, ['serve_notes']);
+    const printed = document.documentElement.classList.contains('pdf');      // a printed page shows every sentence
     el.replaceChildren(...rows.sort((a, b) => a.rank - b.rank).map((r) => {
-      const li = ER.el('li');
-      li.appendChild(ER.span(ER.tx(r, 'text'), 'serve_notes', 'text', r.key));
-      return li;
+      const art = ER.el('article', 'er-key');
+      const text = ER.el('p');
+      text.appendChild(ER.span(ER.tx(r, 'text'), 'serve_notes', 'text', r.key));
+      if (!r.head) {                                         // data built before the notes had headlines
+        art.appendChild(text);
+        return art;
+      }
+      const h = ER.el('h4');
+      h.appendChild(ER.span(ER.tx(r, 'head'), 'serve_notes', 'head', r.key));
+      art.append(h, ER.el('div', 'er-label', ER.tx(r, 'measure')));
+      const bars = [];
+      for (let i = 1; i <= (Number(r.bars) || 0); i += 1) {
+        const v = Number(r['bar' + i]);
+        if (r['bar' + i] != null && Number.isFinite(v)) bars.push([i, v]);
+      }
+      // shares are drawn against the whole; anything else against the larger of the two, from zero
+      const top = r.unit === 'pct' ? 100 : Math.max(1e-9, ...bars.map((b) => b[1]));
+      bars.forEach(([i, v]) => {
+        const f = 'bar' + i, fig = ER.el('div', 'er-kfig');
+        if (r[f + '_tone']) fig.dataset.tone = r[f + '_tone'];
+        const track = ER.el('span', 'er-track'), fill = ER.el('span', 'er-fill');
+        fill.style.width = Math.max(0, Math.min(100, 100 * v / top)) + '%';
+        track.appendChild(fill);
+        fig.append(ER.el('span', null, ER.tx(r, f + '_label')), ER.span(ER.F[r.unit === 'pct' ? 'pct' : 'n1'](v), 'serve_notes', f, r.key, 'er-kval'), track);
+        art.appendChild(fig);
+      });
+      const more = ER.el('details', 'er-more');
+      more.open = printed;
+      more.append(ER.el('summary', null, ER.tr('In full')), text);
+      art.appendChild(more);
+      return art;
     }));
   });
 
