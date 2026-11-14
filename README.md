@@ -4,10 +4,12 @@ Match analysis for **Eleven Table Tennis** on Meta Quest, from the game's own lo
 headset over Wi-Fi, works out every match, game, point and shot, and writes a dashboard you can open in any browser:
 win rates by session and AI level, a session report, a point-by-point replay of every match drawn from the ball
 contacts, serve and return breakdowns, your numbers over any matches you pick set against your other matches, a
-picture of any match to send or post, and a training plan ranked by how many points each item is worth.
+picture of any match to send or post, your own notes on any match, and a training plan ranked by how many points each
+item is worth.
 
 No account, no server, no AI service: everything runs on your computer with plain Python, and the dashboard is a
-single HTML file that works offline. Send it to a coach or a friend, or put it on any static host.
+single HTML file that works offline. Send it to a coach or a friend, or put it on any static host. Notes you write on
+matches are kept in the browser you wrote them in, never in the file, so they stay behind when you send it.
 
 > elevendash is an independent project, not affiliated with or endorsed by For Fun Labs, Meta or 11hero. Its match
 > metrics follow [11hero](https://11hero.com)'s definitions and were checked against it on a real match

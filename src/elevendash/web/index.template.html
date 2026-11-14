@@ -117,6 +117,23 @@
 .er-mark.good{background:color-mix(in oklab,var(--color-ok) 15%,var(--color-panel));color:var(--color-ok)}
 .er-mark.bad{background:color-mix(in oklab,var(--color-bad) 15%,var(--color-panel));color:var(--color-bad)}
 .er-smatches{display:grid;gap:8px;padding-top:14px;border-top:1px solid var(--er-line)}
+/* your notes on matches: the box in the match explorer, a mark on a match chip, the list under a session's chips */
+.er-mnote{display:grid;gap:8px;margin-top:6px;padding-top:14px;border-top:1px solid var(--er-line)}
+.er-mnhead{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 12px}
+.er-nstate{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.er-nstate .bad{color:var(--color-bad)}
+.er-mnote textarea{box-sizing:border-box;width:100%;min-height:4.8em;resize:vertical;font:inherit;font-size:var(--cds-font-size-body);line-height:1.5;padding:9px 11px;border:1px solid var(--er-line);border-radius:var(--cds-radius);background-color:var(--color-bg);color:var(--color-fg)}
+.er-mnote textarea::placeholder{color:var(--color-fg-muted);opacity:1}
+.er-mnote textarea:focus-visible{outline:2px solid var(--er-you);outline-offset:1px}
+.er-mnote textarea:disabled{opacity:.55;cursor:not-allowed}
+.er-mnote p{margin:0;font-size:var(--cds-font-size-caption)}
+.er-nmark{display:inline-flex;flex:none;color:var(--color-fg-muted)}
+.er-nmark svg{display:block}
+.er-unotes{list-style:none;margin:2px 0 0;padding:0;display:grid;gap:10px;max-width:64ch}
+.er-unotes:empty{display:none}
+.er-unotes li{display:grid;gap:2px;line-height:1.45}
+.er-unotes b{font-size:var(--cds-font-size-caption);font-weight:var(--cds-font-weight-medium);color:var(--color-fg-muted);font-variant-numeric:tabular-nums}
+.er-unotes span{white-space:pre-wrap;overflow-wrap:anywhere}
 .er-watch{display:inline-flex;align-items:center;gap:7px;padding:4px 11px 4px 10px;border:1px solid var(--er-line);border-radius:var(--cds-radius);background-color:var(--color-panel);color:var(--color-fg);font-size:var(--cds-font-size-caption);font-weight:var(--cds-font-weight-medium);line-height:1.5;text-decoration:none;white-space:nowrap}
 .er-watch::before{content:"";border-style:solid;border-width:5px 0 5px 8px;border-color:transparent transparent transparent var(--er-you)}
 .er-watch:hover{border-color:var(--color-fg-muted)}
@@ -500,6 +517,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
       <div class="er-smatches">
         <div class="er-label">Matches in this session</div>
         <div class="er-chips" data-draw="session-matches"></div>
+        <ul class="er-unotes" data-draw="session-your-notes" aria-label="Your notes on these matches"></ul>
         <p class="er-muted">Pick a match to open it in the match explorer below.</p>
         <div class="er-svideo" data-draw="session-videos" data-source="videos"></div>
       </div>
@@ -538,6 +556,14 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
         <div><dt>Shots per point</dt><dd><span data-draw="v" data-ds="matches" data-k="{M}" data-f="rallyLength" data-fmt="n1">—</span></dd></div>
         <div id="match-video" hidden><dt>Video</dt><dd data-draw="match-video" data-source="matches"></dd></div>
       </dl>
+    </div>
+    <div class="er-mnote" id="match-note">
+      <div class="er-mnhead"><label class="er-label" for="note-text">Your note</label><span class="er-nstate" role="status"><span data-note-state="saving" hidden>Saving…</span><span data-note-state="saved" hidden>Saved</span><span class="bad" data-note-state="full" hidden>Not saved: there is no room left for notes.</span><span class="bad" data-note-state="failed" hidden>Not saved. Try again.</span></span></div>
+      <textarea id="note-text" data-draw="match-note" rows="3" disabled></textarea>
+      <p class="er-muted" data-note-where="loading">Loading your notes…</p>
+      <p class="er-muted" data-note-where="account" hidden>Only you can see your notes, even when this dashboard is shared.</p>
+      <p class="er-muted" data-note-where="browser" hidden>Kept in this browser on this device. Notes are not part of the file, so they stay behind when you send it.</p>
+      <p class="er-muted" data-note-where="none" hidden>Notes can't be kept in this view.</p>
     </div>
   </div>
   <details class="er-card er-mcard" id="match-card">
@@ -1216,6 +1242,147 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
     const k = ER.matchKey();
     return rows ? rows.find((r) => r.key === k) || null : null;
   };
+  // Your notes on matches: a few lines of your own on any match. On the Claude dashboard they are kept in your own
+  // part of its database (data/users/<you>/notes/matches/<match>), which nobody else can read, the dashboard's owner
+  // included; in the file, in this browser's storage on this device. Never in the data, the PDF or the match card.
+  // where(): 'loading', 'account' (the dashboard's database), 'browser' (this browser's storage) or 'none'.
+  ER.notes = (() => {
+    const LS = 'elevendash.notes', MAX = 2000;
+    const DRAWS = ['match-note', 'match-select', 'session-matches', 'session-your-notes', 'pick-quick', 'pick-list'];
+    const map = new Map();                  // match key -> {text, at}
+    const st = {where: 'loading', version: 0};
+    let col = null;
+    const want = new Map(), running = new Map();
+    const changed = () => {
+      st.version++;
+      DRAWS.forEach((n) => {
+        try {
+          dash.draw(n);
+        } catch (e) {
+          console.error(n, e);
+        }
+      });
+    };
+    const docId = (k) => String(k).replace(/ /g, 'T').replace(/[^A-Za-z0-9_.~:@+-]/g, '_');
+    const keep = (k, v) => {
+      if (typeof k === 'string' && v && typeof v.text === 'string' && v.text.trim()) map.set(k, {text: v.text, at: String(v.at || '')});
+    };
+    const readLocal = () => {
+      const o = JSON.parse(localStorage.getItem(LS) || '{}') || {};
+      map.clear();
+      Object.keys(o).forEach((k) => keep(k, o[k]));
+    };
+    const later = (ms) => new Promise((r) => setTimeout(r, ms));
+    // one write at a time per note: a burst of edits ends in one write of the latest text
+    const write = async (key) => {
+      while (want.has(key)) {
+        const text = want.get(key);
+        want.delete(key);
+        const ref = col.doc(docId(key));
+        const op = () => (text ? ref.set({match: key, text, at: new Date().toISOString()}) : ref.delete());
+        try {
+          await op();
+        } catch (e) {
+          if (!e || e.code !== 'unavailable') throw e;
+          await later(300 + Math.random() * 500);
+          await op();
+        }
+      }
+    };
+    const start = async () => {
+      const c = window.claude;
+      if (c && typeof c.use === 'function') {
+        try {
+          const [db, user] = await Promise.all([c.use('db'), c.use('user')]);
+          const uid = user && typeof user.id === 'function' ? await user.id() : null;
+          if (!db || !uid) throw new Error('no private place to keep notes');
+          col = db.doc('data/users/' + uid + '/notes').collection('matches');
+          col.onSnapshot((snap) => {
+            map.clear();
+            snap.docs.forEach((d) => {
+              const v = d.data();
+              if (v) keep(v.match, v);
+            });
+            st.where = 'account';
+            changed();
+          }, () => {
+            col = null;
+            st.where = 'none';
+            changed();
+          });
+        } catch (e) {
+          st.where = 'none';
+          changed();
+        }
+        return;
+      }
+      try {
+        readLocal();
+        st.where = 'browser';
+      } catch (e) {
+        st.where = 'none';
+      }
+      changed();
+      window.addEventListener('storage', (e) => {
+        if (e.key !== LS) return;
+        try {
+          readLocal();
+          changed();
+        } catch (err) {
+          // keep what is shown
+        }
+      });
+    };
+    const api = {
+      max: MAX,
+      where: () => st.where,
+      version: () => st.version,
+      get: (k) => (map.has(k) ? map.get(k).text : ''),
+      has: (k) => map.has(k),
+      // Keep the note on match `key` (empty text removes it). Resolves once kept; rejects with {code} when not.
+      save(key, text) {
+        const t = String(text == null ? '' : text).slice(0, MAX);
+        const v = t.trim() ? t : '';
+        if (st.where === 'browser') {
+          const before = map.get(key);
+          if (v) map.set(key, {text: v, at: new Date().toISOString()});
+          else map.delete(key);
+          try {
+            localStorage.setItem(LS, JSON.stringify(Object.fromEntries(map)));
+          } catch (e) {
+            if (before) map.set(key, before);
+            else map.delete(key);
+            return Promise.reject({code: 'quota_exceeded'});
+          }
+          changed();
+          return Promise.resolve();
+        }
+        if (st.where !== 'account' || !col) return Promise.reject({code: 'unavailable'});
+        want.set(key, v);
+        if (!running.has(key)) {
+          running.set(key, write(key).catch((e) => {
+            want.delete(key);
+            // this viewer may not write here (view-only) or lost access: say so instead of offering the box
+            if (e && (e.code === 'invalid_argument' || e.code === 'revoked' || e.code === 'not_granted')) {
+              st.where = 'none';
+              changed();
+            }
+            throw e;
+          }).finally(() => running.delete(key)));
+        }
+        return running.get(key);
+      },
+    };
+    start();
+    return api;
+  })();
+  // a small pencil, beside a match that has your note
+  ER.noteMark = () => {
+    const s = ER.el('span', 'er-nmark');
+    s.setAttribute('aria-hidden', 'true');
+    s.innerHTML = '<svg width="11" height="11" viewBox="0 0 11 11"><path d="M2 9.2l.5-2.3 4.9-4.9a1 1 0 0 1 1.4 0l.2.2a1 1 0 0 1 0 1.4L4.1 8.5z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>';
+    return s;
+  };
   ER.sessionKey = () => {
     const p = dash.params().session;
     const rows = ER.rows('sessions');
@@ -1686,7 +1853,8 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       g.label = ER.F.date(date);
       ms.slice().reverse().forEach((r) => {
         const who = r.vs === 'AI' ? ER.tr('level {0}', r.level) : ER.tr('online');
-        g.appendChild(new Option(`${ER.F.time(r.start)} · ${ER.tr(r.result === 'Won' ? 'Won' : 'Lost')} ${r.gamesWon}–${r.gamesLost} · ${who}`, r.key));
+        const note = ER.notes.has(r.key) ? ` · ${ER.tr('your note')}` : '';
+        g.appendChild(new Option(`${ER.F.time(r.start)} · ${ER.tr(r.result === 'Won' ? 'Won' : 'Lost')} ${r.gamesWon}–${r.gamesLost} · ${who}${note}`, r.key));
       });
       return g;
     });
@@ -1694,6 +1862,59 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     sel.value = ER.matchKey();
     sel.onchange = () => ER.set({match: sel.value}, sel);
   });
+
+  // Your note on the match picked. It is kept a moment after you stop typing and when you leave the box; switching
+  // match first keeps what you wrote on the match it was for. The box is the drawing; the lines around it are in the
+  // HTML and are only shown or hidden: where notes are kept (data-note-where) and whether the last one was saved
+  // (data-note-state).
+  (() => {
+    let ta = null, key = null, dirty = false, timer = 0;
+    const show = (attr, name) => document.querySelectorAll(`#match-note [data-note-${attr}]`)
+      .forEach((n) => (n.hidden = n.getAttribute('data-note-' + attr) !== name));
+    const say = (name) => show('state', name);
+    const keep = () => {
+      clearTimeout(timer);
+      timer = 0;
+      if (!dirty || key == null || !ta) return;
+      const k = key, text = ta.value;
+      dirty = false;
+      say('saving');
+      ER.notes.save(k, text).then(() => {
+        if (key === k && !dirty) say('saved');
+      }, (e) => {
+        if (key !== k) return;
+        dirty = true;
+        say(e && e.code === 'quota_exceeded' ? 'full' : 'failed');
+      });
+    };
+    window.addEventListener('pagehide', keep);
+    dash.draw('match-note', (el) => {
+      const w = ER.notes.where(), k = ER.matchKey();
+      if (ta !== el) {
+        ta = el;
+        el.oninput = () => {
+          dirty = true;
+          say('');
+          clearTimeout(timer);
+          timer = setTimeout(keep, 900);
+        };
+        el.onblur = keep;
+      }
+      el.placeholder = ER.tr('What happened in this match, what worked, what to try next time.');
+      el.maxLength = ER.notes.max;
+      el.disabled = w !== 'account' && w !== 'browser';
+      show('where', w);
+      if (k !== key) {
+        keep();
+        key = k;
+        dirty = false;
+        el.value = ER.notes.get(k);
+        say('');
+      } else if (!dirty && document.activeElement !== el) {
+        el.value = ER.notes.get(k);
+      }
+    });
+  })();
 })();
 </script>
 
@@ -1763,6 +1984,11 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       b.setAttribute('data-source', 'matches');
       b.setAttribute('data-field', 'result');
       b.setAttribute('data-where', ER.where(r.key));
+      if (ER.notes.has(r.key)) {
+        b.append(ER.noteMark());
+        b.title += '\n' + ER.notes.get(r.key).slice(0, 300);
+        b.setAttribute('aria-label', b.getAttribute('aria-label') + ' ' + ER.tr('You wrote a note on it.'));
+      }
       b.addEventListener('click', () => {
         ER.set({match: r.key}, null, () => {
           const target = document.getElementById('match');
@@ -1770,6 +1996,20 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
         });
       });
       return b;
+    }));
+  });
+
+  // Your notes on the session's matches, in the order played (the list is empty, and hidden, when there are none).
+  dash.draw('session-your-notes', (el) => {
+    const rows = ER.rows('matches');
+    if (!rows) return el.replaceChildren();
+    const k = ER.sessionKey();
+    el.replaceChildren(...rows.filter((r) => r.session === k && ER.notes.has(r.key)).map((r) => {
+      const won = r.result === 'Won';
+      const li = ER.el('li');
+      li.append(ER.el('b', null, `${ER.tr('Match {0}', r.sessionMatch)} · ${ER.tr(won ? 'Won' : 'Lost')} ${r.gamesWon}–${r.gamesLost}`),
+        ER.el('span', null, ER.notes.get(r.key)));
+      return li;
     }));
   });
 
@@ -1948,22 +2188,24 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   // Quick picks. Each is pressed while the pick is exactly its matches.
   const QUICK = [
     ['last', ER.k('Last session')], ['last3', ER.k('Last 3 sessions')], ['last20', ER.k('Last 20 matches')],
-    ['level', ER.k('All at level {0}')], ['none', ER.k('Clear')],
+    ['level', ER.k('All at level {0}')], ['notes', ER.k('With your notes')], ['none', ER.k('Clear')],
   ];
+  const noted = (x) => x.ai.filter((o) => ER.notes.has(x.ord.get(o).key));
   const quickSet = (x, q) => {
     const main = ER.mainLevel();
     if (q === 'last') return lastSessions(x, 1);
     if (q === 'last3') return lastSessions(x, 3);
     if (q === 'last20') return x.ai.slice(-20);
     if (q === 'level') return x.ai.filter((o) => x.ord.get(o).level === main);
+    if (q === 'notes') return noted(x);
     return [];
   };
   dash.draw('pick-quick', (el) => {
     const x = index();
     if (!x) return ER.wait(el, ['matches', 'sessions']);
-    const main = ER.mainLevel();
-    if (!ER.same(el, [ER.lang(), x, main])) {
-      el.replaceChildren(...QUICK.filter(([q]) => q !== 'level' || main != null).map(([q, label]) => {
+    const main = ER.mainLevel(), anyNote = noted(x).length > 0;
+    if (!ER.same(el, [ER.lang(), x, main, anyNote])) {
+      el.replaceChildren(...QUICK.filter(([q]) => (q !== 'level' || main != null) && (q !== 'notes' || anyNote)).map(([q, label]) => {
         const b = ER.el('button', 'er-tab', ER.tr(label, main));
         b.type = 'button';
         b.dataset.q = q;
@@ -2005,8 +2247,8 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
           const b = ER.el('button', 'er-chip' + (won ? ' won' : ''), `${r.sessionMatch} · ${ER.tr(won ? 'Won' : 'Lost')} ${r.gamesWon}–${r.gamesLost}`);
           b.type = 'button';
           b.dataset.o = String(o);
-          b.title = `${ER.F.time(r.start)}: ${String(r.score).replace(/-/g, '–')}`;
-          b.setAttribute('aria-label', ER.tr(won ? 'Match {0}, won {1} to {2}' : 'Match {0}, lost {1} to {2}', r.sessionMatch, r.gamesWon, r.gamesLost));
+          b.dataset.t = `${ER.F.time(r.start)}: ${String(r.score).replace(/-/g, '–')}`;
+          b.dataset.a = ER.tr(won ? 'Match {0}, won {1} to {2}' : 'Match {0}, lost {1} to {2}', r.sessionMatch, r.gamesWon, r.gamesLost);
           return b;
         }));
         g.append(head, chips);
@@ -2034,7 +2276,15 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       const n = os.filter((o) => cur.has(o)).length;
       b.setAttribute('aria-pressed', n === 0 ? 'false' : n === os.length ? 'true' : 'mixed');
     });
-    el.querySelectorAll('.er-chip').forEach((b) => b.setAttribute('aria-pressed', String(cur.has(Number(b.dataset.o)))));
+    // what is picked, and which matches have your note (notes can change while the list stays)
+    el.querySelectorAll('.er-chip').forEach((b) => {
+      const o = Number(b.dataset.o), r = x.ord.get(o), has = ER.notes.has(r.key), mark = b.querySelector('.er-nmark');
+      b.setAttribute('aria-pressed', String(cur.has(o)));
+      if (has && !mark) b.append(ER.noteMark());
+      else if (!has && mark) mark.remove();
+      b.title = b.dataset.t + (has ? '\n' + ER.notes.get(r.key).slice(0, 300) : '');
+      b.setAttribute('aria-label', b.dataset.a + (has ? ' ' + ER.tr('You wrote a note on it.') : ''));
+    });
   });
 
   dash.draw('pick-label', (el) => {
