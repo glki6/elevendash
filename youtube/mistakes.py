@@ -32,7 +32,7 @@ GROUPS, MISSES, MADE = 4, 4, 2      # kinds of ball in the reel; misses and land
 MIN_MISSES = 3                      # a kind of ball needs this many misses in the session to get in
 BEFORE, AFTER_MISS, AFTER_MADE = 0.9, 1.3, 1.4      # seconds before your previous shot; after the point; after your shot
 SHOT_FIELDS = ['at', 'n', 'role', 'shot', 'ok', 'miss', 'speed', 'top', 'win', 'cx', 'cy', 'inShot', 'inSpeed', 'inTop',
-               'bx', 'bz', 'since', 'rise', 'cls']
+               'bx', 'bz', 'since', 'rise', 'cls', 'up', 'cz']
 SPIN = {'t': 'topspin', 'n': 'little spin', 'b': 'backspin'}
 SIDE = {'B': 'your backhand side', 'M': 'the middle', 'F': 'your forehand side'}
 DEPTH = {'s': 'short', 'h': 'half-long', 'l': 'long'}

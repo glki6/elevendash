@@ -159,10 +159,11 @@ def replay_track(p, you, sx):
 # One record for each shot you hit, and one for each ball that beat you without a touch (shot X). It says what came
 # at you (the opponent's shot, its speed and spin off their bat, where it bounced on your half), what you did with it
 # and, for a miss, how it missed. In your view: your half is z below 0 and your shots travel to z above 0.
+# up is the angle the ball left your bat at, above level, in tenths of a degree; cz is where you met it, in cm from the net.
 TABLE_W, TABLE_L, FAST = 0.7625, 1.37, 10       # half the table's width and length, in metres; a fast ball, in m/s
 SPIN_C = {'topspin': 't', 'little spin': 'n', 'backspin': 'b'}
 SHOT_FIELDS = ['n', 'role', 'shot', 'ok', 'miss', 'speed', 'top', 'win', 'cx', 'cy', 'inShot', 'inSpeed', 'inTop', 'bx', 'bz',
-               'since', 'rise', 'cls']
+               'since', 'rise', 'cls', 'up', 'cz']
 
 
 def miss_kind(e, after, you, sx, serve):
@@ -222,7 +223,11 @@ def shot_records(p, you, sx):
         e = tr[at[i]]
         r = {'n': h['n'], 'role': 'S' if i == 0 else 'R' if i == 1 else 'A', 'shot': SHOT_CODE[h['shot']], 'ok': int(h['ok']),
              'miss': '' if h['ok'] else miss_kind(e, tr[at[i] + 1:], you, sx, i == 0), 'speed': round(h['speed'] * 10),
-             'top': round(h['top']), 'win': int(bool(h.get('win'))), 'cx': round(e['pos'][0] * sx * 100), 'cy': round(e['pos'][1] * 100)}
+             'top': round(h['top']), 'win': int(bool(h.get('win'))), 'cx': round(e['pos'][0] * sx * 100), 'cy': round(e['pos'][1] * 100),
+             'cz': round(e['pos'][2] * sx * 100)}
+        v = e.get('vel')
+        if v and any(v):
+            r['up'] = round(math.degrees(math.atan2(v[1], math.hypot(v[0], v[2]))) * 10)
         if i:
             b = incoming(r, i - 1, e['pos'][0] * sx)
             if b and e.get('gt') and b.get('gt'):
