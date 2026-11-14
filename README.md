@@ -1,6 +1,12 @@
 # elevendash
 
-Match analysis for **Eleven Table Tennis** on Meta Quest, from the game's own log files. It copies the logs off your
+Match analysis for **Eleven Table Tennis** on Meta Quest, from the game's own log files.
+
+[![The top of the dashboard: matches won and lost at your main AI level and over every AI match, then the report on the last session.](pages/img/overview.png)](https://glki6.github.io/elevendash/demo/)
+
+*The pictures on this page are of the [demo](https://glki6.github.io/elevendash/demo/), built from made-up matches.*
+
+It copies the logs off your
 headset over Wi-Fi, works out every match, game, point and shot, and writes a dashboard you can open in any browser:
 win rates by session and AI level, a session report, a point-by-point replay of every match drawn from the ball
 contacts (from above, or in 3D with a slow-motion replay of the shot that decided the point and its spin), serve and return breakdowns, a shot explorer that finds any of your shots by the ball that came at you and lists the kinds of ball you miss most and shows how your misses differ from the shots you land, rolling win rates with the range chance allows and how you play from the first match of a session to the last, your numbers over any matches you pick set against your other matches, a
@@ -14,6 +20,15 @@ matches are kept in the browser you wrote them in, never in the file, so they st
 > elevendash is an independent project, not affiliated with or endorsed by For Fun Labs, Meta or 11hero. Its match
 > metrics follow [11hero](https://11hero.com)'s definitions and were checked against it on a real match
 > (see `research/CALIBRATION.md`).
+
+## What it looks like
+
+| | |
+|---|---|
+| ![A table seen from above with the paths of a 16-shot rally, bars for every point of two games, and a shot list with type, speed and spin.](pages/img/replay.png) | ![The same point on a table drawn in 3D, with a ball in the corner showing the spin of the last shot.](pages/img/replay-3d.png) |
+| **Point by point.** Every point of a match as a bar; click one to play it back from the ball contacts, with each shot's type, speed and spin. | **3D replay.** The same point in 3D. "Deciding shot" replays the last shot in slow motion with the camera on the ball and its spin shown. |
+| ![A ranked list of the kinds of ball missed most, each with a bar for the miss rate against the usual rate.](pages/img/shots.png) | ![Training plan items, each with a drill, what it is worth in points a match, and a chart of the number against its target.](pages/img/plan.png) |
+| **Shot explorer.** The kinds of ball you miss most, and a filter that finds any shot by the ball that came at you. | **Training plan.** What to practise next, ranked by points a match, each item with a drill, a target and its trend. |
 
 ## Try it without a Quest
 
