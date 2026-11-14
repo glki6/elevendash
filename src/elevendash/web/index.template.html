@@ -240,6 +240,9 @@
 .er-rcourt svg{border-radius:10px;touch-action:pan-y}
 .er-rcourt svg.er-r3d{cursor:grab;user-select:none;-webkit-user-select:none}
 .er-rcourt svg.er-r3d:active{cursor:grabbing}
+.er-tog{display:inline-flex;align-items:center;gap:7px}
+.er-tog::before{content:"";flex:none;width:12px;height:12px;border-radius:3px;box-shadow:inset 0 0 0 1.5px var(--color-fg-muted);background-color:transparent}
+.er-tog[aria-pressed=true]::before{background-color:var(--er-you);box-shadow:inset 0 0 0 1.5px var(--er-you)}
 .er-rcourt svg.er-r3d:focus-visible{outline:2px solid var(--er-you);outline-offset:2px}
 .er-rbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .er-rbar input[type=range]{flex:1 1 120px;min-width:0;margin:0;accent-color:var(--er-you)}
@@ -598,10 +601,11 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
           <button class="er-btn" type="button" id="replay-prev">← Previous point</button>
           <button class="er-btn" type="button" id="replay-next">Next point →</button>
         </div>
-        <div class="er-rbar"><span class="er-ctl" id="replay-view-label">View</span><div class="er-tabs" id="replay-view" role="group" aria-labelledby="replay-view-label"><button class="er-tab" type="button" data-view="2d" aria-pressed="true">2D</button><button class="er-tab" type="button" data-view="3d" aria-pressed="false">3D</button></div><button class="er-btn" type="button" id="replay-last" hidden>Deciding shot</button></div>
+        <div class="er-rbar"><span class="er-ctl" id="replay-view-label">View</span><div class="er-tabs" id="replay-view" role="group" aria-labelledby="replay-view-label"><button class="er-tab" type="button" data-view="2d" aria-pressed="true">2D</button><button class="er-tab" type="button" data-view="3d" aria-pressed="false">3D</button></div><button class="er-btn" type="button" id="replay-last" hidden>Deciding shot</button><button class="er-btn er-tog" type="button" id="replay-call" aria-pressed="false" hidden>Landing call</button></div>
         <div class="er-rbar"><span class="er-ctl" id="replay-rate-label">Speed</span><div class="er-tabs" id="replay-rate" role="group" aria-labelledby="replay-rate-label"><button class="er-tab" type="button" data-rate="1" aria-pressed="true">Full</button><button class="er-tab" type="button" data-rate="0.5" aria-pressed="false">Half</button><button class="er-tab" type="button" data-rate="0.25" aria-pressed="false">Quarter</button></div></div>
         <div class="er-legend court"><span><i class="er-sw ball"></i>Your shots</span><span><i class="er-sw ball ai"></i>Opponent's shots</span><span><i class="er-sw rx"></i>Shot that missed</span></div>
         <p class="er-muted" id="replay-3d-hint" hidden>Drag the table to turn it. Deciding shot replays the shot that ended the point at a tenth of real speed: the camera moves in as the bat meets the ball, follows the ball, and comes to rest where it lands. Turn the table or press Play to see the whole table again. The small ball shows the spin the shot left the bat with, always turning at a tenth of real speed.</p>
+        <p class="er-muted" id="replay-call-hint" hidden>Landing call: when the last shot of the point comes down, shows how far inside or outside the table it landed and how high it crossed the net.</p>
       </div>
       <div class="er-rside">
         <div class="er-legend"><span><i class="er-sw"></i>You won the point</span><span><i class="er-sw ai"></i>You lost it</span></div>
@@ -833,6 +837,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
     <li>The training plan is built for the AI level you played most in your last five sessions. Now is your latest sessions at that level, taken together until they hold 1,000 points. The target is the same number in the matches you won at that level. What an item is worth is the number of tries you get in a match, times the gap between now and the target, times what one more success has been worth in points over all your points at that level. That assumes the extra balls you land win as often as the ones you land today, and that the AI plays the same way, so read it as a ranking and not as a promise. An arrow marks a number that moved further from your earlier sessions than chance explains about nine times in ten. Speeds are the ball's speed just after the hit.</li>
     <li>In Serves and returns, depth is where the serve first bounces on the receiver's half: short is within 50 cm of the net, half-long is 50 cm to 1 m from it, long is the last 37 cm. A serve has topspin or backspin when it carries more than 20 r/s of it, otherwise little spin. A point is won by the return when the AI does not reach it or misses its next shot; it is lost to the AI's next shot when you do not reach that shot or miss it. The same goes for your serve and third ball. Rows and serve types with fewer than 30 serves are left out, and the written notes use only groups of 50 or more.</li>
     <li>The point replay moves the ball in straight lines between the contacts the game logged, at the logged times, so a ball that curved with sidespin is drawn straight. The ball is drawn larger the higher it is; its height between contacts is worked out from the contact heights and gravity. When the log stops with the ball in the air, the last stretch carries on the way the ball was going for 0.4 seconds. The 3D view curves each flight instead: the log gives the ball's velocity just after every hit and as it arrives at every contact, and the curve is the smooth path that leaves and arrives with those. Where the two can be compared, on a shot from bat to table, this path and a simpler one sit about 2 cm apart at mid-flight. The log has nothing between contacts, no bats and no players, and the spin shown is the spin as the ball left the bat.</li>
+    <li>The landing call measures from where the log says the ball met the table to the nearest edge of that half. A ball that missed the table is measured where its drawn flight comes down to the height of the table, and the height over the net is read off the drawn flight where it crosses the net, so those two are estimates, good to a few centimetres.</li>
     <li>Videos are the headset recording of a session, uploaded whole to YouTube as unlisted: only someone with the link can open one. A recording is lined up with the log by sound, sliding the log's contact times along the soundtrack until they sit on the clicks of the ball. A point's link starts two seconds before its toss. Sessions that were not recorded have no links.</li>
     <li>The highlight reel is cut from the same recording by code, from the log alone. Each point scores two for every shot in the rally, one for every m/s over 10 on your winning shot, and extra for a point won at game point, late in a close game, or to win a match. Points you won need three shots or more; up to two rallies of six shots or more that you lost go in too. The best-scoring points are taken until the reel is about 90 seconds long, then shown in the order they were played, one rally fading into the next.</li>
     <li>The metrics use 11hero.com's definitions. They were checked against 11hero on a real online match, with both players read from the game's log: every hit came out the same (speed, spin, shot type, whether it landed and whether it won the point), and so did 37 of the 42 numbers on its page. The other five are the shares of points won by each kind of shot, which move a little because 11hero counts one more, empty point at the end of the match.</li>
@@ -3442,7 +3447,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   const TW = 0.7625, TL = 1.37, TY = 0.76, NH = 0.1525, NW = 0.915, BR = 0.02;
   const HALL = 'color-mix(in oklab, var(--er-court) 30%, #0b111c)', MINE = '#fff';
   const st = {match: null, key: null, t: 0, end: 0, rate: 1, playing: false, raf: 0, last: 0, ev: [], hits: [], g: null, rows: [],
-    view: '2d', slow: false, fl: [], seg: [], chase: null};
+    view: '2d', slow: false, fl: [], seg: [], chase: null, call: null, callOn: false};
   // where the 3D view is seen from: turned round the table (0 is behind you) and raised above it, in radians
   const CAM = {yaw: 0.3, pitch: 0.55};
   const cam = Object.assign({}, CAM);
@@ -3450,6 +3455,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   const DIST = 5, CENTRE = [0, TY, 0];
   try {
     if (localStorage.getItem('elevendash.replay.view') === '3d') st.view = '3d';
+    st.callOn = localStorage.getItem('elevendash.replay.call') === '1';
   } catch (e) { /* no storage here: the view starts from above */ }
   const $ = (id) => document.getElementById(id);
   const calm = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -3511,6 +3517,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       const a = p.ev[i], dt = p.ev[i + 1].t - a.t, n = Math.max(2, Math.min(120, Math.ceil(dt / 0.012)));
       return {by: a.by, t0: a.t, dt, n, P: Array.from({length: n + 1}, (x, j) => fn(j / n)), S: null};
     });
+    st.call = verdict();
   };
 
   // The ball's flight from contact a to contact b, as a function of the share of the time gone (0 to 1) giving
@@ -3601,14 +3608,67 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       return [dot(v, r), -dot(v, u), dot(v, f)];
     }};
   };
+  // Where a shot came down: the first time the ball meets the table or anything else but the net. A serve bounces
+  // on the server's own half first: that is not it (you are at z below 0, so your shots land at z above 0).
+  const landing = (h) => {
+    const after = st.ev.filter((e) => e.t > h.t), over = (e) => (e.z > 0) === h.you;
+    return after.find((e) => e.k === 'o' || (e.k === 'b' && (h.shot !== 'S' || over(e)))) || after[after.length - 1] || h;
+  };
+  // The landing call for the last shot of the point, as a line-call replay gives it. kind: in (met the far half of
+  // the table), out (crossed the net and missed the table), net or short (never crossed), own (a rally shot that met
+  // the hitter's own half). cm: how far inside the nearest edge, or how far off the table where the drawn flight
+  // comes down to table height. net: how far the ball cleared the net by, read off the drawn flight. a, b: the two
+  // ends of the measured gap, lying on the table. null when the log stops before the ball comes down.
+  const verdict = () => {
+    const h = st.hits[st.hits.length - 1];
+    if (!h) return null;
+    const land = landing(h), i0 = st.ev.indexOf(h), i1 = st.ev.indexOf(land), far = h.you ? 1 : -1;
+    if (land === h || (land.k !== 'b' && land.k !== 'o')) return null;
+    const pts = [];
+    for (let i = i0; i < i1; i += 1) for (let j = 0; j <= 40; j += 1) pts.push(st.fl[i](j / 40));
+    const k = pts.findIndex((q, i) => i > 0 && pts[i - 1][2] * far < 0 && q[2] * far >= 0);
+    const out = {t: land.t, kind: '', cm: null, how: '', net: null, clip: st.ev.slice(i0 + 1, i1).some((e) => e.k === 'n'), a: null, b: null};
+    if (k > 0) {
+      const a = pts[k - 1], b = pts[k], u = a[2] / (a[2] - b[2]);
+      if (Math.abs(a[0] + (b[0] - a[0]) * u) <= NW) out.net = Math.round((a[1] + (b[1] - a[1]) * u - BR - TY - NH) * 100);
+    }
+    const y = TY + 0.003;
+    if (land.k === 'b') {
+      if ((land.z > 0) !== h.you) return Object.assign(out, {kind: out.clip ? 'net' : 'own', net: null});      // off the net, or straight down
+      const dx = TW - Math.abs(land.x), dz = TL - Math.abs(land.z);
+      return Object.assign(out, {kind: 'in', cm: Math.max(0, Math.round(Math.min(dx, dz) * 100)), a: [land.x, y, land.z],
+        b: dz < dx ? [land.x, y, far * TL] : [(land.x < 0 ? -1 : 1) * TW, y, land.z]});
+    }
+    if (k < 0) return Object.assign(out, {kind: out.clip ? 'net' : 'short', net: null});
+    const off = (q) => [Math.max(0, Math.abs(q[0]) - TW), Math.max(0, q[2] * far - TL)];
+    let d = pts.slice(k).find((q) => q[1] <= TY + BR) || [land.x, land.y, land.z], [dx, dz] = off(d);
+    if (!dx && !dz) {
+      d = [land.x, land.y, land.z];
+      [dx, dz] = off(d);
+    }
+    out.kind = 'out';
+    if (dx || dz) {
+      Object.assign(out, {cm: Math.round(Math.hypot(dx, dz) * 100), how: dx && dz ? '' : dz ? 'long' : 'wide',
+        a: [Math.max(-TW, Math.min(TW, d[0])), y, far * Math.max(0, Math.min(TL, d[2] * far))], b: [d[0], y, d[2]]});
+    }
+    return out;
+  };
+  const CALL = {in: ER.k('In by {0} cm'), long: ER.k('Long by {0} cm'), wide: ER.k('Wide by {0} cm'), out: ER.k('Out by {0} cm'),
+    net: ER.k('Into the net'), short: ER.k('Short of the net'), own: ER.k('Own side of the table')};
+  // The two lines of the call: the verdict, and what the ball did at the net.
+  const callText = (c) => {
+    const n = (v) => (v < 1 ? '<1' : String(v));
+    const key = CALL[c.kind === 'out' ? c.how || 'out' : c.kind];
+    const main = c.kind === 'out' && c.cm == null ? ER.tr('Out') : ER.tr(key, n(c.cm || 0));
+    const sub = c.kind === 'net' || c.kind === 'short' ? '' : c.clip ? ER.tr('Touched the net')
+      : c.net != null && c.net >= 0 ? ER.tr('Over the net by about {0} cm', n(c.net)) : '';
+    return [main, sub];
+  };
   // The tracking camera of the deciding shot, the way a line-call replay is filmed: it moves in behind the ball as
   // the bat meets it, rides along with the ball from one steady angle, and comes to rest on the spot where the ball
   // first meets the table or the floor. a to b: the stretch of the point over which it moves in; tl: the landing.
   const chase = (h, t0) => {
-    // the landing: the first time the ball meets the table or anything else but the net. A serve bounces on the
-    // server's own half first: that is not it (you are at z below 0, so your shots land at z above 0)
-    const after = st.ev.filter((e) => e.t > h.t), over = (e) => (e.z > 0) === h.you;
-    const land = after.find((e) => e.k === 'o' || (e.k === 'b' && (h.shot !== 'S' || over(e)))) || after[after.length - 1] || h;
+    const land = landing(h);
     let dx = land.x - h.x, dz = land.z - h.z;
     if (Math.hypot(dx, dz) < 0.3) {
       dx = 0;
@@ -3703,6 +3763,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     d(g.mid, line([0, TY, -TL], [0, TY, TL]));
     d(g.net, shape([[-NW, TY, 0], [NW, TY, 0], [NW, TY + NH, 0], [-NW, TY + NH, 0]]));
     d(g.tape, line([-NW, TY + NH, 0], [NW, TY + NH, 0]));
+    d(g.gap, st.call && st.call.a ? line(st.call.a, st.call.b) : '');
     g.names.forEach(([node, z]) => {
       const q = g.pr([0, TY, z]);
       if (!q) {
@@ -3748,6 +3809,10 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       node.style.display = e.t <= t ? '' : 'none';
       node.style.opacity = e.by >= cur - 1 ? 1 : 0.35;
     });
+    // the landing call, once the last shot has come down
+    const called = st.callOn && st.call && t >= st.call.t ? '' : 'none';
+    g.gap.style.display = called;
+    g.callBox.style.display = called;
     g.ball.style.display = q ? '' : 'none';
     if (q) {
       g.ball.setAttribute('cx', q[0].toFixed(1));
@@ -3817,6 +3882,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     g.top = path(svg).style('fill', 'var(--er-court)').style('stroke', '#fff').style('stroke-width', 2).style('stroke-linejoin', 'round').node();
     g.mid = path(svg).style('stroke', '#fff').style('stroke-opacity', 0.45).node();
     const onTable = svg.append('g');
+    g.gap = path(svg).style('stroke', '#fff').style('stroke-width', 2).style('stroke-dasharray', '4 3').node();
     g.shade = svg.append('ellipse').style('fill', '#000').style('fill-opacity', 0.38).node();
     g.net = path(svg).style('fill', '#fff').style('fill-opacity', 0.13).style('stroke', '#fff').style('stroke-opacity', 0.5).node();
     g.tape = path(svg).style('stroke', '#fff').style('stroke-width', 2.5).style('stroke-linecap', 'round').node();
@@ -3847,6 +3913,20 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       }
     });
     g.ball = svg.append('circle').style('fill', '#fff').style('stroke', 'var(--er-court)').style('stroke-width', 1.5).node();
+    // the landing call, top right: the verdict, and under it what the ball did at the net
+    const box = svg.append('g').style('display', 'none');
+    if (st.call) {
+      const [main, sub] = callText(st.call), bw = Math.min(W - 84, 208), bx = W - bw - 10, bh = sub ? 46 : 30;
+      box.append('rect').attr('x', bx).attr('y', 10).attr('width', bw).attr('height', bh).attr('rx', 8).style('fill', '#0b111c')
+        .style('fill-opacity', 0.86).style('stroke', '#fff').style('stroke-opacity', 0.3);
+      box.append('text').attr('x', bx + bw / 2).attr('y', 30).attr('text-anchor', 'middle').style('fill', '#fff').style('font-size', '15px')
+        .style('font-weight', 600).text(main);
+      if (sub) {
+        box.append('text').attr('x', bx + bw / 2).attr('y', 47).attr('text-anchor', 'middle').style('fill', '#fff').style('fill-opacity', 0.8)
+          .style('font-size', '11px').text(sub);
+      }
+    }
+    g.callBox = box.node();
     const R = 22, cx = R + 14, cy = R + 12, sg = svg.append('g');
     g.spin = {R, cx, cy};
     g.spin.axis = path(sg).style('stroke', '#fff').style('stroke-opacity', 0.55).style('stroke-width', 1.5).style('stroke-linecap', 'round').node();
@@ -4117,15 +4197,30 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     st.t = st.end * (+ev.target.value) / 1000;
     paint();
   });
+  // The landing call is a switch of the 3D view, off until asked for and remembered in the browser.
+  const callSwitch = () => {
+    const b = $('replay-call'), hint = $('replay-call-hint');
+    if (b) b.setAttribute('aria-pressed', String(st.callOn));
+    if (hint) hint.hidden = !(st.callOn && st.view === '3d');
+  };
+  on('replay-call', 'click', () => {
+    st.callOn = !st.callOn;
+    callSwitch();
+    try {
+      localStorage.setItem('elevendash.replay.call', st.callOn ? '1' : '0');
+    } catch (e) { /* no storage here: the choice lasts until the page closes */ }
+    paint();
+  });
   // The view: from above, or 3D. The 3D view has one more button, for the shot that ended the point.
   const view = (v, keep) => {
     st.view = v;
     st.chase = null;
     document.querySelectorAll('#replay-view [data-view]').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.view === v)));
-    ['replay-last', 'replay-3d-hint'].forEach((id) => {
+    ['replay-last', 'replay-3d-hint', 'replay-call'].forEach((id) => {
       const el = $(id);
       if (el) el.hidden = v !== '3d';
     });
+    callSwitch();
     if (keep) {
       try {
         localStorage.setItem('elevendash.replay.view', v);
