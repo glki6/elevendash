@@ -3,7 +3,7 @@
 Match analysis for **Eleven Table Tennis** on Meta Quest, from the game's own log files. It copies the logs off your
 headset over Wi-Fi, works out every match, game, point and shot, and writes a dashboard you can open in any browser:
 win rates by session and AI level, a session report, a point-by-point replay of every match drawn from the ball
-contacts (from above, or in 3D with a slow-motion replay of the shot that decided the point and its spin), serve and return breakdowns, a shot explorer that finds any of your shots by the ball that came at you and lists the kinds of ball you miss most, your numbers over any matches you pick set against your other matches, a
+contacts (from above, or in 3D with a slow-motion replay of the shot that decided the point and its spin), serve and return breakdowns, a shot explorer that finds any of your shots by the ball that came at you and lists the kinds of ball you miss most, rolling win rates with the range chance allows and how you play from the first match of a session to the last, your numbers over any matches you pick set against your other matches, a
 picture of any match to send or post, your own notes on any match, and a training plan ranked by how many points each
 item is worth.
 

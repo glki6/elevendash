@@ -206,6 +206,8 @@
 .er-plan.keep .er-pitem{grid-template-columns:minmax(0,1fr)}
 .er-keephead{display:grid;gap:4px;padding-top:6px}
 .er-sw.hollow{border-radius:50%;background:var(--color-panel);box-shadow:inset 0 0 0 2px var(--er-you)}
+.er-sw.band{width:16px;height:10px;border-radius:2px;background:color-mix(in oklab,var(--er-you) 22%,transparent)}
+.er-sw.mute{background:color-mix(in oklab,var(--color-fg-muted) 55%,transparent)}
 .er-sw.dash{width:16px;height:0;border-radius:0;background:none;border-top:2px dashed var(--color-fg)}
 
 /* serves and returns */
@@ -440,7 +442,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
 <nav class="er-nav" id="section-menu" aria-label="Sections">
   <button class="er-navbtn" type="button" id="section-toggle" aria-expanded="false" aria-controls="section-list">
     <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 3.5h10M2 7h10M2 10.5h6.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-    <span class="er-navnow"><span data-now="summary">Overview</span><span data-now="session" hidden>Session report</span><span data-now="plan" hidden>Training plan</span><span data-now="match" hidden>Match explorer</span><span data-now="shots" hidden>Shot explorer</span><span data-now="pick" hidden>Matches you pick</span><span data-now="progress" hidden>Progress by day</span><span data-now="findings" hidden>What decides points</span><span data-now="serve" hidden>Serves and returns</span><span data-now="by-level" hidden>By AI level</span><span data-now="notes" hidden>How it's worked out</span></span>
+    <span class="er-navnow"><span data-now="summary">Overview</span><span data-now="session" hidden>Session report</span><span data-now="plan" hidden>Training plan</span><span data-now="match" hidden>Match explorer</span><span data-now="shots" hidden>Shot explorer</span><span data-now="pick" hidden>Matches you pick</span><span data-now="progress" hidden>Progress by day</span><span data-now="form" hidden>Form and stamina</span><span data-now="findings" hidden>What decides points</span><span data-now="serve" hidden>Serves and returns</span><span data-now="by-level" hidden>By AI level</span><span data-now="notes" hidden>How it's worked out</span></span>
     <svg class="er-navchev" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </button>
   <ol id="section-list">
@@ -463,6 +465,11 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
       </ol></li>
     <li><a href="#pick">Matches you pick</a></li>
     <li><a href="#progress">Progress by day</a></li>
+    <li><a href="#form">Form and stamina</a>
+      <ol>
+        <li><a href="#form-rolling">Rolling results</a></li>
+        <li><a href="#form-session">Through a session</a></li>
+      </ol></li>
     <li><a href="#findings">What decides points</a></li>
     <li><a href="#serve">Serves and returns</a>
       <ol>
@@ -790,6 +797,28 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
   </div>
 </section>
 
+<section class="er-section" id="form">
+  <div class="er-sechead">
+    <div><h2>Form and stamina</h2><p class="er-muted">Your results over your latest matches at one AI level, with the range that chance leaves open, and how your matches go from the first of a session to the last.</p></div>
+  </div>
+  <div class="er-card" id="form-rolling">
+    <h3>Rolling results</h3>
+    <div class="er-controls"><span class="er-ctl" id="form-level-label">AI level</span><div class="er-tabs" id="form-level" role="group" aria-labelledby="form-level-label" data-draw="level-tabs"></div></div>
+    <div class="er-controls"><span class="er-ctl" id="form-w-label">Over the last</span><div class="er-tabs" id="form-w" role="group" aria-labelledby="form-w-label"><button class="er-tab" type="button" data-w="10" aria-pressed="false">10 matches</button><button class="er-tab" type="button" data-w="20" aria-pressed="true">20 matches</button><button class="er-tab" type="button" data-w="50" aria-pressed="false">50 matches</button></div><div class="er-tabs" id="form-f" role="group" aria-label="What is counted"><button class="er-tab" type="button" data-f="m" aria-pressed="true">Matches won</button><button class="er-tab" type="button" data-f="p" aria-pressed="false">Points won</button></div></div>
+    <p class="er-pstat" data-draw="form-now" data-source="form" role="status"></p>
+    <div class="er-legend"><span><i class="er-sw line"></i>Share over the last matches</span><span><i class="er-sw band"></i>Likely range</span><span><i class="er-sw dash"></i>All your matches at this level</span></div>
+    <div class="er-chart" id="chart-form" data-draw="form-chart" data-source="form"></div>
+    <p class="er-muted">Each point on the line is the share over the matches up to that one. The band is where the share you would settle at over many matches most likely sits (9 times in 10). A short run of matches leaves a wide band, so a line that stays inside the band of a month ago has not really moved.</p>
+  </div>
+  <div class="er-card" id="form-session">
+    <h3>From the first match of a session to the last</h3>
+    <p class="er-muted">Points won in each match, set against the other matches of the same session at the same level, and added up by the place of the match in its session. Above the line you play better than in the rest of the session, below it worse.</p>
+    <div class="er-legend"><span><i class="er-sw"></i>Clearly better</span><span><i class="er-sw ai"></i>Clearly worse</span><span><i class="er-sw mute"></i>Within chance</span><span><i class="er-sw ref"></i>Likely range</span></div>
+    <div class="er-chart" id="chart-shape" data-draw="form-shape" data-source="session_shape"></div>
+    <ul class="er-notes" data-draw="form-notes" data-source="form_notes"></ul>
+  </div>
+</section>
+
 <section class="er-section" id="findings">
   <div class="er-sechead"><div><h2>What decides your points at <span data-draw="v" data-ds="findings" data-k="main" data-f="levelName">—</span></h2><p class="er-muted">From all <span data-draw="v" data-ds="findings" data-k="main" data-f="matches" data-fmt="int">—</span> level-<span data-draw="v" data-ds="findings" data-k="main" data-f="level">—</span> matches, <span data-draw="v" data-ds="findings" data-k="main" data-f="from" data-fmt="date">—</span> to <span data-draw="v" data-ds="findings" data-k="main" data-f="to" data-fmt="date">—</span>. The headlines are written by fixed rules from these numbers and change when the numbers do.</p></div></div>
   <div class="er-finds" data-draw="findings"></div>
@@ -920,6 +949,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
     <li>The point replay moves the ball in straight lines between the contacts the game logged, at the logged times, so a ball that curved with sidespin is drawn straight. The ball is drawn larger the higher it is; its height between contacts is worked out from the contact heights and gravity. When the log stops with the ball in the air, the last stretch carries on the way the ball was going for 0.4 seconds. The 3D view curves each flight instead: the log gives the ball's velocity just after every hit and as it arrives at every contact, and the curve is the smooth path that leaves and arrives with those. Where the two can be compared, on a shot from bat to table, this path and a simpler one sit about 2 cm apart at mid-flight. The log has nothing between contacts, no bats and no players, and the spin shown is the spin as the ball left the bat.</li>
     <li>The landing call measures from where the log says the ball met the table to the nearest edge of that half. A ball that missed the table is measured where its drawn flight comes down to the height of the table, and the height over the net is read off the drawn flight where it crosses the net, so those two are estimates, good to a few centimetres.</li>
     <li>The shot explorer lists every shot you hit, and every ball that landed on your half and you never touched. The ball that came at you is described by the shot before yours: its spin as it left the bat (topspin or backspin above 20 r/s, otherwise little spin), fast when it left the bat at 10 m/s or more, its side by where it bounced on your half (the middle is the 50 cm down the centre of the table; a ball that did not bounce is placed where you met it), and its depth as for serves. A miss is into the net when the ball never got over it, long when the line of the shot passes the end of the table between its sides, and wide otherwise. Where your misses pile up is worked out for the level of the training plan.</li>
+    <li>Rolling results take your matches at one AI level in the order you played them. The band is the range a share sits in 9 times in 10 (the Wilson interval), counting each match, or each point, as a separate try; points inside one match are not quite separate tries, so the band for points is a little too narrow. From the first match of a session to the last uses sessions with three or more matches at one level, and sets each match against the others of that session and level; a place in the session is called clearly better or worse when a gap that large would turn up by chance about one time in ten.</li>
     <li>Videos are the headset recording of a session, uploaded whole to YouTube as unlisted: only someone with the link can open one. A recording is lined up with the log by sound, sliding the log's contact times along the soundtrack until they sit on the clicks of the ball. A point's link starts two seconds before its toss. Sessions that were not recorded have no links.</li>
     <li>The highlight reel is cut from the same recording by code, from the log alone. Each point scores two for every shot in the rally, one for every m/s over 10 on your winning shot, and extra for a point won at game point, late in a close game, or to win a match. Points you won need three shots or more; up to two rallies of six shots or more that you lost go in too. The best-scoring points are taken until the reel is about 90 seconds long, then shown in the order they were played, one rally fading into the next.</li>
     <li>The metrics use 11hero.com's definitions. They were checked against 11hero on a real online match, with both players read from the game's log: every hit came out the same (speed, spin, shot type, whether it landed and whether it won the point), and so did 37 of the 42 numbers on its page. The other five are the shares of points won by each kind of shot, which move a little because 11hero counts one more, empty point at the end of the match.</li>
@@ -4640,6 +4670,188 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     redraw(['sx-groups-note', 'sx-groups']);
   });
   ER.shots = {filters: f, chosen, apply, groups};
+})();
+</script>
+
+<script>
+// Form and stamina. `form` has one row per AI match with the share of matches (m) and points (p) won over the last
+// 10, 20 and 50 matches at its level, each with a likely range (lo, hi). `session_shape` has one row per place in a
+// session. The window and what is counted are this card's own state; the level is the dashboard's.
+(() => {
+  const ER = window.ER;
+  const st = {w: 20, f: 'm'};
+  const $ = (id) => document.getElementById(id);
+  const picked = () => {
+    const rows = ER.rows('form');
+    if (!rows) return null;
+    const L = ER.level(), k = st.f + st.w;
+    return {L, k, all: rows.filter((r) => r.level === L), rows: rows.filter((r) => r.level === L && r[k] != null)};
+  };
+  // the share over every match at the level
+  const overall = (L) => {
+    const ms = (ER.rows('matches') || []).filter((r) => r.vs === 'AI' && r.level === L);
+    if (!ms.length) return null;
+    const a = st.f === 'm' ? ms.filter((r) => r.result === 'Won').length : d3.sum(ms, (r) => r.pointsWonN);
+    const b = st.f === 'm' ? ms.length : d3.sum(ms, (r) => r.points);
+    return b ? {n: ms.length, v: Math.round(1000 * a / b) / 10} : null;
+  };
+  const draws = {};
+  draws['form-now'] = (el) => {
+    const s = picked();
+    if (!s) return ER.wait(el, ['form']);
+    if (!s.rows.length) {
+      return el.replaceChildren(ER.tr('Level {0} has {1} matches so far: not enough for a run of {2}.', s.L, s.all.length, st.w));
+    }
+    const r = s.rows[s.rows.length - 1], all = overall(s.L);
+    const b = (t) => ER.el('b', null, t);
+    const isM = st.f === 'm';
+    const out = ER.trn(isM ? 'Your last {0} matches at level {1}: {2} of matches won, likely range {3} to {4}.'
+      : 'Your last {0} matches at level {1}: {2} of points won, likely range {3} to {4}.',
+      String(st.w), String(s.L), b(ER.F.pct(r[s.k])), ER.F.pct(r[s.k + 'lo']), ER.F.pct(r[s.k + 'hi']));
+    if (all) out.push(' ', ...ER.trn('All {0} matches at this level: {1}.', ER.F.int(all.n), b(ER.F.pct(all.v))));
+    el.replaceChildren(...out);
+  };
+  draws['form-chart'] = (el) => {
+    const s = picked();
+    if (!s) return ER.wait(el, ['form']);
+    const W = Math.max(280, el.clientWidth || 600), H = 280;      // before emptying: see ER.tableFrame
+    el.replaceChildren();
+    if (!s.rows.length) return;
+    const rows = s.rows, k = s.k, last = rows[rows.length - 1], all = overall(s.L);
+    const isM = st.f === 'm';
+    const svg = ER.svg(el, W, H, ER.tr(isM ? 'Line chart of the share of matches you won over your last {0} matches at level {1}, match by match, with the likely range as a band'
+      : 'Line chart of the share of points you won over your last {0} matches at level {1}, match by match, with the likely range as a band', st.w, s.L));
+    const y = d3.scaleLinear().domain([0, Math.max(isM ? 40 : 50, d3.max(rows, (r) => r[k + 'hi']))]).nice();
+    const ticks = y.ticks(5);
+    const ml = Math.ceil(d3.max(ticks, (t) => ER.textW(svg, t + '%'))) + 10;
+    const mr = Math.ceil(ER.textW(svg, ER.F.pct(last[k]), 'er-strong')) + 14;
+    const m = {t: 12, r: mr, b: 26, l: ml};
+    y.range([H - m.b, m.t]);
+    const x = d3.scaleLinear().domain([rows[0].i, Math.max(last.i, rows[0].i + 1)]).range([m.l, W - m.r]);
+    ticks.forEach((t) => {
+      svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(t)).attr('y2', y(t))
+        .style('stroke', t === 0 ? 'var(--cds-chart-axis)' : 'var(--cds-chart-grid)');
+      svg.append('text').attr('x', m.l - 8).attr('y', y(t)).attr('text-anchor', 'end').attr('dominant-baseline', 'middle').attr('class', 'er-num').text(t + '%');
+    });
+    svg.append('text').attr('x', m.l).attr('y', H - 6).attr('text-anchor', 'start').text(`${ER.tr('match {0}', rows[0].i)} · ${ER.F.date(rows[0].date)}`);
+    svg.append('text').attr('x', W - m.r).attr('y', H - 6).attr('text-anchor', 'end').text(`${ER.tr('match {0}', last.i)} · ${ER.F.date(last.date)}`);
+    const px = (r) => x(r.i);
+    svg.append('path').datum(rows).attr('d', d3.area().x(px).y0((r) => y(r[k + 'lo'])).y1((r) => y(r[k + 'hi'])))
+      .style('fill', ER.YOU).style('fill-opacity', 0.16);
+    if (all) {
+      svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(all.v)).attr('y2', y(all.v))
+        .style('stroke', 'var(--color-fg)').style('stroke-width', 1.5).style('stroke-dasharray', '5 4').style('stroke-opacity', 0.7);
+    }
+    svg.append('path').datum(rows).attr('d', d3.line().x(px).y((r) => y(r[k])))
+      .style('fill', 'none').style('stroke', ER.YOU).style('stroke-width', 2).style('stroke-linejoin', 'round').style('stroke-linecap', 'round');
+    ER.markSvg(svg.append('circle').attr('cx', px(last)).attr('cy', y(last[k])).attr('r', 4.5)
+      .style('fill', ER.YOU).style('stroke', 'var(--color-panel)').style('stroke-width', 2), 'form', k, last.key);
+    ER.markSvg(svg.append('text').attr('x', px(last) + 9).attr('y', y(last[k])).attr('dominant-baseline', 'middle')
+      .attr('class', 'er-strong er-num').text(ER.F.pct(last[k])), 'form', k, last.key);
+    const tip = ER.tip(el);
+    const rule = svg.append('line').attr('y1', m.t).attr('y2', H - m.b).style('stroke', 'var(--cds-chart-reference)').style('display', 'none');
+    const dot = svg.append('circle').attr('r', 4).style('fill', ER.YOU).style('stroke', 'var(--color-panel)').style('stroke-width', 2).style('display', 'none');
+    svg.append('rect').attr('x', m.l).attr('y', m.t).attr('width', Math.max(0, W - m.l - m.r)).attr('height', H - m.t - m.b)
+      .style('fill', 'transparent').style('cursor', 'crosshair')
+      .on('pointermove pointerdown', (evt) => {
+        const [mx] = d3.pointer(evt);
+        const r = d3.least(rows, (q) => Math.abs(x(q.i) - mx));
+        rule.attr('x1', px(r)).attr('x2', px(r)).style('display', null);
+        dot.attr('cx', px(r)).attr('cy', y(r[k])).style('display', null);
+        tip.show(evt, [
+          `${ER.F.date(r.date)} · ${ER.tr('matches {0} to {1} at level {2}', r.i - st.w + 1, r.i, s.L)}`,
+          ER.tr(isM ? 'Matches won: {0}' : 'Points won: {0}', ER.F.pct(r[k])),
+          ER.tr('Likely range: {0} to {1}', ER.F.pct(r[k + 'lo']), ER.F.pct(r[k + 'hi'])),
+        ]);
+      })
+      .on('pointerleave', () => {
+        tip.hide();
+        rule.style('display', 'none');
+        dot.style('display', 'none');
+      });
+  };
+
+  // Points won by the place of a match in its session, against the rest of the session.
+  draws['form-shape'] = (el) => {
+    const rows = ER.rows('session_shape');
+    if (!rows) return ER.wait(el, ['session_shape']);
+    const W = Math.max(280, el.clientWidth || 600), H = 272;      // before emptying: see ER.tableFrame
+    if (ER.same(el, [ER.lang(), W, rows])) return;
+    el.replaceChildren();
+    if (!rows.length) {
+      el.appendChild(ER.el('p', 'er-muted', ER.tr('Not enough sessions of three matches or more yet.')));
+      return;
+    }
+    const data = rows.slice().sort((a, b) => a.order - b.order);
+    const svg = ER.svg(el, W, H, ER.tr('Bar chart of the points you won by the place of a match in its session, as the gap to the other matches of the same session, with the likely range of each gap'));
+    const top = Math.max(4, d3.max(data, (r) => Math.max(Math.abs(r.lo), Math.abs(r.hi))));
+    const y = d3.scaleLinear().domain([-top, top]).nice();
+    const ticks = y.ticks(5);
+    const sign = (v) => (v > 0 ? '+' : v < 0 ? '−' : '') + ER.fmt1(Math.abs(v));
+    const ml = Math.ceil(d3.max(ticks, (t) => ER.textW(svg, sign(t)))) + 10;
+    const m = {t: 16, r: 6, b: 58, l: ml};
+    y.range([H - m.b, m.t]);
+    const x = d3.scaleBand().domain(data.map((r) => r.key)).range([m.l, W - m.r]).paddingInner(0.35).paddingOuter(0.2);
+    const bw = Math.min(24, x.bandwidth());
+    ticks.forEach((t) => {
+      svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(t)).attr('y2', y(t))
+        .style('stroke', t === 0 ? 'var(--cds-chart-axis)' : 'var(--cds-chart-grid)');
+      svg.append('text').attr('x', m.l - 8).attr('y', y(t)).attr('text-anchor', 'end').attr('dominant-baseline', 'middle').attr('class', 'er-num').text(sign(t));
+    });
+    const colour = (r) => (r.move > 0 ? ER.YOU : r.move < 0 ? ER.AI : 'color-mix(in oklab, var(--color-fg-muted) 55%, transparent)');
+    const place = (r) => (r.order === r.to ? String(r.order) : `${r.order}–${r.to}`);
+    const cx = (r) => x(r.key) + x.bandwidth() / 2;
+    const tip = ER.tip(el);
+    const g = svg.append('g').selectAll('g').data(data).join('g');
+    g.append('path').attr('d', (r) => ER.barPath(cx(r) - bw / 2, y(0), bw, Math.max(1, Math.abs(y(r.diff) - y(0))), r.diff >= 0 ? -1 : 1))
+      .style('fill', colour).attr('data-source', 'session_shape').attr('data-field', 'diff').attr('data-where', (r) => ER.where(r.key));
+    g.append('path').attr('d', (r) => `M${cx(r)},${y(r.lo)}V${y(r.hi)}M${cx(r) - 4},${y(r.lo)}h8M${cx(r) - 4},${y(r.hi)}h8`)
+      .style('fill', 'none').style('stroke', 'var(--color-fg)').style('stroke-width', 1.5);
+    g.append('text').attr('x', cx).attr('y', H - m.b + 16).attr('text-anchor', 'middle').attr('class', 'er-strong er-num').text(place);
+    g.append('text').attr('x', cx).attr('y', H - m.b + 31).attr('text-anchor', 'middle').attr('class', 'er-num')
+      .text((r) => (x.step() > 62 ? ER.tr('{0} matches', r.matches) : ER.F.int(r.matches)));
+    svg.append('text').attr('x', m.l).attr('y', H - 3).attr('text-anchor', 'start').text(ER.tr('Place of the match in its session, and how many matches'));
+    g.append('rect').attr('x', (r) => x(r.key) - (x.step() - x.bandwidth()) / 2).attr('width', x.step()).attr('y', m.t).attr('height', H - m.t - m.b)
+      .style('fill', 'transparent')
+      .on('pointermove pointerdown', (evt, r) => tip.show(evt, [
+        `${ER.tx(r, 'label')} · ${ER.tr('{0} matches', r.matches)}`,
+        ER.tr('Points won: {0}; the rest of the session: {1}', ER.F.pct(r.rate), ER.F.pct(r.rest)),
+        ER.tr('Gap: {0} percentage points, likely {1} to {2}', sign(r.diff), sign(r.lo), sign(r.hi)),
+        ER.tr('Matches won: {0} of {1}', r.wins, r.matches),
+      ]))
+      .on('pointerleave', () => tip.hide());
+  };
+  const MARK = {good: ['+', ER.k('Better')], bad: ['−', ER.k('Worse')], note: ['·', ER.k('Note')]};
+  draws['form-notes'] = (el) => {
+    const rows = ER.rows('form_notes');
+    if (!rows) return ER.wait(el, ['form_notes']);
+    el.replaceChildren(...rows.slice().sort((a, b) => a.rank - b.rank).map((r) => {
+      const li = ER.el('li');
+      const [glyph, name] = MARK[r.tone] || MARK.note;
+      const mark = ER.el('span', 'er-mark ' + (r.tone || 'note'), glyph);
+      mark.setAttribute('role', 'img');
+      mark.setAttribute('aria-label', ER.tr(name));
+      li.append(mark, ER.span(ER.tx(r, 'text'), 'form_notes', 'text', r.key));
+      return li;
+    }));
+  };
+  Object.keys(draws).forEach((n) => dash.draw(n, draws[n]));
+
+  const redraw = () => ['form-now', 'form-chart'].forEach((n) => document.querySelectorAll(`[data-draw="${n}"]`).forEach((el) => draws[n](el)));
+  const tabs = (id, attr, set) => {
+    const box = $(id);
+    if (!box) return;
+    box.addEventListener('click', (ev) => {
+      const b = ev.target.closest && ev.target.closest(`[data-${attr}]`);
+      if (!b || b.getAttribute('aria-pressed') === 'true') return;
+      set(b.dataset[attr]);
+      box.querySelectorAll(`[data-${attr}]`).forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      redraw();
+    });
+  };
+  tabs('form-w', 'w', (v) => { st.w = +v; });
+  tabs('form-f', 'f', (v) => { st.f = v; });
+  ER.form = st;
 })();
 </script>
 

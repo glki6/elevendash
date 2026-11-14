@@ -688,6 +688,105 @@ for i, r in enumerate(plan):
 write('plan', plan)
 write('plan_trend', plan_trend)
 
+# ---------------- form: your latest matches at a level, and how a session goes from its first match to its last ----------------
+# form: one row per AI match, in order at its level, with the share of matches and of points won over the last 10, 20
+# and 50 matches at that level up to it, each with the range the true share most likely sits in (9 times in 10, Wilson's
+# interval, every match or point taken as a separate try; the same one-in-ten rule as MIN_Z). Empty until the level has that many matches.
+FORM_WINDOWS = (10, 20, 50)
+
+
+def likely_range(k, n, z=MIN_Z):
+    c, d = k / n + z * z / (2 * n), 1 + z * z / n
+    h = z * math.sqrt(k / n * (1 - k / n) / n + z * z / (4 * n * n))
+    return r1(100 * max(0.0, (c - h) / d)), r1(100 * min(1.0, (c + h) / d))
+
+
+form = []
+for lvl in sorted({r['level'] for r in ai_ms}):
+    ms = [r for r in ai_ms if r['level'] == lvl]
+    for i, r in enumerate(ms):
+        row = {'key': r['key'], 'level': lvl, 'i': i + 1, 'date': r['date'], 'session': r['session']}
+        for w in FORM_WINDOWS:
+            last = ms[i + 1 - w:i + 1] if i + 1 >= w else []
+            for f, k, n in (('m', sum(x['result'] == 'Won' for x in last), len(last)),
+                            ('p', sum(x['pointsWonN'] for x in last), sum(x['points'] for x in last))):
+                lo, hi = likely_range(k, n) if n else (None, None)
+                row.update({f'{f}{w}': pc(k, n), f'{f}{w}lo': lo, f'{f}{w}hi': hi})
+        form.append(row)
+write('form', form)
+
+# session_shape: points won in each match against the other matches of the same session at the same level, added up by
+# the match's place in the session. A place is clearly better or worse (move) when a gap that large turns up by chance
+# about one time in ten (MIN_Z), as in the session report.
+SHAPE_PLACES = [(1, 1), (2, 2), (3, 5), (6, 10), (11, 15), (16, 20), (21, 9999)]
+SHAPE_MIN, LATE_FROM, LATE_MIN = 5, 11, 10       # matches for a place to be shown; where late in a session starts; matches for a word on it
+
+
+def shape_tally(pairs):
+    """pairs: (match, the matches it is set against). Points won against what the others' rate would give."""
+    t = {'matches': 0, 'wins': 0, 'points': 0, 'won': 0, 'exp': 0.0, 'var': 0.0}
+    for r, rest in pairs:
+        pts = sum(x['points'] for x in rest)
+        if not pts or not r['points']:
+            continue
+        e = sum(x['pointsWonN'] for x in rest) / pts
+        t['matches'] += 1
+        t['wins'] += r['result'] == 'Won'
+        t['points'] += r['points']
+        t['won'] += r['pointsWonN']
+        t['exp'] += e * r['points']
+        t['var'] += e * (1 - e) * (r['points'] + r['points'] ** 2 / pts)      # the match's own luck, and the others'
+    return t
+
+
+def shape_row(key, t):
+    se = math.sqrt(t['var']) / t['points'] if t['points'] else 0
+    d = (t['won'] - t['exp']) / t['points'] if t['points'] else 0
+    return {'key': key, 'matches': t['matches'], 'wins': t['wins'], 'matchRate': pc(t['wins'], t['matches']), 'points': t['points'],
+            'rate': pc(t['won'], t['points']), 'rest': r1(100 * t['exp'] / t['points']) if t['points'] else None,
+            'diff': r1(100 * d), 'lo': r1(100 * (d - MIN_Z * se)), 'hi': r1(100 * (d + MIN_Z * se)),
+            'move': 0 if not se or abs(d) / se < MIN_Z else 1 if d > 0 else -1}
+
+
+shape_groups = defaultdict(list)        # the matches of one session at one level
+for r in ai_ms:
+    shape_groups[r['session'], r['level']].append(r)
+shape_groups = [g for g in shape_groups.values() if len(g) >= 3]
+session_shape, form_notes = [], []
+for a, b in SHAPE_PLACES:
+    t = shape_tally([(r, [x for x in g if x is not r]) for g in shape_groups for r in g if a <= r['sessionMatch'] <= b])
+    if t['matches'] >= SHAPE_MIN:
+        row = dict(shape_row(f'{a}', t), order=a, to=min(b, max(r['sessionMatch'] for g in shape_groups for r in g)))
+        put(row, 'label', T('Match {a}', a=a) if a == b else T('Matches {a} on', a=a) if b > 999 else T('Matches {a} to {b}', a=a, b=b))
+        session_shape.append(row)
+write('session_shape', session_shape)
+# two sentences, by fixed rules: the first match of a session, and the matches late in one
+first = next((r for r in session_shape if r['key'] == '1'), None)
+if first:
+    gap = T('{d} percentage points', d=f"{abs(first['diff']):.1f}")
+    form_notes.append(('good' if first['move'] > 0 else 'bad' if first['move'] < 0 else 'note',
+                       T('Your first match of a session runs {gap} above the rest of the session ({n} first matches).', gap=gap, n=first['matches'])
+                       if first['move'] > 0 else
+                       T('Your first match of a session runs {gap} below the rest of the session ({n} first matches): a longer warm-up may be worth points.',
+                         gap=gap, n=first['matches']) if first['move'] < 0 else
+                       T('No warm-up effect: your first match of a session is within chance of the rest of it ({n} first matches).', n=first['matches'])))
+late = shape_tally([(r, [x for x in g if x['sessionMatch'] < LATE_FROM]) for g in shape_groups for r in g if r['sessionMatch'] >= LATE_FROM])
+if late['matches'] >= LATE_MIN:
+    lr = shape_row('late', late)
+    gap = T('{d} percentage points', d=f"{abs(lr['diff']):.1f}")
+    form_notes.append(('bad' if lr['move'] < 0 else 'good' if lr['move'] > 0 else 'note',
+                       T('From match {a} of a session on you win {gap} fewer of the points than in its first {b} matches ({n} matches): the sign of tiring.',
+                         a=LATE_FROM, b=LATE_FROM - 1, gap=gap, n=lr['matches']) if lr['move'] < 0 else
+                       T('From match {a} of a session on you win {gap} more of the points than in its first {b} matches ({n} matches): you play yourself in.',
+                         a=LATE_FROM, b=LATE_FROM - 1, gap=gap, n=lr['matches']) if lr['move'] > 0 else
+                       T('No sign of tiring: from match {a} of a session on, your points won stay within chance of its first {b} matches ({n} matches).',
+                         a=LATE_FROM, b=LATE_FROM - 1, n=lr['matches'])))
+else:
+    form_notes.append(('note', T('Too few long sessions to say anything about tiring: {n} matches came after the first {b} of a session.',
+                                 n=late['matches'], b=LATE_FROM - 1)))
+write('form_notes', [put({'key': str(i + 1), 'rank': i + 1, 'tone': tone}, 'text', text) for i, (tone, text) in enumerate(form_notes)])
+
+
 # ---------------- serves and returns, level by level ----------------
 # who 'recv' = points the AI served, 'serve' = points you served. Sides are as you face the AI; for the AI's serves your
 # left is your backhand side. Depth is the first bounce on the receiver's half: short = within 50 cm of the net,

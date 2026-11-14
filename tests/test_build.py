@@ -97,6 +97,27 @@ class Build(unittest.TestCase):
             self.assertTrue(r['n'] >= 30 and r['rate'] > r['usual'] and r['extra'] >= 0, r)
             self.assertTrue(r['failed'] >= r['net'] + r['long'] + r['wide'] + r['unreached'], r)
             self.assertTrue(r['label'] and r['label_zh'])
+        # form: the rolling shares are the plain shares over the last matches at the level, inside their ranges
+        ms = [r for r in self.rows('matches') if r['vs'] == 'AI']
+        form = self.rows('form')
+        self.assertEqual(len(form), len(ms))
+        for r in form:
+            at = [m for m in ms if m['level'] == r['level']]
+            self.assertEqual(at[r['i'] - 1]['key'], r['key'])
+            for w in (10, 20, 50):
+                last = at[r['i'] - w:r['i']] if r['i'] >= w else []
+                if not last:
+                    self.assertIsNone(r[f'm{w}'])
+                    continue
+                self.assertAlmostEqual(r[f'm{w}'], 100 * sum(m['result'] == 'Won' for m in last) / w, delta=0.06)
+                self.assertAlmostEqual(r[f'p{w}'], 100 * sum(m['pointsWonN'] for m in last) / sum(m['points'] for m in last), delta=0.06)
+                for f in ('m', 'p'):
+                    self.assertTrue(0 <= r[f'{f}{w}lo'] <= r[f'{f}{w}'] <= r[f'{f}{w}hi'] <= 100, r)
+        for r in self.rows('session_shape'):
+            self.assertTrue(r['matches'] >= 5 and r['lo'] <= r['diff'] <= r['hi'], r)
+            self.assertEqual(r['move'], 1 if r['lo'] > 0 else -1 if r['hi'] < 0 else 0, r)     # coloured when the range clears zero
+            self.assertAlmostEqual(r['diff'], r['rate'] - r['rest'], delta=0.11)
+        self.assertTrue(all(r['text'] and r['text_zh'] for r in self.rows('form_notes')))
         main = next(r for r in self.rows('findings') if r['key'] == 'main')
         self.assertEqual(main['level'], 100)                    # the level of the latest sessions
         self.assertTrue(0.3 < main['shotSecs'] < 1.5)
