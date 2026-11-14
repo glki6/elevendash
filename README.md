@@ -17,9 +17,13 @@ No account, no server, no AI service: everything runs on your computer with plai
 single HTML file that works offline. Send it to a coach or a friend, or put it on any static host. Notes you write on
 matches are kept in the browser you wrote them in, never in the file, so they stay behind when you send it.
 
-> elevendash is an independent project, not affiliated with or endorsed by For Fun Labs, Meta or 11hero. Its match
-> metrics follow [11hero](https://11hero.com)'s definitions and were checked against it on a real match
-> (see `research/CALIBRATION.md`).
+elevendash is built for matches against the AI. Matches against people online have a side of their own, with
+ratings: it should work, but it is close to untested on real matches
+(see [Against the AI, and against people online](#against-the-ai-and-against-people-online)).
+
+> elevendash is inspired by [11hero](https://11hero.com). Its match metrics follow 11hero's definitions and were
+> checked against it on a real match (see `research/CALIBRATION.md`). It is an independent project, not affiliated
+> with or endorsed by For Fun Labs, Meta or 11hero.
 
 ## What it looks like
 
@@ -90,8 +94,9 @@ The same demo is online at https://glki6.github.io/elevendash/demo/.
 
 ## Against the AI, and against people online
 
-Against the AI, the game logs every ball contact by both players, so everything on the dashboard works: the replay,
-rally and serve analysis, the 11hero metrics for both sides, the match card and the training plan.
+elevendash is built for matches against the AI, and nearly all of its testing is on them. Against the AI, the game
+logs every ball contact by both players, so everything on the dashboard works: the replay, rally and serve analysis,
+the 11hero metrics for both sides, the match card and the training plan.
 
 Matches against people online are the dashboard's second side. A switch at the top of the page turns all of it from
 your AI matches to your online ones: the same session report, training plan, shot explorer and breakdowns, added up
@@ -101,9 +106,10 @@ holds both players' ratings as each match starts and what a ranked match is wort
 match by match and your results against lower, equal and higher rated opponents, set against what the ratings alone
 expect. No opponent's name appears anywhere.
 
-The online side is new and lightly tested: it is built and checked on generated matches, and against one real online
-match, where every hit of both players and their metrics matched 11hero's. The misses reel and the session videos are
-still made for sessions against the AI only.
+The online side should work, but treat it as untested. It is built and checked on generated matches, and on one real
+online match, where every hit of both players and their metrics matched 11hero's. One match cannot show what a
+season of online play looks like, so expect rough edges, and please report them (see `CONTRIBUTING.md`). The misses
+reel and the session videos are still made for sessions against the AI only.
 
 ## Privacy first
 
@@ -224,6 +230,17 @@ logs. The dashboard opens on your main level (the AI level with the most points 
 findings are written from your numbers by fixed rules in `builddata.py`. Online play: see "Against the AI, and against
 people online" above. Left-handed play is handled but has only been tested by forcing `hand=left` on right-handed logs. Logs
 from other headsets, game versions and online matches are welcome (redacted): see `CONTRIBUTING.md`.
+
+## Backstory
+
+I had never played table tennis before Eleven. I got into the game, wanted to get better at it, and wanted to know
+what was losing me points instead of guessing. [11hero](https://11hero.com) showed me what match analysis for Eleven
+can look like, and elevendash is inspired by it: the same kind of numbers, worked out on my own computer from the
+game's logs, for the matches I play most, which are against the AI. I play with a SolidSlime paddle adapter, made by
+the same people behind 11hero.
+
+I am one player with one headset, so this is built around how I play. If it helps you improve too, or it gets
+something wrong on your logs, I would like to hear about it.
 
 ## Licence
 
