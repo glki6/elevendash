@@ -118,6 +118,24 @@ class Build(unittest.TestCase):
             self.assertEqual(r['move'], 1 if r['lo'] > 0 else -1 if r['hi'] < 0 else 0, r)     # coloured when the range clears zero
             self.assertAlmostEqual(r['diff'], r['rate'] - r['rest'], delta=0.11)
         self.assertTrue(all(r['text'] and r['text_zh'] for r in self.rows('form_notes')))
+        # plan progress: one row per plan item, agreeing with the plan as it stands
+        plan = {r['key']: r for r in self.rows('plan')}
+        prog = self.rows('plan_progress')
+        self.assertEqual(sorted(g['key'] for g in prog), sorted(plan))
+        for g in prog:
+            r, st = plan[g['key']], g['states']
+            self.assertEqual(len(st), sum(x['level'] == r['level'] for x in sessions))
+            self.assertEqual((g['state'], g['ever']), (st[-1], int('1' in st)), g)
+            want = '-' if r['status'] == 'none' else '0' if r['status'] == 'reached' or r['gain'] < 0.15 else '1'
+            self.assertEqual(g['state'], want, g)
+            self.assertLessEqual(g['runSession'], sessions[-1]['n'])
+            if g['ever']:
+                e = st.index('1')
+                self.assertEqual((g['sessionsFrom'], g['sessionsSince'], g['sessionsOn']), (len(st) - e, len(st) - e - 1, st[e:].count('1')), g)
+                self.assertTrue(0 <= g['then'] <= 100 and g['thenTries'] > 0 and g['move'] in (-1, 0, 1), g)
+                self.assertEqual(g['since'] is None, g['sinceTries'] == 0, g)
+                if g['move']:
+                    self.assertEqual(g['move'], 1 if g['since'] > g['then'] else -1, g)
         main = next(r for r in self.rows('findings') if r['key'] == 'main')
         self.assertEqual(main['level'], 100)                    # the level of the latest sessions
         self.assertTrue(0.3 < main['shotSecs'] < 1.5)

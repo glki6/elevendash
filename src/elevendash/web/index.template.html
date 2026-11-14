@@ -200,6 +200,10 @@
 .er-pnow .er-pnum{font-size:30px;color:var(--color-fg)}
 .er-pnow b{color:var(--color-fg)}
 .er-pnow .er-chg{min-width:0;margin-left:0}
+.er-psince{display:grid;gap:4px;padding-top:10px;border-top:1px solid var(--er-line);font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.er-psince p{margin:0;line-height:1.45}
+.er-psince b{color:var(--color-fg);font-variant-numeric:tabular-nums}
+.er-psince .er-chg{min-width:0;margin-left:0;white-space:nowrap}
 .er-ptrend{position:relative;min-height:118px;min-width:0}
 .er-ptrend svg{display:block;max-width:100%}
 .er-plan.keep{grid-template-columns:repeat(2,minmax(0,1fr));gap:0 44px}
@@ -209,6 +213,7 @@
 .er-sw.band{width:16px;height:10px;border-radius:2px;background:color-mix(in oklab,var(--er-you) 22%,transparent)}
 .er-sw.mute{background:color-mix(in oklab,var(--color-fg-muted) 55%,transparent)}
 .er-sw.dash{width:16px;height:0;border-radius:0;background:none;border-top:2px dashed var(--color-fg)}
+.er-sw.vdot{width:0;height:14px;border-radius:0;background:none;border-left:2px dotted var(--color-fg-muted)}
 
 /* serves and returns */
 .er h3.er-subhead{font-family:var(--er-display);font-weight:600;font-stretch:94%;font-size:clamp(18px,2.4cqi,21px);line-height:1.2;margin:14px 0 0;padding-top:22px;border-top:1px solid var(--er-line)}
@@ -690,8 +695,8 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
 
 <section class="er-section" id="plan">
   <div class="er-sechead">
-    <div><h2>Training plan</h2><p class="er-muted">What to practise next, in order of how many points a match each item is worth. It is rebuilt from the logs at every update, so an item drops down the list as you close its gap.</p></div>
-    <div class="er-legend"><span><i class="er-sw dot"></i>Recent sessions, counted as now</span><span><i class="er-sw hollow"></i>Earlier sessions</span><span><i class="er-sw dash"></i>Target: the same number in matches you won</span></div>
+    <div><h2>Training plan</h2><p class="er-muted">What to practise next, in order of how many points a match each item is worth. It is rebuilt from the logs at every update, so an item drops down the list as you close its gap. Each item also shows its number since the session that first put it on the plan.</p></div>
+    <div class="er-legend"><span><i class="er-sw dot"></i>Recent sessions, counted as now</span><span><i class="er-sw hollow"></i>Earlier sessions</span><span><i class="er-sw dash"></i>Target: the same number in matches you won</span><span><i class="er-sw vdot"></i>Joined the plan</span></div>
   </div>
   <div class="er-multi er-plead" data-draw="plan-lead" data-source="plan"></div>
   <ol class="er-plan" id="plan-items" data-draw="plan-items" data-source="plan"></ol>
@@ -944,7 +949,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
     <li>Everything comes from the game's own log files, copied from the Quest through Eleven's File Sharing. The Quest keeps only its most recent launches, so a copy of every log is kept on your computer. Nothing is sent anywhere: the numbers are worked out there, by code anyone can read.</li>
     <li>A session is a run of AI matches with less than 45 minutes between one ending and the next starting.</li>
     <li>The session report sets each session against all your earlier points at the same AI level. A change is called out when a session of that size would show a gap that large by chance only about one time in ten, so about one line in ten is still luck. The notes are written by the same code that builds the data.</li>
-    <li>The training plan is built for the AI level you played most in your last five sessions. Now is your latest sessions at that level, taken together until they hold 1,000 points. The target is the same number in the matches you won at that level. What an item is worth is the number of tries you get in a match, times the gap between now and the target, times what one more success has been worth in points over all your points at that level. That assumes the extra balls you land win as often as the ones you land today, and that the AI plays the same way, so read it as a ranking and not as a promise. An arrow marks a number that moved further from your earlier sessions than chance explains about nine times in ten. Speeds are the ball's speed just after the hit.</li>
+    <li>The training plan is built for the AI level you played most in your last five sessions. Now is your latest sessions at that level, taken together until they hold 1,000 points. The target is the same number in the matches you won at that level. What an item is worth is the number of tries you get in a match, times the gap between now and the target, times what one more success has been worth in points over all your points at that level. That assumes the extra balls you land win as often as the ones you land today, and that the AI plays the same way, so read it as a ranking and not as a promise. An arrow marks a number that moved further from your earlier sessions than chance explains about nine times in ten. Speeds are the ball's speed just after the hit. The plan keeps no history, so to say when an item joined it, the same sums are done again as they would have stood after each earlier session at that level. Then is the item's number over the recent sessions as they stood when it first made the list; since is every session at that level played after that one. An item joins when its number is low, and a low number is partly bad luck, so a small rise afterwards would come even without practice.</li>
     <li>In Serves and returns, depth is where the serve first bounces on the receiver's half: short is within 50 cm of the net, half-long is 50 cm to 1 m from it, long is the last 37 cm. A serve has topspin or backspin when it carries more than 20 r/s of it, otherwise little spin. A point is won by the return when the AI does not reach it or misses its next shot; it is lost to the AI's next shot when you do not reach that shot or miss it. The same goes for your serve and third ball. Rows and serve types with fewer than 30 serves are left out, and the written notes use only groups of 50 or more.</li>
     <li>The point replay moves the ball in straight lines between the contacts the game logged, at the logged times, so a ball that curved with sidespin is drawn straight. The ball is drawn larger the higher it is; its height between contacts is worked out from the contact heights and gravity. When the log stops with the ball in the air, the last stretch carries on the way the ball was going for 0.4 seconds. The 3D view curves each flight instead: the log gives the ball's velocity just after every hit and as it arrives at every contact, and the curve is the smooth path that leaves and arrives with those. Where the two can be compared, on a shot from bat to table, this path and a simpler one sit about 2 cm apart at mid-flight. The log has nothing between contacts, no bats and no players, and the spin shown is the spin as the ball left the bat.</li>
     <li>The landing call measures from where the log says the ball met the table to the nearest edge of that half. A ball that missed the table is measured where its drawn flight comes down to the height of the table, and the height over the net is read off the drawn flight where it crosses the net, so those two are estimates, good to a few centimetres.</li>
@@ -2543,10 +2548,11 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
 
 <script>
 // Training plan. The plan source holds the ranked items (evidence, drill, now, target, worth); plan_trend holds each
-// item's number in every session at the plan's level.
+// item's number in every session at the plan's level; plan_progress says when each item joined the plan and what its
+// number was then and has been since.
 (() => {
   const ER = window.ER;
-  const KEEP_UNDER = 0.15;   // points a match: an item worth less than this counts as already working
+  const KEEP_UNDER = 0.15;   // points a match: an item worth less than this counts as already working (PLAN_KEEP in the builder)
   const isKeep = (r) => r.status === 'reached' || (r.gain != null && r.gain < KEEP_UNDER);
   const ranked = () => {
     const rows = ER.rows('plan');
@@ -2581,7 +2587,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
         ER.tr('If you reach every target below. An estimate from your own points, not a promise.')));
   });
 
-  const trend = (box, r, pts) => {
+  const trend = (box, r, pts, g) => {
     if (!pts.length) return;
     const W = Math.max(220, box.clientWidth || 320), H = 118;
     const svg = ER.svg(box, W, H, ER.tr('{0}: line chart by session at level {1}', ER.tx(r, 'metric'), r.level));
@@ -2608,6 +2614,11 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       if (Math.abs(y(r.target) - py(last)) >= 13)
         svg.append('text').attr('x', W - m.r + 9).attr('y', y(r.target)).attr('dominant-baseline', 'middle').text(ER.tr('target'));
     }
+    const joined = g && g.ever && pts.length > 1 ? pts.find((p) => p.session >= g.session) : null;
+    if (joined) {
+      svg.append('line').attr('x1', px(joined)).attr('x2', px(joined)).attr('y1', m.t).attr('y2', H - m.b)
+        .style('stroke', 'var(--color-fg-muted)').style('stroke-width', 2).style('stroke-dasharray', '1 4').style('stroke-linecap', 'round');
+    }
     svg.append('path').datum(pts).attr('d', d3.line().x(px).y(py))
       .style('fill', 'none').style('stroke', ER.YOU).style('stroke-width', 2).style('stroke-linejoin', 'round').style('stroke-linecap', 'round');
     pts.forEach((p) => {
@@ -2625,7 +2636,9 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
         const [qx] = d3.pointer(evt);
         const p = d3.least(pts, (q) => Math.abs(px(q) - qx));
         ring.attr('cx', px(p)).attr('cy', py(p)).style('display', null);
-        tip.show(evt, [`${ER.tr('Session {0}', p.session)} · ${ER.F.date(p.date)}`, ER.tr('{0} of {1} tries', ER.F.pct(p.value), ER.F.int(p.tries))]);
+        const lines = [`${ER.tr('Session {0}', p.session)} · ${ER.F.date(p.date)}`, ER.tr('{0} of {1} tries', ER.F.pct(p.value), ER.F.int(p.tries))];
+        if (joined && p === joined) lines.push(ER.tr('Joined the plan'));
+        tip.show(evt, lines);
       })
       .on('pointerleave', () => {
         tip.hide();
@@ -2633,7 +2646,46 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       });
   };
 
-  const item = (r, keep) => {
+  // Since the item joined the plan: when, its number then, its number over the sessions since, and whether that moved.
+  const since = (g) => {
+    if (!g || g.state === '-') return null;
+    const d = ER.el('div', 'er-psince');
+    const sp = (text, field) => ER.span(text, 'plan_progress', field, g.key);
+    const bold = (text, field) => {
+      const b = ER.el('b');
+      b.appendChild(sp(text, field));
+      return b;
+    };
+    d.appendChild(ER.el('span', 'er-label', ER.tr('Since it joined the plan')));
+    const lead = ER.el('p');
+    d.appendChild(lead);
+    if (!g.ever) {
+      lead.textContent = ER.tr('Never on the plan at level {0}, so there is nothing to follow.', g.level);
+      return d;
+    }
+    const when = [sp(ER.F.date(g.date), 'date'), sp(String(g.session), 'session')];
+    if (g.state === '0') lead.append(...ER.trn('Joined on {0} (session {1}). Already working since {2}.', ...when, sp(ER.F.date(g.runDate), 'runDate')));
+    else if (g.sessionsOn < g.sessionsFrom) lead.append(...ER.trn('Joined on {0} (session {1}). On the plan after {2} of the {3} sessions from then on.', ...when, sp(String(g.sessionsOn), 'sessionsOn'), sp(String(g.sessionsFrom), 'sessionsFrom')));
+    else lead.append(...ER.trn('On the plan since {0} (session {1}).', ...when));
+    const nums = ER.el('p');
+    d.appendChild(nums);
+    if (g.since == null) {
+      nums.textContent = ER.tr('No session played since then, so nothing to compare yet.');
+      return d;
+    }
+    nums.append(...ER.trn(g.sessionsSince === 1 ? '{0} then, {1} in the session since ({3} tries).' : '{0} then, {1} over the {2} sessions since ({3} tries).',
+      bold(ER.F.pct(g.then), 'then'), bold(ER.F.pct(g.since), 'since'), sp(String(g.sessionsSince), 'sessionsSince'), sp(ER.F.int(g.sinceTries), 'sinceTries')));
+    const chg = ER.el('span', 'er-chg' + (g.move > 0 ? ' good' : g.move < 0 ? ' bad' : ''));
+    if (g.move) {
+      const arrow = ER.el('span', null, g.move > 0 ? '▲ ' : '▼ ');
+      arrow.setAttribute('aria-hidden', 'true');
+      chg.append(arrow, ER.tr(g.move > 0 ? 'Clearly up' : 'Clearly down'));
+    } else chg.textContent = ER.tr('No clear change');
+    nums.append(' ', chg);
+    return d;
+  };
+
+  const item = (r, keep, g) => {
     const li = ER.el('li', 'er-pitem');
     li.id = 'plan-' + r.key;
     const a = ER.el('div'), b = ER.el('div');
@@ -2683,6 +2735,8 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     }
     const box = ER.el('div', 'er-ptrend');
     b.append(metric, now, box);
+    const prog = since(g);
+    if (prog) b.appendChild(prog);
     li.append(a, b);
     return [li, box];
   };
@@ -2690,17 +2744,19 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   const list = (keep) => (el) => {
     const rows = ranked();
     if (!rows) return ER.wait(el, ['plan']);
-    if (ER.same(el, [ER.lang(), el.clientWidth, ER.rows('plan'), ER.rows('plan_trend')])) return;
+    const prog = ER.rows('plan_progress') || [];
+    if (ER.same(el, [ER.lang(), el.clientWidth, ER.rows('plan'), ER.rows('plan_trend'), ER.rows('plan_progress')])) return;
     const mine = rows.filter((r) => isKeep(r) === keep);
     if (!mine.length) {
       el.replaceChildren(ER.el('li', 'er-muted', ER.tr(keep ? 'Nothing here yet: every item above still has a gap to close.' : 'Every item is at the level of the matches you won. Time to move the targets.')));
       return;
     }
-    const built = mine.map((r) => item(r, keep));
+    const joinedOf = (r) => prog.find((g) => g.key === r.key && g.level === r.level);
+    const built = mine.map((r) => item(r, keep, joinedOf(r)));
     el.replaceChildren(...built.map(([li]) => li));
     const tr = ER.rows('plan_trend');
     if (!tr) return;
-    built.forEach(([, box], i) => trend(box, mine[i], tr.filter((p) => p.item === mine[i].key && p.value != null).sort((p, q) => p.session - q.session)));
+    built.forEach(([, box], i) => trend(box, mine[i], tr.filter((p) => p.item === mine[i].key && p.value != null).sort((p, q) => p.session - q.session), joinedOf(mine[i])));
   };
   dash.draw('plan-items', list(false));
   dash.draw('plan-keep', list(true));

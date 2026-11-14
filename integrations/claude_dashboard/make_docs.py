@@ -31,6 +31,8 @@ TITLES = {
              'One row per thing to practise at the AI level you play now, ranked by the points a match it is worth: your recent number, the target from matches you won, the evidence and a drill.'),
     'plan_trend': ('Training plan by session',
                    'Each plan item\'s number in every session at that level, with how many tries it covers.'),
+    'plan_progress': ('Training plan progress',
+                      'For each plan item: the session that first put it on the plan, its number then, its number over the sessions since, and whether that is a clear change.'),
     'serve_flow': ('Where serve points end',
                    'For each AI level and each kind of serve (side, spin, depth), yours and the AI\'s: the share of points that ended at each stage, from the serve to the later rally.'),
     'serve_types': ('Serve types',

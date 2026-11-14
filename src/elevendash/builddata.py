@@ -688,6 +688,68 @@ for i, r in enumerate(plan):
 write('plan', plan)
 write('plan_trend', plan_trend)
 
+# ---------------- plan progress: each item since it joined the list ----------------
+# The plan keeps no history: it is rebuilt from the logs at every update. So the same sums are done again as they would
+# have stood after each earlier session at the plan's level (the sessions up to that one only), which gives every item a
+# state session by session: on the list (1), already working (0: at its target, or worth under PLAN_KEEP points a
+# match) or without a target yet (-). An item joined the list at the first session that put it there. Its number then
+# (the recent sessions as they stood at that session) is set against its number over the sessions played since, with
+# the same one-in-ten rule for calling a change clear. An item joins when its number is low, and a low number is partly
+# bad luck, so some rise afterwards would come without any practice: read a small rise with that in mind.
+PLAN_KEEP = 0.15        # points a match; the page uses the same value to split the list from "Already working"
+sess_won = [plan_tally([(ai_items[r['key']][0], q) for r in ms if r['level'] == plan_level and r['result'] == 'Won'
+                        for q in ai_items[r['key']][1]]) for _, ms in lv_sessions]
+sess_n = [sum(r['level'] == plan_level for r in ms) for _, ms in lv_sessions]
+
+
+def plan_asof(k):
+    """The plan as it stood after session k (an index into sess_tallies): {item: state, gain, and the recent tallies}."""
+    rec, n = Counter(), 0
+    while n <= k and rec['pts'] < RECENT_POINTS:
+        rec.update(sess_tallies[k - n][1])
+        n += 1
+    tot, won = Counter(), Counter()
+    for j in range(k + 1):
+        tot.update(sess_tallies[j][1])
+        won.update(sess_won[j])
+    m, out = sum(sess_n[:k + 1]), {}
+    for key, _title, _metric, num, den, worth, _drill in PLAN:
+        now, target = fr(rec, num, den), fr(won, num, den) if won[den] >= MIN_TARGET else None
+        gain = None if target is None or now is None else round(max(0.0, tot[den] / m * (target - now) * worth(tot)), 2)
+        state = '-' if gain is None else '0' if now >= target or gain < PLAN_KEEP else '1'
+        out[key] = {'state': state, 'gain': gain, 'num': rec[num], 'den': rec[den]}
+    return out
+
+
+plan_hist = [plan_asof(k) for k in range(len(sess_tallies))]
+for r in plan:      # the last step of the history is the plan itself
+    assert plan_hist[-1][r['key']]['gain'] == r['gain'], (r['key'], plan_hist[-1][r['key']]['gain'], r['gain'])
+plan_progress = []
+for key, title, metric, num, den, worth, drill in PLAN:
+    states = ''.join(h[key]['state'] for h in plan_hist)
+    run = len(states.rstrip(states[-1]))      # where the latest unbroken run of the current state began
+    row = {'key': key, 'level': plan_level, 'state': states[-1], 'states': states, 'ever': int('1' in states),
+           'runSession': sess_tallies[run][0]['n'], 'runDate': sess_tallies[run][0]['date'],
+           'sessionsKnown': len(states) - states.count('-')}
+    if row['ever']:
+        e = states.index('1')
+        then, since = plan_hist[e][key], Counter()
+        for _, c in sess_tallies[e + 1:]:
+            since.update(c)
+        move = 0
+        if then['den'] >= MIN_TRIES and since[den] >= MIN_TRIES:
+            pool = (then['num'] + since[num]) / (then['den'] + since[den])
+            se = math.sqrt(pool * (1 - pool) * (1 / then['den'] + 1 / since[den]))
+            d = since[num] / since[den] - then['num'] / then['den']
+            move = 0 if not se or abs(d) / se < MIN_Z else 1 if d > 0 else -1
+        row.update({'session': sess_tallies[e][0]['n'], 'sessionKey': sess_tallies[e][0]['key'], 'date': sess_tallies[e][0]['date'],
+                    'sessionsOn': states[e:].count('1'), 'sessionsFrom': len(states) - e,
+                    'sessionsSince': len(states) - 1 - e, 'matchesSince': sum(sess_n[e + 1:]),
+                    'then': pc(then['num'], then['den']), 'thenTries': then['den'], 'thenGain': then['gain'],
+                    'since': pc(since[num], since[den]), 'sinceTries': since[den], 'move': move})
+    plan_progress.append(row)
+write('plan_progress', plan_progress)
+
 # ---------------- form: your latest matches at a level, and how a session goes from its first match to its last ----------------
 # form: one row per AI match, in order at its level, with the share of matches and of points won over the last 10, 20
 # and 50 matches at that level up to it, each with the range the true share most likely sits in (9 times in 10, Wilson's
