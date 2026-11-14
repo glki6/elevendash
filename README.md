@@ -236,8 +236,8 @@ from other headsets, game versions and online matches are welcome (redacted): se
 I had never played table tennis before Eleven. I got into the game, wanted to get better at it, and wanted to know
 what was losing me points instead of guessing. [11hero](https://11hero.com) showed me what match analysis for Eleven
 can look like, and elevendash is inspired by it: the same kind of numbers, worked out on my own computer from the
-game's logs, for the matches I play most, which are against the AI. I play with a SolidSlime paddle adapter, made by
-the same people behind 11hero.
+game's logs, for the matches I play most, which are against the AI. I play with a
+[SolidSlime paddle adapter](https://vrpingpong.net), made by the same people behind 11hero.
 
 I am one player with one headset, so this is built around how I play. If it helps you improve too, or it gets
 something wrong on your logs, I would like to hear about it.
