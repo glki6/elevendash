@@ -238,6 +238,9 @@
 .er-rcourt{min-height:0;max-width:300px;width:100%}
 .er-rflow{min-height:0}
 .er-rcourt svg{border-radius:10px;touch-action:pan-y}
+.er-rcourt svg.er-r3d{cursor:grab;user-select:none;-webkit-user-select:none}
+.er-rcourt svg.er-r3d:active{cursor:grabbing}
+.er-rcourt svg.er-r3d:focus-visible{outline:2px solid var(--er-you);outline-offset:2px}
 .er-rbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .er-rbar input[type=range]{flex:1 1 120px;min-width:0;margin:0;accent-color:var(--er-you)}
 .er-rplay{min-width:5.4em;text-align:center}
@@ -583,7 +586,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
   </details>
   <div class="er-card" id="match-replay">
     <h3>Point by point</h3>
-    <p class="er-muted">One bar per point, in order: bars above the line are points you won, bars below are points you lost, and a longer bar is a longer point. Click a bar to watch that point from above, you at the bottom, drawn from every contact the game logged: bat, table, net and floor.</p>
+    <p class="er-muted">One bar per point, in order: bars above the line are points you won, bars below are points you lost, and a longer bar is a longer point. Click a bar to watch that point from above, you at the bottom, drawn from every contact the game logged: bat, table, net and floor. Switch to 3D to see how the ball flew, and to replay the shot that ended the point in slow motion with its spin.</p>
     <div class="er-replay">
       <div class="er-rstage">
         <div class="er-chart er-rcourt" id="chart-replay" data-draw="replay" data-nomorph data-source="replay" data-fetchpriority="low"></div>
@@ -595,8 +598,10 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
           <button class="er-btn" type="button" id="replay-prev">← Previous point</button>
           <button class="er-btn" type="button" id="replay-next">Next point →</button>
         </div>
+        <div class="er-rbar"><span class="er-ctl" id="replay-view-label">View</span><div class="er-tabs" id="replay-view" role="group" aria-labelledby="replay-view-label"><button class="er-tab" type="button" data-view="2d" aria-pressed="true">2D</button><button class="er-tab" type="button" data-view="3d" aria-pressed="false">3D</button></div><button class="er-btn" type="button" id="replay-last" hidden>Deciding shot</button></div>
         <div class="er-rbar"><span class="er-ctl" id="replay-rate-label">Speed</span><div class="er-tabs" id="replay-rate" role="group" aria-labelledby="replay-rate-label"><button class="er-tab" type="button" data-rate="1" aria-pressed="true">Full</button><button class="er-tab" type="button" data-rate="0.5" aria-pressed="false">Half</button><button class="er-tab" type="button" data-rate="0.25" aria-pressed="false">Quarter</button></div></div>
         <div class="er-legend court"><span><i class="er-sw ball"></i>Your shots</span><span><i class="er-sw ball ai"></i>Opponent's shots</span><span><i class="er-sw rx"></i>Shot that missed</span></div>
+        <p class="er-muted" id="replay-3d-hint" hidden>Drag the table to turn it. Deciding shot replays the shot that ended the point at a tenth of real speed. The small ball shows the spin the shot left the bat with, always turning at a tenth of real speed.</p>
       </div>
       <div class="er-rside">
         <div class="er-legend"><span><i class="er-sw"></i>You won the point</span><span><i class="er-sw ai"></i>You lost it</span></div>
@@ -827,7 +832,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
     <li>The session report sets each session against all your earlier points at the same AI level. A change is called out when a session of that size would show a gap that large by chance only about one time in ten, so about one line in ten is still luck. The notes are written by the same code that builds the data.</li>
     <li>The training plan is built for the AI level you played most in your last five sessions. Now is your latest sessions at that level, taken together until they hold 1,000 points. The target is the same number in the matches you won at that level. What an item is worth is the number of tries you get in a match, times the gap between now and the target, times what one more success has been worth in points over all your points at that level. That assumes the extra balls you land win as often as the ones you land today, and that the AI plays the same way, so read it as a ranking and not as a promise. An arrow marks a number that moved further from your earlier sessions than chance explains about nine times in ten. Speeds are the ball's speed just after the hit.</li>
     <li>In Serves and returns, depth is where the serve first bounces on the receiver's half: short is within 50 cm of the net, half-long is 50 cm to 1 m from it, long is the last 37 cm. A serve has topspin or backspin when it carries more than 20 r/s of it, otherwise little spin. A point is won by the return when the AI does not reach it or misses its next shot; it is lost to the AI's next shot when you do not reach that shot or miss it. The same goes for your serve and third ball. Rows and serve types with fewer than 30 serves are left out, and the written notes use only groups of 50 or more.</li>
-    <li>The point replay moves the ball in straight lines between the contacts the game logged, at the logged times, so a ball that curved with sidespin is drawn straight. The ball is drawn larger the higher it is; its height between contacts is worked out from the contact heights and gravity. When the log stops with the ball in the air, the last stretch carries on the way the ball was going for 0.4 seconds.</li>
+    <li>The point replay moves the ball in straight lines between the contacts the game logged, at the logged times, so a ball that curved with sidespin is drawn straight. The ball is drawn larger the higher it is; its height between contacts is worked out from the contact heights and gravity. When the log stops with the ball in the air, the last stretch carries on the way the ball was going for 0.4 seconds. The 3D view curves each flight instead: the log gives the ball's velocity just after every hit and as it arrives at every contact, and the curve is the smooth path that leaves and arrives with those. Where the two can be compared, on a shot from bat to table, this path and a simpler one sit about 2 cm apart at mid-flight. The log has nothing between contacts, no bats and no players, and the spin shown is the spin as the ball left the bat.</li>
     <li>Videos are the headset recording of a session, uploaded whole to YouTube as unlisted: only someone with the link can open one. A recording is lined up with the log by sound, sliding the log's contact times along the soundtrack until they sit on the clicks of the ball. A point's link starts two seconds before its toss. Sessions that were not recorded have no links.</li>
     <li>The highlight reel is cut from the same recording by code, from the log alone. Each point scores two for every shot in the rally, one for every m/s over 10 on your winning shot, and extra for a point won at game point, late in a close game, or to win a match. Points you won need three shots or more; up to two rallies of six shots or more that you lost go in too. The best-scoring points are taken until the reel is about 90 seconds long, then shown in the order they were played, one rally fading into the next.</li>
     <li>The metrics use 11hero.com's definitions. They were checked against 11hero on a real online match, with both players read from the game's log: every hit came out the same (speed, spin, shot type, whether it landed and whether it won the point), and so did 37 of the 42 numbers on its page. The other five are the shares of points won by each kind of shot, which move a little because 11hero counts one more, empty point at the end of the match.</li>
@@ -3427,13 +3432,23 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
 
 <script>
 // Point replay. One row of `replay` is one point: every ball contact from the serve on (see the dataset's note for the
-// format). The point shown, the time and the speed are this card's own state, not dashboard settings.
+// format). The point shown, the time, the speed and the view (from above, or 3D) are this card's own state, not
+// dashboard settings. The 3D view is drawn here with its own small camera: no 3D library.
 (() => {
   const ER = window.ER;
   const SHOT = {S: ER.k('Serve'), D: ER.k('Drive'), L: ER.k('Slow loop'), F: ER.k('Fast loop'), P: ER.k('Push'), C: ER.k('Chop')};
-  const X = 1.4, Z = 2.6, G = 9.81, HOLD = 0.35;
+  const X = 1.4, Z = 2.6, G = 9.81, HOLD = 0.35, SLOW = 0.1;
+  // the table in metres: half its width and length, the height of its top, the net's height and half width, the ball's radius
+  const TW = 0.7625, TL = 1.37, TY = 0.76, NH = 0.1525, NW = 0.915, BR = 0.02;
   const HALL = 'color-mix(in oklab, var(--er-court) 30%, #0b111c)', MINE = '#fff';
-  const st = {match: null, key: null, t: 0, end: 0, rate: 1, playing: false, raf: 0, last: 0, ev: [], hits: [], g: null, rows: []};
+  const st = {match: null, key: null, t: 0, end: 0, rate: 1, playing: false, raf: 0, last: 0, ev: [], hits: [], g: null, rows: [],
+    view: '2d', slow: false, fl: [], seg: []};
+  // where the 3D view is seen from: turned round the table (0 is behind you) and raised above it, in radians
+  const CAM = {yaw: 0.3, pitch: 0.55};
+  const cam = Object.assign({}, CAM);
+  try {
+    if (localStorage.getItem('elevendash.replay.view') === '3d') st.view = '3d';
+  } catch (e) { /* no storage here: the view starts from above */ }
   const $ = (id) => document.getElementById(id);
   const calm = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   const opp = () => {
@@ -3445,11 +3460,14 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     const hits = [];
     const ev = track.split(';').map((s) => {
       const f = s.split(',');
-      const e = {k: f[0], x: +f[1] / 100, z: +f[2] / 100, y: +f[3] / 100, t: +f[4] / 100};
+      const e = {k: f[0], x: +f[1] / 100, z: +f[2] / 100, y: +f[3] / 100, t: +f[4] / 1000};
+      // three numbers from place i on, as [x, y up, z]; null where the log had none
+      const v3 = (i, k) => (f[i] != null && f[i] !== '' && f[i + 2] != null ? [+f[i] * k, +f[i + 1] * k, +f[i + 2] * k] : null);
       if (e.k === 'h') {
-        Object.assign(e, {you: f[5] === 'y', speed: +f[6] / 10, top: +f[7], shot: f[8], ok: f[9] === '1', n: hits.length + 1});
+        Object.assign(e, {you: f[5] === 'y', speed: +f[6] / 10, top: +f[7], shot: f[8], ok: f[9] === '1', n: hits.length + 1,
+          pre: v3(10, 0.1), post: v3(13, 0.1), spin: v3(16, 1)});
         hits.push(e);
-      }
+      } else e.pre = v3(5, 0.1);
       e.by = hits.length - 1;
       return e;
     });
@@ -3484,6 +3502,43 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     st.hits = p.hits;
     st.end = p.ev.length ? p.ev[p.ev.length - 1].t + HOLD : 0;
     st.t = play ? 0 : st.end;
+    // for the 3D view: the flight between each contact and the next, and points along it for the trail
+    st.fl = p.ev.slice(0, -1).map((a, i) => flight(a, p.ev[i + 1]));
+    st.seg = st.fl.map((fn, i) => {
+      const a = p.ev[i], dt = p.ev[i + 1].t - a.t, n = Math.max(2, Math.min(120, Math.ceil(dt / 0.012)));
+      return {by: a.by, t0: a.t, dt, n, P: Array.from({length: n + 1}, (x, j) => fn(j / n)), S: null};
+    });
+  };
+
+  // The ball's flight from contact a to contact b, as a function of the share of the time gone (0 to 1) giving
+  // [x, y up, z]. The log has the ball's velocity just after a hit and as it arrives at a contact. With both, the
+  // flight is the cubic that leaves and arrives with them; with one, a steady pull that fits it; with neither,
+  // gravity alone. The last, estimated stretch (kind x) just carries on from the bat under gravity.
+  const flight = (a, b) => {
+    const T = b.t - a.t, p0 = [a.x, a.y, a.z], p1 = [b.x, b.y, b.z];
+    const v0 = a.k === 'h' ? a.post : null, v1 = b.k === 'x' ? null : b.pre;
+    const up = (p) => (p[1] < BR ? [p[0], BR, p[2]] : p);
+    if (!(T > 0)) return () => p1;
+    if (b.k === 'x' && v0) return (u) => up([p0[0] + v0[0] * u * T, p0[1] + v0[1] * u * T - 0.5 * G * u * u * T * T, p0[2] + v0[2] * u * T]);
+    if (v0 && v1) {
+      return (u) => {
+        const u2 = u * u, u3 = u2 * u, h00 = 2 * u3 - 3 * u2 + 1, h10 = (u3 - 2 * u2 + u) * T, h01 = 3 * u2 - 2 * u3, h11 = (u3 - u2) * T;
+        return up(p0.map((x, i) => h00 * x + h10 * v0[i] + h01 * p1[i] + h11 * v1[i]));
+      };
+    }
+    if (v1) return (u) => up(p1.map((x, i) => x - v1[i] * (1 - u) * T + (p0[i] - x + v1[i] * T) * (1 - u) * (1 - u)));
+    if (v0) return (u) => up(p0.map((x, i) => x + v0[i] * u * T + (p1[i] - x - v0[i] * T) * u * u));
+    return (u) => [p0[0] + (p1[0] - p0[0]) * u, p0[1] + (p1[1] - p0[1]) * u + 0.5 * G * T * T * u * (1 - u), p0[2] + (p1[2] - p0[2]) * u];
+  };
+  // Where the ball is at time t in the 3D view: the contact it last left, and its place on that flight.
+  const at3 = (t) => {
+    const ev = st.ev, n = ev.length;
+    if (!n) return null;
+    if (n === 1 || t >= ev[n - 1].t) return {i: n - 1, p: [ev[n - 1].x, ev[n - 1].y, ev[n - 1].z]};
+    let i = 0;
+    while (i < n - 2 && ev[i + 1].t <= t) i += 1;
+    const dt = ev[i + 1].t - ev[i].t;
+    return {i, p: st.fl[i](dt > 0 ? Math.max(0, Math.min(1, (t - ev[i].t) / dt)) : 1)};
   };
 
   // Where the ball is at time t: straight between contacts, with a height from gravity for its drawn size.
@@ -3501,6 +3556,12 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   const paint = () => {
     const g = st.g;
     if (!g || !st.ev.length) return;
+    const t = st.t, cur = g.three ? paint3(g) : paint2(g);
+    st.rows.forEach((tr, i) => tr.classList.toggle('on', i === cur && t < st.end));
+    const seek = $('replay-seek');
+    if (seek) seek.value = st.end ? Math.round(1000 * t / st.end) : 1000;
+  };
+  const paint2 = (g) => {
     const t = st.t, now = at(t), ev = st.ev;
     const cur = now.i >= 0 ? ev[now.i].by : 0;
     g.trails.forEach((path, s) => {
@@ -3517,9 +3578,215 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     g.ball.setAttribute('cx', g.sx(now.x));
     g.ball.setAttribute('cy', g.sy(now.z));
     g.ball.setAttribute('r', (5 + Math.max(0, Math.min(0.7, now.y - 0.78)) * 5).toFixed(1));
-    st.rows.forEach((tr, i) => tr.classList.toggle('on', i === cur && t < st.end));
-    const seek = $('replay-seek');
-    if (seek) seek.value = st.end ? Math.round(1000 * t / st.end) : 1000;
+    return cur;
+  };
+
+  // ---- the 3D view ----
+  const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  // Point the camera: work out where every fixed thing sits on screen. The picture is scaled so the table and the
+  // room just round it, where nearly every shot is hit, always fit, from any side.
+  const look = (g) => {
+    const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw), cp = Math.cos(cam.pitch), sp = Math.sin(cam.pitch), D = 5;
+    const c = [D * sy * cp, TY + D * sp, -D * cy * cp], f = [-sy * cp, -sp, cy * cp], r = [cy, 0, sy], u = cross(f, r);
+    const raw = (p) => {
+      const v = [p[0] - c[0], p[1] - c[1], p[2] - c[2]], zc = dot(v, f);
+      return [dot(v, r) / zc, -dot(v, u) / zc, zc];
+    };
+    let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    [-0.92, 0.92].forEach((bx) => [0.25, 1.25].forEach((by) => [-1.8, 1.8].forEach((bz) => {
+      const q = raw([bx, by, bz]);
+      x0 = Math.min(x0, q[0]);
+      x1 = Math.max(x1, q[0]);
+      y0 = Math.min(y0, q[1]);
+      y1 = Math.max(y1, q[1]);
+    })));
+    const F = Math.min((g.W - 12) / (x1 - x0), (g.H - 12) / (y1 - y0));
+    const ox = g.W / 2 - F * (x0 + x1) / 2, oy = g.H / 2 - F * (y0 + y1) / 2;
+    Object.assign(g, {F, r, u, f});
+    g.pr = (p) => {
+      const q = raw(p);
+      return [ox + F * q[0], oy + F * q[1], q[2]];
+    };
+    const P = (p) => {
+      const q = g.pr(p);
+      return q[0].toFixed(1) + ',' + q[1].toFixed(1);
+    };
+    const quad = (y, x, z) => `M${P([-x, y, -z])}L${P([x, y, -z])}L${P([x, y, z])}L${P([-x, y, z])}Z`;
+    const d = (node, v) => node.setAttribute('d', v);
+    d(g.floor, quad(0, TW, TL));
+    d(g.legs, [[-0.6, -1.05], [0.6, -1.05], [0.6, 1.05], [-0.6, 1.05]].map(([x, z]) => `M${P([x, TY, z])}L${P([x, 0, z])}`).join(''));
+    const lo = TY - 0.06, cs = [[-TW, -TL], [TW, -TL], [TW, TL], [-TW, TL]];
+    d(g.sides, cs.map((a, i) => {
+      const b = cs[(i + 1) % 4];
+      return `M${P([a[0], TY, a[1]])}L${P([b[0], TY, b[1]])}L${P([b[0], lo, b[1]])}L${P([a[0], lo, a[1]])}Z`;
+    }).join(''));
+    d(g.top, quad(TY, TW, TL));
+    d(g.mid, `M${P([0, TY, -TL])}L${P([0, TY, TL])}`);
+    d(g.net, `M${P([-NW, TY, 0])}L${P([NW, TY, 0])}L${P([NW, TY + NH, 0])}L${P([-NW, TY + NH, 0])}Z`);
+    d(g.tape, `M${P([-NW, TY + NH, 0])}L${P([NW, TY + NH, 0])}`);
+    g.names.forEach(([node, z]) => {
+      const q = g.pr([0, TY, z]);
+      // kept inside the picture, and out from under the spin ball in its corner
+      const x = Math.max(28, Math.min(g.W - 28, q[0])), y = Math.max(16, Math.min(g.H - 8, q[1] + (q[2] < D ? 16 : -6)));
+      const s = g.spin, under = x < s.cx + s.R + 30 && y < s.cy + s.R + 24;
+      node.setAttribute('x', x.toFixed(1));
+      node.setAttribute('y', (under ? s.cy + s.R + 34 : y).toFixed(1));
+    });
+    g.marks.forEach((m) => m[2](P));
+    st.seg.forEach((sg) => {
+      sg.S = sg.P.map(P);
+    });
+  };
+  const paint3 = (g) => {
+    const t = st.t, ev = st.ev, now = at3(t), cur = ev[now.i].by, flying = now.i < ev.length - 1;
+    const q = g.pr(now.p);
+    g.trails.forEach((path, s) => {
+      let dd = '';
+      if (s <= cur) {
+        st.seg.forEach((sg, i) => {
+          if (sg.by !== s || i > now.i) return;
+          const upto = i < now.i ? sg.n : Math.floor(sg.n * Math.max(0, Math.min(1, (t - sg.t0) / sg.dt)) + 1e-6);
+          for (let j = dd ? 1 : 0; j <= upto; j += 1) dd += (dd ? 'L' : 'M') + sg.S[j];
+          if (i === now.i && flying) dd += 'L' + q[0].toFixed(1) + ',' + q[1].toFixed(1);
+        });
+      }
+      path.setAttribute('d', dd);
+      path.style.opacity = s === cur ? 1 : s === cur - 1 ? 0.5 : 0.2;
+    });
+    g.marks.forEach(([node, e]) => {
+      node.style.display = e.t <= t ? '' : 'none';
+      node.style.opacity = e.by >= cur - 1 ? 1 : 0.35;
+    });
+    g.ball.setAttribute('cx', q[0].toFixed(1));
+    g.ball.setAttribute('cy', q[1].toFixed(1));
+    g.ball.setAttribute('r', Math.max(3.5, g.F * BR * 2.2 / q[2]).toFixed(1));
+    // its shadow, straight below on the table or the floor
+    const p = now.p, over = Math.abs(p[0]) <= TW && Math.abs(p[2]) <= TL && p[1] >= TY;
+    const qs = g.pr([p[0], over ? TY : 0, p[2]]), rs = Math.max(3, g.F * 0.032 / qs[2]);
+    g.shade.setAttribute('cx', qs[0].toFixed(1));
+    g.shade.setAttribute('cy', qs[1].toFixed(1));
+    g.shade.setAttribute('rx', rs.toFixed(1));
+    g.shade.setAttribute('ry', (rs * Math.max(0.22, Math.sin(cam.pitch))).toFixed(1));
+    spin3(g, st.hits[cur], t);
+    return cur;
+  };
+  // The spin ball: the ball as the camera sees it, turning the way the shot's spin turns it. Two rings drawn on it
+  // go round with it; the thin line through it is the axis it turns about. It always turns at a tenth of real speed,
+  // whatever the replay's speed, so the turning can be seen: 60 turns a second shows as 6.
+  const spin3 = (g, h, t) => {
+    const s = g.spin, w = h && h.spin ? Math.hypot(h.spin[0], h.spin[1], h.spin[2]) : 0;
+    s.ring.style.stroke = h && !h.you ? ER.AI : MINE;
+    s.label.textContent = h && h.spin ? ER.tr('{0} r/s', Math.round(w)) : '';
+    if (w < 1) {
+      [s.a, s.b, s.axis].forEach((n) => n.setAttribute('d', ''));
+      return;
+    }
+    const a = h.spin.map((x) => x / w);
+    let e1 = cross(a, Math.abs(a[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0]);
+    const n1 = Math.hypot(e1[0], e1[1], e1[2]);
+    e1 = e1.map((x) => x / n1);
+    const e2 = cross(a, e1);
+    const rate = st.slow ? SLOW : st.rate;
+    const th = 2 * Math.PI * w * Math.max(0, t - h.t) * (rate > SLOW ? SLOW / rate : 1), c = Math.cos(th), sn = Math.sin(th);
+    const f1 = e1.map((x, i) => c * x + sn * e2[i]), f2 = e1.map((x, i) => c * e2[i] - sn * x);
+    const xy = (p, k) => (s.cx + s.R * k * dot(p, g.r)).toFixed(1) + ',' + (s.cy - s.R * k * dot(p, g.u)).toFixed(1);
+    // the half of a ring through the two ends of the axis that faces the camera
+    const ring = (e) => {
+      let dd = '', pen = false;
+      for (let j = 0; j <= 48; j += 1) {
+        const ph = j / 48 * 2 * Math.PI, p = a.map((x, i) => Math.cos(ph) * x + Math.sin(ph) * e[i]);
+        if (dot(p, g.f) < 0.02) {
+          dd += (pen ? 'L' : 'M') + xy(p, 1);
+          pen = true;
+        } else pen = false;
+      }
+      return dd;
+    };
+    s.a.setAttribute('d', ring(f1));
+    s.b.setAttribute('d', ring(f2));
+    s.axis.setAttribute('d', `M${xy(a, -1.45)}L${xy(a, 1.45)}`);
+  };
+  const draw3 = (el, W, H) => {
+    const svg = ER.svg(el, W, H, ER.tr("Table tennis table in 3D: the flight of the ball through the chosen point, white for your shots and orange for the opponent's. Drag it, or use the arrow keys, to turn it"));
+    svg.attr('class', 'er-r3d').attr('tabindex', 0).attr('data-source', 'replay').attr('data-field', 'track').attr('data-where', ER.where(st.key));
+    svg.append('rect').attr('width', W).attr('height', H).style('fill', HALL);
+    const path = (parent) => parent.append('path').style('fill', 'none');
+    const g = {three: true, W, H, marks: [], names: []};
+    g.floor = path(svg).style('fill', '#000').style('fill-opacity', 0.28).node();
+    g.legs = path(svg).style('stroke', '#000').style('stroke-opacity', 0.55).style('stroke-width', 3).style('stroke-linecap', 'round').node();
+    g.sides = path(svg).style('fill', 'color-mix(in oklab, var(--er-court) 45%, #000)').node();
+    g.top = path(svg).style('fill', 'var(--er-court)').style('stroke', '#fff').style('stroke-width', 2).style('stroke-linejoin', 'round').node();
+    g.mid = path(svg).style('stroke', '#fff').style('stroke-opacity', 0.45).node();
+    const onTable = svg.append('g');
+    g.shade = svg.append('ellipse').style('fill', '#000').style('fill-opacity', 0.38).node();
+    g.net = path(svg).style('fill', '#fff').style('fill-opacity', 0.13).style('stroke', '#fff').style('stroke-opacity', 0.5).node();
+    g.tape = path(svg).style('stroke', '#fff').style('stroke-width', 2.5).style('stroke-linecap', 'round').node();
+    [[opp(), TL + 0.42], ['You', -TL - 0.42]].forEach(([s, z]) => g.names.push([svg.append('text').attr('text-anchor', 'middle').style('fill', '#fff')
+      .style('fill-opacity', 0.75).style('font-size', '11px').style('letter-spacing', '.08em').text(ER.tr(s).toUpperCase()).node(), z]));
+    const colour = (s) => (st.hits[s] && st.hits[s].you ? MINE : ER.AI);
+    g.trails = st.hits.map((h, s) => path(svg).style('stroke', colour(s)).style('stroke-width', 2).style('stroke-linejoin', 'round').style('stroke-linecap', 'round').node());
+    const inAir = svg.append('g');
+    st.ev.forEach((e) => {
+      const c = colour(e.by), at = [e.x, e.y, e.z];
+      const spot = (node) => (P) => {
+        const [x, y] = P(at).split(',');
+        node.setAttribute('cx', x);
+        node.setAttribute('cy', y);
+      };
+      if (e.k === 'h') {
+        const node = inAir.append('circle').attr('r', 4).style('fill', HALL).style('stroke', c).style('stroke-width', 2).node();
+        g.marks.push([node, e, spot(node)]);
+      } else if (e.k === 'n') {
+        const node = inAir.append('circle').attr('r', 3.5).style('fill', 'none').style('stroke', c).style('stroke-width', 1.5).node();
+        g.marks.push([node, e, spot(node)]);
+      } else if (e.k === 'b') {       // where it bounced: a spot lying flat on the table
+        const node = onTable.append('path').style('fill', c).node(), y = e.y - BR + 0.002;
+        g.marks.push([node, e, (P) => node.setAttribute('d', 'M' + d3.range(12).map((j) => P([e.x + 0.034 * Math.cos(j * Math.PI / 6), y, e.z + 0.034 * Math.sin(j * Math.PI / 6)])).join('L') + 'Z')]);
+      } else if (e.k === 'o' && st.hits[e.by] && !st.hits[e.by].ok) {      // a miss: a cross lying where it came down
+        const node = path(inAir).style('stroke', c).style('stroke-width', 2).style('stroke-linecap', 'round').node(), y = Math.max(0, e.y - BR) + 0.002, k = 0.07;
+        g.marks.push([node, e, (P) => node.setAttribute('d', `M${P([e.x - k, y, e.z - k])}L${P([e.x + k, y, e.z + k])}M${P([e.x - k, y, e.z + k])}L${P([e.x + k, y, e.z - k])}`)]);
+      }
+    });
+    g.ball = svg.append('circle').style('fill', '#fff').style('stroke', 'var(--er-court)').style('stroke-width', 1.5).node();
+    const R = 22, cx = R + 14, cy = R + 12, sg = svg.append('g');
+    g.spin = {R, cx, cy};
+    g.spin.axis = path(sg).style('stroke', '#fff').style('stroke-opacity', 0.55).style('stroke-width', 1.5).style('stroke-linecap', 'round').node();
+    g.spin.ring = sg.append('circle').attr('cx', cx).attr('cy', cy).attr('r', R).style('fill', '#f4f6f8').style('stroke-width', 2).node();
+    g.spin.a = path(sg).style('stroke', '#16202c').style('stroke-width', 3.5).style('stroke-linecap', 'round').node();
+    g.spin.b = path(sg).style('stroke', '#c2410c').style('stroke-width', 2).style('stroke-linecap', 'round').node();
+    g.spin.label = sg.append('text').attr('x', cx).attr('y', cy + R + 15).attr('text-anchor', 'middle').style('fill', '#fff')
+      .style('fill-opacity', 0.85).style('font-size', '11px').style('font-variant-numeric', 'tabular-nums').node();
+    st.g = g;
+    look(g);
+    // turn it: drag, or the arrow keys; a double click puts the camera back
+    const node = svg.node(), turn = (yaw, pitch) => {
+      cam.yaw = yaw;
+      cam.pitch = Math.max(0.08, Math.min(1.5, pitch));
+      look(g);
+      paint();
+    };
+    let drag = null;
+    node.addEventListener('pointerdown', (ev) => {
+      if (ev.pointerType === 'mouse' && ev.button !== 0) return;
+      drag = {x: ev.clientX, y: ev.clientY, yaw: cam.yaw, pitch: cam.pitch};
+      try {
+        node.setPointerCapture(ev.pointerId);
+      } catch (e) { /* the pointer is already gone */ }
+    });
+    node.addEventListener('pointermove', (ev) => {
+      if (drag) turn(drag.yaw - (ev.clientX - drag.x) * 0.012, drag.pitch + (ev.clientY - drag.y) * 0.008);
+    });
+    ['pointerup', 'pointercancel'].forEach((type) => node.addEventListener(type, () => {
+      drag = null;
+    }));
+    node.addEventListener('dblclick', () => turn(CAM.yaw, CAM.pitch));
+    node.addEventListener('keydown', (ev) => {
+      const k = {ArrowLeft: [0.12, 0], ArrowRight: [-0.12, 0], ArrowUp: [0, 0.08], ArrowDown: [0, -0.08]}[ev.key];
+      if (!k) return;
+      ev.preventDefault();
+      turn(cam.yaw + k[0], cam.pitch + k[1]);
+    });
   };
   const sync = () => {
     const a = $('replay-play-go'), b = $('replay-play-stop');
@@ -3530,6 +3797,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   };
   const stop = () => {
     st.playing = false;
+    st.slow = false;
     if (st.raf) cancelAnimationFrame(st.raf);
     st.raf = 0;
     sync();
@@ -3537,7 +3805,9 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   const frame = (ms) => {
     st.raf = 0;
     if (!st.playing) return;
-    st.t = Math.min(st.end, st.t + Math.min(0.1, (ms - st.last) / 1000) * st.rate);
+    // the deciding shot runs slow until the ball's last contact, then the short hold at the end passes as usual
+    const rate = st.slow ? (st.t < st.end - HOLD ? SLOW : 1) : st.rate;
+    st.t = Math.min(st.end, st.t + Math.min(0.1, (ms - st.last) / 1000) * rate);
     st.last = ms;
     paint();
     if (st.t >= st.end) return stop();
@@ -3591,6 +3861,12 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       return;
     }
     const W = Math.max(200, Math.min(300, cw || 300)), H = Math.round(W * Z / X);
+    if (st.view === '3d') {       // a squarer frame: seen from behind your end, the table is about as wide as it is deep
+      draw3(el, W, Math.round(W * 1.3));
+      paint();
+      mark();
+      return;
+    }
     const sx = (x) => (x + X) / (2 * X) * W, sy = (z) => (Z - z) / (2 * Z) * H;
     const svg = ER.svg(el, W, H, ER.tr("Table seen from above with you at the bottom: the path of the ball through the chosen point, white for your shots and orange for the opponent's"));
     svg.attr('data-source', 'replay').attr('data-field', 'track').attr('data-where', ER.where(st.key));
@@ -3729,6 +4005,37 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     stop();
     st.t = st.end * (+ev.target.value) / 1000;
     paint();
+  });
+  // The view: from above, or 3D. The 3D view has one more button, for the shot that ended the point.
+  const view = (v, keep) => {
+    st.view = v;
+    document.querySelectorAll('#replay-view [data-view]').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.view === v)));
+    ['replay-last', 'replay-3d-hint'].forEach((id) => {
+      const el = $(id);
+      if (el) el.hidden = v !== '3d';
+    });
+    if (keep) {
+      try {
+        localStorage.setItem('elevendash.replay.view', v);
+      } catch (e) { /* no storage here: the choice lasts until the page closes */ }
+    }
+  };
+  view(st.view, false);
+  on('replay-view', 'click', (ev) => {
+    const b = ev.target.closest && ev.target.closest('[data-view]');
+    if (!b || b.dataset.view === st.view) return;
+    view(b.dataset.view, true);
+    document.querySelectorAll('[data-draw="replay"]').forEach((el) => draws.replay(el));
+  });
+  // The deciding shot: the last shot of the point in slow motion, from just before the bat meets the ball.
+  on('replay-last', 'click', () => {
+    const h = st.hits[st.hits.length - 1];
+    if (!h) return;
+    stop();
+    const before = st.ev.filter((e) => e.t < h.t).pop();
+    st.t = Math.max(before ? before.t : 0, h.t - 0.25);
+    st.slow = true;
+    play();
   });
   on('replay-rate', 'click', (ev) => {
     const b = ev.target.closest && ev.target.closest('[data-rate]');

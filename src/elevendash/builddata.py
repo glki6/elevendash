@@ -111,18 +111,22 @@ SHOT_CODE = {'Serve': 'S', 'Drive': 'D', 'SlowLoop': 'L', 'FastLoop': 'F', 'Push
 
 def replay_track(p, you, sx):
     """One point for the replay: every ball contact from the serve on, as 'kind,x,z,y,t' joined by ';'.
-    Your view, in cm and 1/100 s from the serve. kind: h bat, b table, n net, o anything else (nearly always the floor),
+    Your view, in cm and 1/1000 s from the serve. kind: h bat, b table, n net, o anything else (nearly always the floor),
     x where the ball was heading when the log stops (estimated, not logged). A bat contact adds: y or a (you or the
-    opponent), speed in 0.1 m/s, topspin (+) or backspin (-) in r/s, shot letter, and 1 if the shot landed."""
+    opponent), speed in 0.1 m/s, topspin (+) or backspin (-) in r/s, shot letter, and 1 if the shot landed.
+    Then, for the 3D view, every logged contact ends with the ball's velocity as it arrived (x, y up, z; 0.1 m/s), and
+    a bat contact with two more triples: its velocity just after the hit, and its spin just after it (the turning axis
+    times r/s). A triple the log does not have is left empty (an online opponent's hit has no arriving velocity)."""
     tr = [e for e in (p.get('track') or []) if e['k'] != 'toss']
     first = next((i for i, e in enumerate(tr) if e['k'] == 'hit'), None)
     if first is None:
         return None
     tr = tr[first:]
     t0, last, hi, out, vel = tr[0]['gt'], 0, 0, [], None
+    v3 = lambda v, k: [round(v[0] * sx * k), round(v[1] * k), round(v[2] * sx * k)] if v and any(v) else ['', '', '']
     for e in tr:
-        t = max(last, round((e['gt'] - t0) * 100))
-        if t - last > 400:          # a contact long after the rally (the ball rolling away): not part of the point
+        t = max(last, round((e['gt'] - t0) * 1000))
+        if t - last > 4000:         # a contact long after the rally (the ball rolling away): not part of the point
             break
         last = t
         x, y, z = e['pos']
@@ -133,6 +137,9 @@ def replay_track(p, you, sx):
             hi += 1
             f += ['y' if e['side'] == you else 'a', round(h['speed'] * 10), round(h['top']), SHOT_CODE[h['shot']], int(h['ok'])]
             vel = e.get('vel')
+        f += v3(e.get('pre'), 10)
+        if k == 'h':
+            f += v3(vel, 10) + v3(e.get('rr'), 1 / 360)
         out.append(f)
         if k == 'o':
             break
@@ -142,9 +149,9 @@ def replay_track(p, you, sx):
             dx, dz = vel[0] * sx * 0.4, vel[2] * sx * 0.4
         else:
             a = next((f for f in reversed(out[:-1]) if f[4] < end[4]), None)
-            dt = (end[4] - a[4]) / 100 if a else 0
+            dt = (end[4] - a[4]) / 1000 if a else 0
             dx, dz = ((end[1] - a[1]) / 100 / dt * 0.4, (end[2] - a[2]) / 100 / dt * 0.4) if dt else (0, 0)
-        out.append(['x', round(end[1] + dx * 100), round(end[2] + dz * 100), end[3], end[4] + 40])
+        out.append(['x', round(end[1] + dx * 100), round(end[2] + dz * 100), end[3], end[4] + 400])
     return ';'.join(','.join(map(str, f)) for f in out)
 
 
@@ -1129,7 +1136,7 @@ def shot_secs(rows):
     every replayed rally. The page's switches fade in over this time, so a change takes as long as a ball crossing."""
     gaps = []
     for r in rows:
-        hs = [int(e.split(',')[4]) / 100 for e in r['track'].split(';') if e.startswith('h,')]
+        hs = [int(e.split(',')[4]) / 1000 for e in r['track'].split(';') if e.startswith('h,')]
         gaps += [b - a for a, b in zip(hs, hs[1:]) if 0.15 < b - a < 2.5]
     if not gaps:
         return None

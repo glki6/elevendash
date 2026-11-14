@@ -33,17 +33,25 @@ class Log:
     def __init__(self, start):
         self.start = start          # the wall clock at app second 0
         self.lines = []
+        self.prev = None            # where and when the ball last touched something
 
     def say(self, t, text):
         w = self.start + dt.timedelta(seconds=t)
         self.lines.append(f'[{w:%m/%d/%Y %H:%M:%S}][{int(t * 1000)},{int(t * 72)}] {text}')
 
     def contact(self, t, kind, pos, vel=(0.0, 0.0, 0.0), rr=(0.0, 0.0, 0.0), sender='', game_time=None):
+        # A contact's own block gives the ball's velocity as it arrived, as the game logs it: here, what a free flight
+        # under gravity from the contact before arrives with. (The 3D replay curves its flights from these.)
+        pre = vel
+        if not kind.startswith('Toss') and self.prev and t > self.prev[1]:
+            (x0, y0, z0), T = self.prev[0], t - self.prev[1]
+            pre = ((pos[0] - x0) / T, (pos[1] - y0) / T - 4.905 * T, (pos[2] - z0) / T)
+        self.prev = (pos, t)
         if kind.startswith('Hit'):  # the physics block with the ball's state after the hit comes first, as in the game
             self.say(t, '[Physics-BallCollisions]Dynamic Collision...')
             self.say(t, f'[Physics-BallCollisions]postCollisionState:{{pos:{vec(pos)},vel:{vec(vel)},rRate:{vec(rr)}}}')
         self.say(t, '[Physics-BallCollisions]MyCollision:')
-        self.lines += [f'\tpongGameCollisionType: {kind}', f'\tposition: {vec(pos)}', f'\tvelocity: {vec(vel)}',
+        self.lines += [f'\tpongGameCollisionType: {kind}', f'\tposition: {vec(pos)}', f'\tvelocity: {vec(pre)}',
                        f'\trotationRate: {vec(rr)}', f'\tgameTime: {t if game_time is None else game_time:.4f}']
         if sender:
             self.lines.append(f'\trelativeSender: {sender}')

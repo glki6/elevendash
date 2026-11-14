@@ -73,7 +73,9 @@ def finish_point(pt):
     pt['toss'] = toss and {'side': toss['side'], 'pos': toss['pos'], 'speed': toss['speed']}
     pt['server'] = hits[0]['side'] if hits else (toss['side'] if toss else None)
     # every ball contact in order, for the point replay: toss, hits, table, net, and anything else it touched
-    pt['track'] = [{k: e[k] for k in ('k', 'side', 'pos', 'gt', 'by', 'vel') if e.get(k) is not None} for e in ev if e.get('pos')]
+    # (vel, rr: the ball's velocity and rotation rate just after a hit; pre, prr: as it arrived at any contact)
+    pt['track'] = [{k: e[k] for k in ('k', 'side', 'pos', 'gt', 'by', 'vel', 'rr', 'pre', 'prr') if e.get(k) is not None}
+                   for e in ev if e.get('pos')]
     pts = [e['pos'] for e in ev if e.get('pos')]
     pt['dist'] = sum(math.dist(a, b) for a, b in zip(pts, pts[1:]))
     # when the point ran, in seconds since the app started: the clock a session recording is lined up against
@@ -99,7 +101,8 @@ def extract_log(path):
             return
         typ = b['type']
         side = typ[-1] if typ[-1] in 'AB' else None
-        e = {'gt': b.get('gameTime'), 'pos': b.get('position')}
+        # pre, prr: the ball's velocity and rotation rate as it arrived at this contact
+        e = {'gt': b.get('gameTime'), 'pos': b.get('position'), 'pre': b.get('velocity'), 'prr': b.get('rotationRate')}
         # gameTime is the app clock in seconds, except on a toss, where it is 0: then the line's own clock stands in
         e['at'] = e['gt'] if e['gt'] else (b['ms'] / 1000 if b.get('ms') is not None else None)
         if typ.startswith('Toss'):
@@ -110,7 +113,7 @@ def extract_log(path):
                 vel, rr = pending_post[1], pending_post[2]
             if vel is None:          # no matching post-hit state: fall back to the pre-hit values
                 vel, rr = b.get('velocity', (0, 0, 0)), b.get('rotationRate', (0, 0, 0))
-            e.update(k='hit', side=side, speed=math.hypot(*vel), spin=math.hypot(*rr) / 360, top=top_back(vel, rr), vel=vel)
+            e.update(k='hit', side=side, speed=math.hypot(*vel), spin=math.hypot(*rr) / 360, top=top_back(vel, rr), vel=vel, rr=rr)
             pending_post = None
         elif typ.startswith('Table'):
             e.update(k='table', side=side, by=b.get('relativeSender', '')[-1:])
@@ -136,7 +139,7 @@ def extract_log(path):
         if kind == 'toss':
             e.update(k='toss', speed=math.hypot(*vel))
         else:
-            e.update(k='hit', speed=math.hypot(*vel), spin=math.hypot(*rr) / 360, top=top_back(vel, rr), vel=vel)
+            e.update(k='hit', speed=math.hypot(*vel), spin=math.hypot(*rr) / 360, top=top_back(vel, rr), vel=vel, rr=rr)
         ev.append(e)
 
     with open(path, encoding='utf-8', errors='replace') as f:

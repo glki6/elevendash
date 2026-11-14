@@ -3,7 +3,7 @@
 Match analysis for **Eleven Table Tennis** on Meta Quest, from the game's own log files. It copies the logs off your
 headset over Wi-Fi, works out every match, game, point and shot, and writes a dashboard you can open in any browser:
 win rates by session and AI level, a session report, a point-by-point replay of every match drawn from the ball
-contacts, serve and return breakdowns, your numbers over any matches you pick set against your other matches, a
+contacts (from above, or in 3D with a slow-motion replay of the shot that decided the point and its spin), serve and return breakdowns, your numbers over any matches you pick set against your other matches, a
 picture of any match to send or post, your own notes on any match, and a training plan ranked by how many points each
 item is worth.
 
@@ -100,7 +100,7 @@ or `--dir`, or `ELEVENDASH_HOME`.
 
 ## Sharing the dashboard
 
-`site/index.html` is self-contained (about 10 MB for a few hundred matches): send it as a file, or upload it to any
+`site/index.html` is self-contained (about 13 MB for a few hundred matches): send it as a file, or upload it to any
 static host (GitHub Pages, Netlify, Cloudflare Pages). A view's level, session and match are kept in the address after
 `#`, so a link can open a particular match. In the browser, Save as PDF prints it.
 

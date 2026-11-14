@@ -2,6 +2,7 @@
 import contextlib
 import io
 import json
+import math
 import os
 import sys
 import tempfile
@@ -58,6 +59,17 @@ class Build(unittest.TestCase):
         self.assertEqual(sum(s['matches'] for s in sessions), sum(n for _, n in sample.SESSIONS))
         self.assertEqual(sorted({s['level'] for s in sessions}), [75, 100])
         self.assertTrue(self.rows('replay'))
+        for r in self.rows('replay'):       # the 3D view's numbers: velocity arriving at every contact; leaving, and spin, on a hit
+            ev = [e.split(',') for e in r['track'].split(';')]
+            self.assertEqual(ev[0][0], 'h')
+            for e in ev:
+                self.assertEqual(len(e), {'h': 19, 'x': 5}.get(e[0], 8), r['track'])
+                if e[0] == 'h':
+                    vx, vy, vz = (int(x) / 10 for x in e[13:16])
+                    self.assertAlmostEqual(math.hypot(vx, vy, vz), int(e[6]) / 10, delta=0.2)      # the logged speed
+                    self.assertTrue(e[16] != '' and e[10] != '')
+            ts = [int(e[4]) for e in ev]
+            self.assertEqual(ts, sorted(ts))
         main = next(r for r in self.rows('findings') if r['key'] == 'main')
         self.assertEqual(main['level'], 100)                    # the level of the latest sessions
         self.assertTrue(0.3 < main['shotSecs'] < 1.5)

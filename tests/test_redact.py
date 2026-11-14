@@ -7,17 +7,18 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(
 from elevendash import extract, redact, sample  # noqa: E402
 
 # made-up values in the shapes real logs use: plain JSON, JSON inside a JSON string, numbers, lists
+# (the place has five decimals: the generated logs' own numbers have four, so none of them can be the same number)
 FAKE = '\n'.join([
     '[01/05/2026 18:00:00][100,7] [Auth] {"AuthToken":"tok-AAAA1111","PlatformAccessToken":"FAKEPLATFORMTOKEN99"}',
     '[01/05/2026 18:00:01][200,14] [Account] {"PlatformUserId":123456789012,"Username":"sample.player","DeviceId":"dev-0099xyz"}',
-    '[01/05/2026 18:00:02][300,21] [Geo] {"Latitude":"51.5072","Longitude":"-0.1276","CountryCode":"GB","LocalIP":"10.1.2.3"}',
+    '[01/05/2026 18:00:02][300,21] [Geo] {"Latitude":"51.50722","Longitude":"-0.12765","CountryCode":"GB","LocalIP":"10.1.2.3"}',
     '[01/05/2026 18:00:03][400,28] [Online] "{\\"HomeUserId\\":\\"777888999000\\",\\"PlayerNames\\":[\\"rival.one\\",\\"sample.player\\"]}"',
     '[01/05/2026 18:00:04][500,36] [Chat] sample.player joined the room hosted at 203.0.113.9',
     '[01/05/2026 18:00:05][600,43] [UserCommunication] voice packet',
     '\tsomething about voice',
     '[01/05/2026 18:00:06][700,50] [Settings] Paddle settings loaded: {"paddleHand":"Right"}',
 ])
-SECRETS = ('tok-AAAA1111', 'FAKEPLATFORMTOKEN99', '123456789012', 'sample.player', 'dev-0099xyz', '51.5072', '-0.1276',
+SECRETS = ('tok-AAAA1111', 'FAKEPLATFORMTOKEN99', '123456789012', 'sample.player', 'dev-0099xyz', '51.50722', '-0.12765',
            '10.1.2.3', '777888999000', 'rival.one', '203.0.113.9', 'voice')
 
 

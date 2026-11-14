@@ -40,7 +40,7 @@ TITLES = {
     'serve_notes': ('Serve and return notes',
                     'Sentences about serves and returns at each AI level, written by the same code that builds the data.'),
     'replay': ('Point replays',
-               'One row per point: every ball contact from the serve on, as kind,x,z,y,t joined by semicolons, in your view (your half is z below 0, +x your right), in cm and hundredths of a second. Kinds: h bat, b table, n net, o anything else (nearly always the floor), x an estimated last stretch. A bat contact adds who (y or a), speed in 0.1 m/s, topspin (+) or backspin (-) in r/s, the shot letter and 1 if it landed.'),
+               'One row per point: every ball contact from the serve on, as kind,x,z,y,t joined by semicolons, in your view (your half is z below 0, +x your right), in cm and thousandths of a second. Kinds: h bat, b table, n net, o anything else (nearly always the floor), x an estimated last stretch. A bat contact adds who (y or a), speed in 0.1 m/s, topspin (+) or backspin (-) in r/s, the shot letter and 1 if it landed. Every logged contact then ends with the velocity of the ball as it arrived (x, y up, z, in 0.1 m/s), and a bat contact with its velocity and its spin (axis times r/s) just after the hit; a triple the log lacks is empty.'),
     'findings': ('What decides your points',
                  'Your main level (the AI level with the most points in your last five sessions) and up to six findings there, each a headline, a sentence and two bars, written by fixed rules from the numbers.'),
     'days': ('Daily results against the AI',
