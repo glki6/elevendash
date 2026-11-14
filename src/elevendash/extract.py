@@ -9,6 +9,9 @@ import json, math, re, sys
 TS = re.compile(r'^\[(\d+)/(\d+)/(\d+) (\d+:\d+:\d+)\](?:\[(\d+),)?')
 VEC = re.compile(r'\(([^)]*)\)')
 POST = re.compile(r'postCollisionState:\{pos:\(([^)]*)\),vel:\(([^)]*)\),rRate:\(([^)]*)\)')
+# Online, the opponent's game sends each of their tosses and hits: where the ball was and its state just after
+# (the same post-hit velocity and rotation rate a local hit logs). These are the only record of the opponent's shots.
+REMOTE = re.compile(r'\[MPMatch\]Received ball (hit|toss) from opponent: pos:\(([^)]*)\) vel:\(([^)]*)\) rrate:\(([^)]*)\)')
 ATTACK = ('Drive', 'SlowLoop', 'FastLoop')
 
 
@@ -117,6 +120,25 @@ def extract_log(path):
             e.update(k='other')
         pt['_ev'].append(e)
 
+    def remote(kind, pos, vel, rr):
+        """The opponent's toss or hit in an online match, from the message their game sent."""
+        if not any(vel):         # between points the game sends a ball at rest out of play, at (0,-10,0)
+            return
+        ev = pt['_ev']
+        if any(x.get('remote') and x['pos'] == pos for x in ev[-4:]):
+            return               # the same message logged twice
+        if kind == 'hit' and not any(x['k'] == 'toss' for x in ev):
+            return               # before the toss the ball is out of play: a serve sent after the point was given,
+                                 # or the opponent playing with the ball between points
+        at = ms / 1000 if ms is not None else None
+        # the time it arrived: the bounces that follow are timed by the local game from then on
+        e = {'gt': at, 'at': at, 'pos': pos, 'side': 'B' if user_side == 'A' else 'A', 'remote': True}
+        if kind == 'toss':
+            e.update(k='toss', speed=math.hypot(*vel))
+        else:
+            e.update(k='hit', speed=math.hypot(*vel), spin=math.hypot(*rr) / 360, top=top_back(vel, rr), vel=vel)
+        ev.append(e)
+
     with open(path, encoding='utf-8', errors='replace') as f:
         lines = f.readlines()
     for line in lines:
@@ -142,6 +164,11 @@ def extract_log(path):
                 ms = int(t[5])
         if 'MyCollision:' in line:
             block = {'ms': ms}
+            continue
+        if 'from opponent: pos:' in line:
+            mm = REMOTE.search(line)
+            if mm and m is not None and pt is not None:
+                remote(mm[1], v3(mm[2]), v3(mm[3]), v3(mm[4]))
             continue
         if 'Dynamic Collision...' in line:
             pending_post = 'wait'

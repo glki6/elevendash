@@ -30,9 +30,10 @@ The same demo is online at https://glki6.github.io/elevendash/demo/.
 
 Against the AI, the game logs every ball contact by both players, so everything on the dashboard works: the replay,
 rally and serve analysis, the 11hero metrics for both sides, the match card and the training plan. Online matches
-against people are counted (who won, the scores), but for those the game logs only your own shots, so the shot-level
-analysis is one-sided there and the match card is left out. So far elevendash has seen just one online match; its metrics for your own shots matched 11hero's
-exactly, and the rest of the online side is largely untested.
+against people get the match explorer and the match card too: the log holds your own shots as ball contacts and your
+opponent's as the messages their game sends, and on the one online match checked so far every hit of both players and
+their metrics matched 11hero's. The AI totals, sessions and training plan are about the AI, so online matches stay out
+of them. One online match is a small sample, so the online side is lightly tested.
 
 ## Privacy first
 

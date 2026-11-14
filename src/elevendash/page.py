@@ -102,7 +102,10 @@ def fill(collect=None, strict=False):
     html = html.replace('{{WVL_ROWS}}', wvl)
     html = html.replace('{{THEME_CSS}}', theme_css())
     html = html.replace('{{METRICS_LEVEL}}', metric_rows([('You', 'levels', '{L}', 'you_'), ('AI', 'levels', '{L}', 'ai_')]))
-    html = html.replace('{{METRICS_MATCH}}', metric_rows([('You', 'matches', '{M}', 'you_'), ('AI', 'matches', '{M}', 'ai_'),
+    # the match's other side: the AI, or a player online (the shown word follows the match picked)
+    them = ''.join(f'<span data-showif data-ds="matches" data-k="{{M}}" data-f="vs" data-eq="{eq}"{" hidden" if eq != "AI" else ""}>{w}</span>'
+                   for eq, w in (('AI', 'AI'), ('Online', 'Opponent')))
+    html = html.replace('{{METRICS_MATCH}}', metric_rows([('You', 'matches', '{M}', 'you_'), (them, 'matches', '{M}', 'ai_'),
                                                           ('Level avg', 'levels', '{ML}', 'you_')]))
     html = html.replace('{{METRICS_PICK}}', metric_rows([('You', 'pick', '', 'you_'), ('AI', 'pick', '', 'ai_'),
                                                          ('Your other matches', 'pick', '', 'ref_')]))

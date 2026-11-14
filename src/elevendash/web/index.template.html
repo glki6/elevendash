@@ -550,7 +550,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
         <div class="er-sets"><div class="er-setlabels"><span>You</span><span>Opponent</span></div><div class="er-games" data-draw="games"></div></div>
       </div>
       <dl class="er-meta">
-        <div><dt>Opponent</dt><dd><span data-draw="v" data-tr data-ds="matches" data-k="{M}" data-f="vs">—</span>, level <span data-draw="v" data-ds="matches" data-k="{M}" data-f="level" data-fmt="int">—</span></dd></div>
+        <div><dt>Opponent</dt><dd><span data-showif data-ds="matches" data-k="{M}" data-f="vs" data-eq="AI"><span data-draw="v" data-tr data-ds="matches" data-k="{M}" data-f="vs">—</span>, level <span data-draw="v" data-ds="matches" data-k="{M}" data-f="level" data-fmt="int">—</span></span><span data-showif data-ds="matches" data-k="{M}" data-f="vs" data-eq="Online" hidden>A player online</span></dd></div>
         <div><dt>Played</dt><dd><span data-draw="v" data-ds="matches" data-k="{M}" data-f="date" data-fmt="date">—</span>, <span data-draw="v" data-ds="matches" data-k="{M}" data-f="start" data-fmt="time">—</span> to <span data-draw="v" data-ds="matches" data-k="{M}" data-f="end" data-fmt="time">—</span></dd></div>
         <div><dt>Points won</dt><dd><span data-draw="v" data-ds="matches" data-k="{M}" data-f="pointRate" data-fmt="pct">—</span> of <span data-draw="v" data-ds="matches" data-k="{M}" data-f="points" data-fmt="int">—</span></dd></div>
         <div><dt>Shots per point</dt><dd><span data-draw="v" data-ds="matches" data-k="{M}" data-f="rallyLength" data-fmt="n1">—</span></dd></div>
@@ -571,8 +571,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
     <div class="er-mcbody">
       <div class="er-mcprev" data-draw="match-card" data-nomorph data-source="points"></div>
       <div class="er-mcside">
-        <p class="er-muted">The card shows the match picked above, in this page's look and language: the result, every point, a few numbers and you against the AI. It has no names, links or videos in it.</p>
-        <p id="card-online" hidden>Cards are for matches against the AI. In an online match the game's log holds only your own shots, so a card's numbers would be wrong.</p>
+        <p class="er-muted">The card shows the match picked above, in this page's look and language: the result, every point, a few numbers and you against your opponent. It has no names, links or videos in it.</p>
         <div id="card-act"><button class="er-btn" type="button" id="card-save" aria-describedby="card-note"><svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true"><path d="M6.5 1v7.2M3.4 5.6l3.1 3.1 3.1-3.1M1.5 11.5h10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Save picture</button></div>
         <p class="er-muted" id="card-note">A PNG picture, 1080 by 1350 pixels.</p>
         <p class="er-muted" id="card-busy" role="status" hidden>Making the picture…</p>
@@ -831,7 +830,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
     <li>The point replay moves the ball in straight lines between the contacts the game logged, at the logged times, so a ball that curved with sidespin is drawn straight. The ball is drawn larger the higher it is; its height between contacts is worked out from the contact heights and gravity. When the log stops with the ball in the air, the last stretch carries on the way the ball was going for 0.4 seconds.</li>
     <li>Videos are the headset recording of a session, uploaded whole to YouTube as unlisted: only someone with the link can open one. A recording is lined up with the log by sound, sliding the log's contact times along the soundtrack until they sit on the clicks of the ball. A point's link starts two seconds before its toss. Sessions that were not recorded have no links.</li>
     <li>The highlight reel is cut from the same recording by code, from the log alone. Each point scores two for every shot in the rally, one for every m/s over 10 on your winning shot, and extra for a point won at game point, late in a close game, or to win a match. Points you won need three shots or more; up to two rallies of six shots or more that you lost go in too. The best-scoring points are taken until the reel is about 90 seconds long, then shown in the order they were played, one rally fading into the next.</li>
-    <li>The metrics use 11hero.com's definitions. They were checked against 11hero on a real online match: all 42 numbers on its page came out the same, and so did the speed, spin and shot type of every hit.</li>
+    <li>The metrics use 11hero.com's definitions. They were checked against 11hero on a real online match, with both players read from the game's log: every hit came out the same (speed, spin, shot type, whether it landed and whether it won the point), and so did 37 of the 42 numbers on its page. The other five are the shares of points won by each kind of shot, which move a little because 11hero counts one more, empty point at the end of the match.</li>
     <li>Speed is the ball's speed just after the hit, in metres per second. Spin is in revolutions per second; topspin and backspin are the part of the spin that rolls the ball forward or back. Topspin and backspin averages count only hits with more than 20 r/s of it.</li>
     <li>A shot landed when its first bounce was on the other side. A serve landed when it bounced on your side and then the other.</li>
     <li>Shot types follow 11hero's rule: backspin over the table is a push, backspin away from it a chop; 50 r/s or more of spin is a loop (a fast loop at 10.5 m/s or more); anything else is a drive. An open-up is a drive or loop against a ball that had backspin.</li>
@@ -1520,7 +1519,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
     const net = svg.append('g');
     net.append('line').attr('x1', x0 - 9).attr('x2', x0 + TW + 9).attr('y1', sy(0)).attr('y2', sy(0))
       .style('stroke', 'var(--color-fg)').style('stroke-width', opt.court ? 3 : 2).style('stroke-linecap', 'round');
-    svg.append('text').attr('x', x0 - 14).attr('y', sy(0.68)).attr('text-anchor', 'end').attr('dominant-baseline', 'middle').attr('class', 'er-strong').text(ER.tr('AI'));
+    svg.append('text').attr('x', x0 - 14).attr('y', sy(0.68)).attr('text-anchor', 'end').attr('dominant-baseline', 'middle').attr('class', 'er-strong').text(opt.them || ER.tr('AI'));
     svg.append('text').attr('x', x0 - 14).attr('y', sy(-0.68)).attr('text-anchor', 'end').attr('dominant-baseline', 'middle').attr('class', 'er-strong').text(ER.tr('You'));
     return {svg, sx, sy, W, H, TW, TH, x0, top, net};
   };
@@ -3040,11 +3039,12 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       return;
     }
     const out = [];
+    const match = ER.find('matches', scope), online = !!match && match.vs !== 'AI';   // scope is a match or a level
     ['You', 'AI'].forEach((who) => {
       const rs = ER.SHOT_ORDER.map((s) => rows.find((r) => r.key === `${scope}|${who}|${s}`)).filter(Boolean);
       if (!rs.length) return;
       const g = ER.el('tr', 'er-group');
-      const gh = ER.el('th', null, ER.tr(who === 'You' ? 'You' : 'AI'));
+      const gh = ER.el('th', null, who === 'You' ? ER.tr('You') : online ? ER.tr('Opponent') : ER.tr('AI'));
       gh.colSpan = 7;
       g.appendChild(gh);
       out.push(g);
@@ -3070,11 +3070,12 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   dash.draw('match-serves', (el) => {
     const rows = ER.rows('serves');
     if (!rows) return ER.wait(el, ['serves']);
-    const k = ER.matchKey();
+    const k = ER.matchKey(), m = ER.matchRow(), online = !!m && m.vs !== 'AI';
     const sv = rows.filter((r) => r.match === k && r.landed && r.x != null);
     const cw = el.clientWidth;
     el.replaceChildren();
-    const T = ER.tableFrame(el, {width: cw, top: 14, bottom: 30, court: true, label: ER.tr('Table seen from your end with a ball mark where each serve of the match first landed, white for points you won and orange for points you lost')});
+    const T = ER.tableFrame(el, {width: cw, top: 14, bottom: 30, court: true, them: online ? ER.tr('Opponent') : null,
+      label: ER.tr('Table seen from your end with a ball mark where each serve of the match first landed, white for points you won and orange for points you lost')});
     T.svg.append('text').attr('x', T.x0).attr('y', T.H - 6).attr('text-anchor', 'start').text(ER.tr('← your left'));
     T.svg.append('text').attr('x', T.x0 + T.TW).attr('y', T.H - 6).attr('text-anchor', 'end').text(ER.tr('your right →'));
     const tip = ER.tip(el);
@@ -3088,7 +3089,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       .on('pointermove pointerdown', (evt, r) => {
         const [, g, p] = r.key.split('|');
         tip.show(evt, [
-          `${ER.tr(r.server === 'You' ? 'Your serve' : "AI's serve")} · ${ER.tr('game {0}, point {1}', g, p)}`,
+          `${r.server === 'You' ? ER.tr('Your serve') : online ? ER.tr("Opponent's serve") : ER.tr("AI's serve")} · ${ER.tr('game {0}, point {1}', g, p)}`,
           `${ER.tr(r.kind)}: ${ER.F.n1(r.speed)} m/s, ${ER.F.n1(r.spin)} r/s`,
           ER.tr(r.youWon ? 'You won the point' : 'You lost the point'),
         ]);
@@ -3238,6 +3239,8 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   const build = (m, pts, c) => {
     const f = facts(pts), won = m.result === 'Won', o = [];
     const D = {font: c.display, weight: 600};
+    // against the AI, or online against a person: only the words for the other side change
+    const ai = m.vs === 'AI', title = ai ? ER.tr('Match against the AI, level {0}', m.level) : ER.tr('Online match');
     face = c.text;
     o.push(rect(0, 0, W, H, 0, c.bg));
 
@@ -3245,7 +3248,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     o.push(`<circle cx="${P + 9}" cy="84" r="9" fill="${c.ai}"/>`);
     o.push(text(P + 30, 92, ER.tr('Eleven Table Tennis').toUpperCase(), {size: 22, fill: c.muted, ls: 3}));
     o.push(text(R, 92, `${longDate(m.date)} · ${ER.F.time(m.start)}`, {size: 22, fill: c.muted, anchor: 'end'}));
-    o.push(text(P, 150, ER.tr('Match against the AI, level {0}', m.level), {size: 40, fill: c.fg, ...D}));
+    o.push(text(P, 150, title, {size: 40, fill: c.fg, ...D}));
 
     // the result and the game scores
     o.push(rect(P, 186, R - P, 224, 28, c.panel));
@@ -3295,7 +3298,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     const tiles = [
       [ER.tr('Points won'), ER.F.pct(pct(f.won, f.n)), of(f.won, f.n)],
       [ER.tr('On your serve'), ER.F.pct(pct(f.svWon, f.sv)), of(f.svWon, f.sv)],
-      [ER.tr("On the AI's serve"), ER.F.pct(pct(f.rvWon, f.rv)), of(f.rvWon, f.rv)],
+      [ai ? ER.tr("On the AI's serve") : ER.tr('On their serve'), ER.F.pct(pct(f.rvWon, f.rv)), of(f.rvWon, f.rv)],
       [ER.tr('Longest point'), String(f.longest), ER.tr('shots')],
       [ER.tr('Best run'), String(f.best), ER.tr('points in a row')],
       [ER.tr('Rally speed'), ER.F.n1(m.you_rallySpeed), 'm/s'],
@@ -3312,8 +3315,10 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     // how the points ended: one bar, points won in blue, points lost in orange
     o.push(text(P, 1000, ER.tr('How the points ended'), {size: 22, fill: c.fg, weight: 600}));
     const ENDS = [
-      ['your winner', ER.tr('Your winners'), c.you, ''], ['AI error', ER.tr('AI errors'), c.you, ' fill-opacity=".5"'],
-      ['your error', ER.tr('Your errors'), c.ai, ''], ['AI winner', ER.tr('AI winners'), c.ai, ' fill-opacity=".5"'],
+      ['your winner', ER.tr('Your winners'), c.you, ''],
+      ['AI error', ai ? ER.tr('AI errors') : ER.tr('Their errors'), c.you, ' fill-opacity=".5"'],
+      ['your error', ER.tr('Your errors'), c.ai, ''],
+      ['AI winner', ai ? ER.tr('AI winners') : ER.tr('Their winners'), c.ai, ' fill-opacity=".5"'],
     ];
     const other = f.n - ENDS.reduce((s, [k]) => s + (f.ends[k] || 0), 0);
     const parts = ENDS.map(([k, label, fill, op]) => [f.ends[k] || 0, label, fill, op]).concat(other > 0 ? [[other, ER.tr('Other'), c.track, '']] : []);
@@ -3331,9 +3336,9 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       o.push(`<text x="${x0 + 22}" y="1074" style="${style({size: 20, fill: c.muted})}">${esc(label)} <tspan fill="${c.fg}" font-weight="600">${n}</tspan></text>`);
     });
 
-    // you against the AI: a bar each way from the middle, the larger value full length
+    // you against the other side: a bar each way from the middle, the larger value full length
     o.push(text(P, 1116, ER.tr('You'), {size: 22, fill: c.you, weight: 600}));
-    o.push(text(R, 1116, ER.tr('AI'), {size: 22, fill: c.ai, weight: 600, anchor: 'end'}));
+    o.push(text(R, 1116, ai ? ER.tr('AI') : ER.tr('Opponent'), {size: 22, fill: c.ai, weight: 600, anchor: 'end'}));
     const VS = [
       [ER.tr('Serve speed (m/s)'), 'serveSpeed', ER.F.n1], [ER.tr('Rally speed (m/s)'), 'rallySpeed', ER.F.n1],
       [ER.tr('Serves landed'), 'serveSuccess', ER.F.pct], [ER.tr('Returns landed'), 'returnSuccess', ER.F.pct],
@@ -3351,7 +3356,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
 
     o.push(rect(P, 1274, R - P, 1, 0, c.line));
     o.push(text(P, 1306, ER.tr("Made with elevendash from the game's own logs"), {size: 18, fill: c.muted}));
-    const label = `${ER.tr('Match against the AI, level {0}', m.level)}, ${longDate(m.date)}: ${word} ${m.gamesWon}–${m.gamesLost}`;
+    const label = `${title}, ${longDate(m.date)}: ${word} ${m.gamesWon}–${m.gamesLost}`;
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)}"`
       + ` font-family="${esc(c.text)}">${o.join('')}</svg>`;
   };
@@ -3362,16 +3367,13 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     if (box && !box.open) return el.replaceChildren();
     const m = ER.matchRow(), pts = m ? pointsOf(m.key) : null;
     if (!m || !pts) return ER.wait(el, ['matches', 'points']);
-    // online, the log holds only your own shots: no card (the serve split, the endings and the comparison need both)
-    const ai = m.vs === 'AI', $ = (id) => document.getElementById(id);
-    el.hidden = !ai;
-    if ($('card-online')) $('card-online').hidden = ai;
-    if ($('card-act')) $('card-act').hidden = !ai;
-    if (m.key !== drawnKey || !ai) {
+    if (m.key !== drawnKey) {
       drawnKey = m.key;
-      ['note', 'busy', 'done', 'none', 'fail'].forEach((n) => $('card-' + n) && ($('card-' + n).hidden = !(ai && n === 'note')));
+      ['note', 'busy', 'done', 'none', 'fail'].forEach((n) => {
+        const e = document.getElementById('card-' + n);
+        if (e) e.hidden = n !== 'note';
+      });
     }
-    if (!ai) return el.replaceChildren();
     el.innerHTML = build(m, pts, look());
   };
   dash.draw('match-card', draw);
@@ -3400,7 +3402,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   btn.addEventListener('click', async () => {
     if (busy) return;
     const m = ER.matchRow(), pts = m ? pointsOf(m.key) : null;
-    if (!m || !pts || m.vs !== 'AI') return show('fail');
+    if (!m || !pts) return show('fail');
     busy = true;
     btn.setAttribute('aria-busy', 'true');
     show('busy');
