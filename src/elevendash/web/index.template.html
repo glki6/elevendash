@@ -285,6 +285,14 @@
 .er-sxgroups>li>div:last-child{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
 .er-sxrank{font-variant-numeric:tabular-nums;color:var(--color-fg-muted)}
 .er-sxgroups p{margin:0}
+.er-sxstrokes{display:grid;gap:8px;min-width:0;padding-top:14px;border-top:1px solid var(--er-line)}
+.er-sxstrokes h4{margin:0;font-size:var(--cds-font-size-body);font-weight:var(--cds-font-weight-medium)}
+.er-t.er-sxst td{white-space:normal}
+.er-sxst td b{color:var(--color-fg);font-weight:var(--cds-font-weight-medium)}
+.er-sxst td small{display:block;font-size:inherit;color:var(--color-fg-muted)}
+.er-sxst td .er-chg{min-width:0;margin-left:4px}
+.er-sxst tr.few td,.er-sxst tr.few th,.er-sxst tr.few td b{color:var(--color-fg-muted);font-weight:400}
+.er-sxst tr.on th{color:var(--er-you)}
 .er-sxlist tbody tr{cursor:pointer}
 .er-sxlist tbody tr:hover th,.er-sxlist tbody tr:hover td{background:var(--er-you-wash)}
 .er-t.er-sxlist th,.er-t.er-sxlist td{text-align:left}
@@ -743,6 +751,12 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
         <p class="er-muted">Your half of the table from above: where each ball bounced before it reached you. The latest 400 are drawn.</p>
       </div>
     </div>
+    <div class="er-sxstrokes" id="sx-strokes-wrap">
+      <h4>Your strokes against these balls</h4>
+      <p class="er-muted" data-draw="sx-strokes-note" data-source="shots"></p>
+      <div class="er-tablewrap"><table class="er-t er-sxst"><thead><tr><th>Stroke</th><th>Shots</th><th>Landed</th><th>Point won</th></tr></thead><tbody data-draw="sx-strokes" data-source="shots"></tbody></table></div>
+      <p class="er-muted">An arrow marks a stroke that lands, or goes on to win the point, clearly more or less often than your other strokes against the same balls: a gap that large would come up by chance about one time in ten. The range is where the true share sits nine times in ten. There is no arrow when the stroke, or your other strokes together, has fewer than 20 shots.</p>
+    </div>
     <div class="er-tablewrap" id="sx-list-wrap"><table class="er-t er-sxlist"><thead><tr><th>Point</th><th>Shot</th><th>Came at you</th><th>You played</th><th>Result</th><th>Open</th></tr></thead><tbody data-draw="sx-list" data-source="shots"></tbody></table></div>
     <div class="er-rbar"><button class="er-btn" type="button" id="sx-more" hidden>Show more</button><span class="er-muted" data-draw="sx-count" data-source="shots"></span></div>
   </div>
@@ -953,7 +967,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
     <li>In Serves and returns, depth is where the serve first bounces on the receiver's half: short is within 50 cm of the net, half-long is 50 cm to 1 m from it, long is the last 37 cm. A serve has topspin or backspin when it carries more than 20 r/s of it, otherwise little spin. A point is won by the return when the AI does not reach it or misses its next shot; it is lost to the AI's next shot when you do not reach that shot or miss it. The same goes for your serve and third ball. Rows and serve types with fewer than 30 serves are left out, and the written notes use only groups of 50 or more.</li>
     <li>The point replay moves the ball in straight lines between the contacts the game logged, at the logged times, so a ball that curved with sidespin is drawn straight. The ball is drawn larger the higher it is; its height between contacts is worked out from the contact heights and gravity. When the log stops with the ball in the air, the last stretch carries on the way the ball was going for 0.4 seconds. The 3D view curves each flight instead: the log gives the ball's velocity just after every hit and as it arrives at every contact, and the curve is the smooth path that leaves and arrives with those. Where the two can be compared, on a shot from bat to table, this path and a simpler one sit about 2 cm apart at mid-flight. The log has nothing between contacts, no bats and no players, and the spin shown is the spin as the ball left the bat.</li>
     <li>The landing call measures from where the log says the ball met the table to the nearest edge of that half. A ball that missed the table is measured where its drawn flight comes down to the height of the table, and the height over the net is read off the drawn flight where it crosses the net, so those two are estimates, good to a few centimetres.</li>
-    <li>The shot explorer lists every shot you hit, and every ball that landed on your half and you never touched. The ball that came at you is described by the shot before yours: its spin as it left the bat (topspin or backspin above 20 r/s, otherwise little spin), fast when it left the bat at 10 m/s or more, its side by where it bounced on your half (the middle is the 50 cm down the centre of the table; a ball that did not bounce is placed where you met it), and its depth as for serves. A miss is into the net when the ball never got over it, long when the line of the shot passes the end of the table between its sides, and wide otherwise. Where your misses pile up is worked out for the level of the training plan.</li>
+    <li>The shot explorer lists every shot you hit, and every ball that landed on your half and you never touched. The ball that came at you is described by the shot before yours: its spin as it left the bat (topspin or backspin above 20 r/s, otherwise little spin), fast when it left the bat at 10 m/s or more, its side by where it bounced on your half (the middle is the 50 cm down the centre of the table; a ball that did not bounce is placed where you met it), and its depth as for serves. A miss is into the net when the ball never got over it, long when the line of the shot passes the end of the table between its sides, and wide otherwise. Where your misses pile up is worked out for the level of the training plan. Your strokes against these balls compares the strokes you chose against the balls the filters pick, leaving the Your stroke filter aside: how often each landed and how often you went on to win the point, each with the range the true share sits in nine times in ten, and an arrow when it differs from your other strokes together by more than chance explains about nine times in ten. It only means something for one kind of ball at a time, because you pick a stroke to suit the ball.</li>
     <li>Rolling results take your matches at one AI level in the order you played them. The band is the range a share sits in 9 times in 10 (the Wilson interval), counting each match, or each point, as a separate try; points inside one match are not quite separate tries, so the band for points is a little too narrow. From the first match of a session to the last uses sessions with three or more matches at one level, and sets each match against the others of that session and level; a place in the session is called clearly better or worse when a gap that large would turn up by chance about one time in ten.</li>
     <li>Videos are the headset recording of a session, uploaded whole to YouTube as unlisted: only someone with the link can open one. A recording is lined up with the log by sound, sliding the log's contact times along the soundtrack until they sit on the clicks of the ball. A point's link starts two seconds before its toss. Sessions that were not recorded have no links.</li>
     <li>The highlight reel is cut from the same recording by code, from the log alone. Each point scores two for every shot in the rally, one for every m/s over 10 on your winning shot, and extra for a point won at game point, late in a close game, or to win a match. Points you won need three shots or more; up to two rallies of six shots or more that you lost go in too. The best-scoring points are taken until the reel is about 90 seconds long, then shown in the order they were played, one rally fading into the next. The misses reel is cut the same way. Your shots are grouped by the ball that came at you, as in the shot explorer, and the kinds of ball you missed or did not reach most often in that session come first. For each kind it shows up to four of the misses, spread over the session, and then up to two occasions when your shot against the same ball landed.</li>
@@ -4442,7 +4456,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
 // dashboard settings: its drawings read them, and a change redraws this section only.
 (() => {
   const ER = window.ER;
-  const PAGE = 25, DOTS = 400;
+  const PAGE = 25, DOTS = 400, MIN_STROKE = 20, Z = 1.64;     // Z: the one-in-ten rule used across the page
   const HALL = 'color-mix(in oklab, var(--er-court) 30%, #0b111c)';
   const NONE = {role: '', shot: '', out: '', spin: '', side: '', depth: '', pace: '', level: '', period: '', moment: '', rally: ''};
   const f = Object.assign({}, NONE);
@@ -4518,14 +4532,18 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       const all = d.recs.filter((r) => roles.has(r.role) && pass(d, r, q));
       ref = {n: all.length, ok: all.filter((r) => r.ok).length};
     }
-    was = {d, key, base, list, ref};
+    // the strokes you chose against the same balls: the Your stroke filter left aside, serves and unreached balls out
+    const q = Object.assign({}, f, {shot: ''});
+    const same = d.recs.filter((r) => r.role !== 'S' && pass(d, r, q));
+    const strokes = same.filter((r) => r.shot !== 'X');
+    was = {d, key, base, list, ref, strokes, unreached: same.length - strokes.length};
     return was;
   };
   const rate = (a, b) => ER.F.pct(Math.round(1000 * a / b) / 10);
 
   const draws = {};
   const redraw = (names) => names.forEach((n) => document.querySelectorAll(`[data-draw="${n}"]`).forEach((el) => draws[n](el)));
-  const OUT = ['sx-summary', 'sx-bars', 'sx-map', 'sx-list', 'sx-count'];
+  const OUT = ['sx-summary', 'sx-bars', 'sx-strokes-note', 'sx-strokes', 'sx-map', 'sx-list', 'sx-count'];
 
   // The filters. Each select is drawn once for a language, then only told what is chosen.
   const options = (k, d) => {
@@ -4578,6 +4596,65 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       track.appendChild(fill);
       row.append(ER.el('span', null, ER.tr(label)), track, ER.el('b', null, ER.F.int(c[k])), ER.el('span', null, rate(c[k], n)));
       return row;
+    }));
+  };
+
+  // Your strokes against the balls picked. For each: shots, the share landed and the share of points won, each with
+  // its likely range (Wilson) and, with MIN_STROKE shots on both sides, whether it differs from the other strokes together.
+  const likely = (k, n) => {
+    const p = k / n, d = 1 + Z * Z / n, c = p + Z * Z / (2 * n), h = Z * Math.sqrt(p * (1 - p) / n + Z * Z / (4 * n * n));
+    return [Math.max(0, 100 * (c - h) / d), Math.min(100, 100 * (c + h) / d)];
+  };
+  const apart = (k1, n1, k2, n2) => {
+    if (n1 < MIN_STROKE || n2 < MIN_STROKE) return 0;
+    const p = (k1 + k2) / (n1 + n2), se = Math.sqrt(p * (1 - p) * (1 / n1 + 1 / n2));
+    const z = se ? (k1 / n1 - k2 / n2) / se : 0;
+    return Math.abs(z) < Z ? 0 : z > 0 ? 1 : -1;
+  };
+  const strokeRows = (s) => {
+    const by = {}, all = {n: 0, ok: 0, won: 0};
+    s.strokes.forEach((r) => {
+      const c = by[r.shot] || (by[r.shot] = {shot: r.shot, n: 0, ok: 0, won: 0});
+      c.n += 1; c.ok += r.ok ? 1 : 0; c.won += r.pt.won ? 1 : 0;
+      all.n += 1; all.ok += r.ok ? 1 : 0; all.won += r.pt.won ? 1 : 0;
+    });
+    return Object.values(by).sort((a, b) => b.n - a.n).map((c) => Object.assign(c, {
+      okMove: apart(c.ok, c.n, all.ok - c.ok, all.n - c.n), wonMove: apart(c.won, c.n, all.won - c.won, all.n - c.n)}));
+  };
+  draws['sx-strokes-note'] = (el) => {
+    const s = chosen(), wrap = $('sx-strokes-wrap');
+    const n = s ? s.strokes.length : 0;
+    if (wrap) wrap.hidden = !n;
+    if (!n) return el.replaceChildren();
+    const out = [ER.tr('{0} shots of yours against the balls picked, by the stroke you chose, whatever Result is set to.', ER.F.int(n))];
+    if (s.unreached) out.push(' ', ER.tr('{0} balls you did not reach are left out.', ER.F.int(s.unreached)));
+    if (!(f.spin || f.side || f.depth || f.pace)) {
+      out.push(' ', ER.el('b', null, ER.tr('No kind of ball is picked, so the strokes are not facing the same balls: a push mostly answers backspin and a loop topspin. Set the spin, side or speed first.')));
+    }
+    el.replaceChildren(...out);
+  };
+  draws['sx-strokes'] = (tb) => {
+    const s = chosen();
+    if (!s || !s.strokes.length) return tb.replaceChildren();
+    const cell = (k, n, move) => {
+      const td = ER.el('td'), [lo, hi] = likely(k, n);
+      td.appendChild(ER.el('b', null, rate(k, n)));
+      if (move) {
+        const chg = ER.el('span', 'er-chg ' + (move > 0 ? 'good' : 'bad'), move > 0 ? '▲' : '▼');
+        chg.title = ER.tr(move > 0 ? 'Clearly more often than your other strokes' : 'Clearly less often than your other strokes');
+        chg.setAttribute('role', 'img');
+        chg.setAttribute('aria-label', chg.title);
+        td.appendChild(chg);
+      }
+      td.appendChild(ER.el('small', null, ER.tr('{0} to {1}', ER.F.pct(Math.round(lo * 10) / 10), ER.F.pct(Math.round(hi * 10) / 10))));
+      return td;
+    };
+    tb.replaceChildren(...strokeRows(s).map((c) => {
+      const tr = ER.el('tr', (c.n < MIN_STROKE ? 'few' : '') + (f.shot === c.shot ? ' on' : ''));
+      const th = ER.el('th', null, ER.tr(STROKE[c.shot] || c.shot));
+      th.scope = 'row';
+      tr.append(th, ER.el('td', null, ER.F.int(c.n)), cell(c.ok, c.n, c.okMove), cell(c.won, c.n, c.wonMove));
+      return tr;
     }));
   };
 
@@ -4727,7 +4804,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     document.querySelectorAll('#sx-scope [data-scope]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
     redraw(['sx-groups-note', 'sx-groups']);
   });
-  ER.shots = {filters: f, chosen, apply, groups};
+  ER.shots = {filters: f, chosen, apply, groups, strokeRows};
 })();
 </script>
 
