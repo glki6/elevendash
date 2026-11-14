@@ -41,6 +41,9 @@
       check('section ' + id, s && s.textContent.trim().length > 40, s ? s.textContent.trim().length + ' characters' : 'not in the page');
     }
     check('nothing failed to load', qa('.er-fail').length === 0, qa('.er-fail').length);
+    // a style that sets display must not bring back what the page has hidden
+    const showing = () => qa('.er-page [hidden]').filter((e) => e.getClientRects().length);
+    check('nothing hidden shows', showing().length === 0, showing().slice(0, 3).map((e) => e.className || e.id || e.tagName).join(', '));
 
     // 3. point replays: only the month of the match on screen is unpacked, and its court draws
     const months = lazy().length;
@@ -139,6 +142,7 @@
         if (!(s && s.textContent.trim().length > 40)) check('online: section ' + id, false, s ? s.textContent.trim().length + ' characters' : 'not in the page');
       }
       check('online: nothing failed to load', qa('.er-fail').length === 0, qa('.er-fail').length);
+      check('online: nothing hidden shows', showing().length === 0, showing().slice(0, 3).map((e) => e.className || e.id || e.tagName).join(', '));
       // what may still name the AI or a level: the way back, the drills against the AI, and a standard you reached
       const kept = ['AI matches', 'the AI at a low level', 'the AI at a level you beat', 'level of the matches you won', 'level of your matches won', 'above level',
         'Matches against the AI are not in these totals'];

@@ -8,6 +8,8 @@
 .er-page:not(.er-zh) [data-l=zh],.er-page.er-zh [data-l=en]{display:none!important}
 /* Two sides: your matches against the AI, and your matches against people online. The switch at the top shows one;
    a part marked data-v belongs to one side, and a sentence that names the AI is in the page in both wordings. */
+/* hidden means hidden, whatever display a class sets (the Claude page frame has this rule; the file on its own did not) */
+.er-page [hidden]{display:none!important}
 .er-page:not(.er-people) [data-v=people],.er-page.er-people [data-v=ai]{display:none!important}
 
 /* Layout: one reading column. A scoreboard strip opens it, findings run as an open two-column list,
@@ -400,7 +402,12 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
 .er-pill.lost{background:var(--er-ai-tint)}
 .er-pill.lost::before{background:var(--er-ai)}
 .er-sets{display:flex;align-items:stretch;gap:8px}
-.er-setlabels{display:grid;grid-template-rows:1fr 1fr;align-items:center;font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.er-setlabels{display:grid;grid-template-columns:auto auto auto;grid-template-rows:1fr 1fr;align-items:center;font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.er-setlabels>*{grid-column:1;grid-row:1}
+.er-setlabels>:nth-child(n+4){grid-row:2}
+.er-setlabels>.er-elo{grid-column:2;margin-left:10px;font-family:var(--er-display);font-weight:600;font-size:17px;line-height:1;color:var(--color-fg);text-align:right}
+.er-meta .er-under{display:block;font-size:var(--cds-font-size-caption)}
+.er-setlabels>.er-chg{grid-column:3;min-width:0;margin-left:7px;font-variant-numeric:tabular-nums}
 .er-games{display:flex;gap:5px;min-height:58px}
 .er-game{display:grid;grid-template-rows:1fr 1fr;min-width:36px;border:1px solid var(--er-line);border-radius:6px;overflow:hidden;font-family:var(--er-display);font-weight:600;font-size:18px;line-height:1;text-align:center}
 .er-game span{display:grid;place-items:center;padding:6px 7px;color:var(--color-fg-muted)}
@@ -656,11 +663,10 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
       <div class="er-result">
         <span data-draw="result"></span>
         <div class="er-score"><b data-draw="v" data-ds="matches" data-k="{M}" data-f="gamesWon" data-fmt="int">—</b><span class="er-dash">–</span><span class="er-los" data-draw="v" data-ds="matches" data-k="{M}" data-f="gamesLost" data-fmt="int">—</span></div>
-        <div class="er-sets"><div class="er-setlabels"><span>You</span><span>Opponent</span></div><div class="er-games" data-draw="games"></div></div>
+        <div class="er-sets"><div class="er-setlabels"><span>You</span><b class="er-elo" data-showif data-ds="matches" data-k="{M}" data-f="rYou" hidden><span data-draw="v" data-ds="matches" data-k="{M}" data-f="rYou" data-fmt="rating">—</span></b><span class="er-chg" data-draw="rating-change" hidden></span><span>Opponent</span><b class="er-elo" data-showif data-ds="matches" data-k="{M}" data-f="rOpp" hidden><span data-draw="v" data-ds="matches" data-k="{M}" data-f="rOpp" data-fmt="rating">—</span></b></div><div class="er-games" data-draw="games"></div></div>
       </div>
       <dl class="er-meta">
-        <div><dt>Opponent</dt><dd><span data-showif data-ds="matches" data-k="{M}" data-f="vs" data-eq="AI"><span data-draw="v" data-tr data-ds="matches" data-k="{M}" data-f="vs">—</span>, level <span data-draw="v" data-ds="matches" data-k="{M}" data-f="level" data-fmt="int">—</span></span><span data-showif data-ds="matches" data-k="{M}" data-f="vs" data-eq="Online" hidden>A player online</span></dd></div>
-        <div data-showif data-ds="matches" data-k="{M}" data-f="rYou" hidden><dt>Ratings</dt><dd>You <span data-draw="v" data-ds="matches" data-k="{M}" data-f="rYou" data-fmt="rating">—</span>, opponent <span data-draw="v" data-ds="matches" data-k="{M}" data-f="rOpp" data-fmt="rating">—</span><span data-showif data-ds="matches" data-k="{M}" data-f="ranked" data-eq="1" hidden> · ranked, <span data-draw="v" data-ds="matches" data-k="{M}" data-f="rChange" data-fmt="signed">—</span> for you</span><span data-showif data-ds="matches" data-k="{M}" data-f="ranked" data-eq="0" hidden> · not ranked</span></dd></div>
+        <div><dt>Opponent</dt><dd><span data-showif data-ds="matches" data-k="{M}" data-f="vs" data-eq="AI"><span data-draw="v" data-tr data-ds="matches" data-k="{M}" data-f="vs">—</span>, level <span data-draw="v" data-ds="matches" data-k="{M}" data-f="level" data-fmt="int">—</span></span><span data-showif data-ds="matches" data-k="{M}" data-f="vs" data-eq="Online" hidden>A player online</span><span class="er-muted er-under" data-showif data-ds="matches" data-k="{M}" data-f="ranked" data-eq="1" hidden>Ranked match</span><span class="er-muted er-under" data-showif data-ds="matches" data-k="{M}" data-f="ranked" data-eq="0" hidden>Not ranked</span></dd></div>
         <div><dt>Played</dt><dd><span data-draw="v" data-ds="matches" data-k="{M}" data-f="date" data-fmt="date">—</span>, <span data-draw="v" data-ds="matches" data-k="{M}" data-f="start" data-fmt="time">—</span> to <span data-draw="v" data-ds="matches" data-k="{M}" data-f="end" data-fmt="time">—</span></dd></div>
         <div><dt>Points won</dt><dd><span data-draw="v" data-ds="matches" data-k="{M}" data-f="pointRate" data-fmt="pct">—</span> of <span data-draw="v" data-ds="matches" data-k="{M}" data-f="points" data-fmt="int">—</span></dd></div>
         <div><dt>Shots per point</dt><dd><span data-draw="v" data-ds="matches" data-k="{M}" data-f="rallyLength" data-fmt="n1">—</span></dd></div>
@@ -2098,6 +2104,21 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       box.append(ER.el('span', 'you' + (a > b ? ' win' : ''), String(a)), ER.el('span', 'ai' + (b > a ? ' win' : ''), String(b)));
       return box;
     }));
+  });
+
+  // What a ranked match was worth to you, beside your rating on the scoreboard.
+  dash.draw('rating-change', (el) => {
+    const m = ER.matchRow();
+    const d = m && Number(m.ranked) === 1 && m.rChange != null ? Number(m.rChange) : NaN;
+    el.hidden = !isFinite(d);
+    if (el.hidden) {
+      el.textContent = '';
+      return;
+    }
+    el.className = 'er-chg' + (d > 0 ? ' good' : d < 0 ? ' bad' : '');
+    el.textContent = ER.F.signed(d);
+    el.title = ER.tr('What this ranked match did to your rating');
+    el.setAttribute('aria-label', ER.tr('Rating change: {0}', ER.F.signed(d)));
   });
 
   dash.draw('level-tabs', (el) => {
