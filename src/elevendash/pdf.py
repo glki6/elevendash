@@ -44,7 +44,8 @@ def make_pdf(build_dir, out_pdf, videos=True, theme='dark', lang='en'):
         raise RuntimeError('no Chrome, Edge or Chromium found to print the PDF (set ELEVENDASH_CHROME to its path)')
     work = tempfile.mkdtemp(prefix='elevendash-pdf-')
     try:
-        page = build_site(build_dir, os.path.join(work, 'index.html'), videos=videos, theme=theme, lang=lang)
+        # plain data: the page is drawn the moment it opens, so the print cannot come before the data
+        page = build_site(build_dir, os.path.join(work, 'index.html'), videos=videos, theme=theme, lang=lang, pack=False)
         tmp_pdf = os.path.join(work, 'report.pdf')
         url = pathlib.Path(page).as_uri() + '?pdf=1'
         subprocess.run([browser, '--headless=new', '--disable-gpu', '--no-first-run', '--disable-extensions',

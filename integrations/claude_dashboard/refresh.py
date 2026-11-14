@@ -79,7 +79,7 @@ class Claude:
         paths = []
         for ds, (theme, lang) in PDFS.items():
             wrap = self.pdf_wraps[ds]
-            mark = sha_bytes(render(self.ws.build, theme=theme, lang=lang).encode('utf-8'))
+            mark = sha_bytes(render(self.ws.build, theme=theme, lang=lang, pack=False).encode('utf-8'))
             tag = ''.join(f'-{x}' for x in (lang, theme) if x not in ('en', 'dark'))
             name = f'Eleven-vs-AI-Report-{last}{tag}.pdf'
             path = os.path.join(self.reports, name)
@@ -109,10 +109,15 @@ class Claude:
             if pub.get(name, {}).get('blob') not in (None, blob):
                 old.append(pub[name]['blob'])
             pub[name] = {'blob': blob, 'sha256': sha(files[name]), 'at': now}
+        gone = [n for n in pub if n not in files]       # a dataset the build no longer writes: its asset goes too
+        for n in gone:
+            old.append(pub.pop(n)['blob'])
         os.makedirs(self.dir, exist_ok=True)
         with open(self.published, 'w', encoding='utf-8') as f:
             json.dump(pub, f, indent=1)
         print('recorded', len(pairs), 'asset ids')
+        if gone:
+            print('datasets gone (delete their documents too):', ' '.join(gone))
         print('replaced assets to delete:', ' '.join(old) if old else 'none')
         left = self.changed()
         print('still to upload:', ' '.join(left) if left else 'nothing')

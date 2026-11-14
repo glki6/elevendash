@@ -4,6 +4,7 @@ import io
 import json
 import math
 import os
+import re
 import sys
 import tempfile
 import unittest
@@ -58,8 +59,14 @@ class Build(unittest.TestCase):
         self.assertEqual(len(sessions), len(sample.SESSIONS))
         self.assertEqual(sum(s['matches'] for s in sessions), sum(n for _, n in sample.SESSIONS))
         self.assertEqual(sorted({s['level'] for s in sessions}), [75, 100])
-        self.assertTrue(self.rows('replay'))
-        for r in self.rows('replay'):       # the 3D view's numbers: velocity arriving at every contact; leaving, and spin, on a hit
+        months = sorted(f[:-5] for f in os.listdir(os.path.join(self.ws, 'build')) if f.startswith('replay'))
+        self.assertTrue(months and all(re.fullmatch(r'replay_\d{4}_\d\d', m) for m in months), months)
+        replay = [r for m in months for r in self.rows(m)]
+        self.assertTrue(replay)
+        for m in months:                    # one file a month, each holding only its own month's points
+            self.assertEqual({'replay_' + r['key'][:7].replace('-', '_') for r in self.rows(m)}, {m})
+        self.assertTrue({r['key'] for r in replay} <= {p['key'] for p in self.rows('points')})
+        for r in replay:                    # the 3D view's numbers: velocity arriving at every contact; leaving, and spin, on a hit
             ev = [e.split(',') for e in r['track'].split(';')]
             self.assertEqual(ev[0][0], 'h')
             for e in ev:

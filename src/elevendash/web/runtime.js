@@ -14,17 +14,34 @@
     if (!Array.isArray(v) && Object.prototype.hasOwnProperty.call(v, 'value') && typeof v.value !== 'object') return v.value;
     return JSON.stringify(v);
   };
-  const DATA = read('ed-data');
-  for (const id of Object.keys(DATA)) {
-    const rows = DATA[id];
-    if (!Array.isArray(rows)) continue;
-    DATA[id] = rows.map((r) => {
-      if (typeof r !== 'object' || r === null || Array.isArray(r)) return r;
-      const o = {};
-      for (const k of Object.keys(r)) o[k] = cell(r[k]);
-      return o;
-    });
+  const asHost = (rows) => (!Array.isArray(rows) ? rows : rows.map((r) => {
+    if (typeof r !== 'object' || r === null || Array.isArray(r)) return r;
+    const o = {};
+    for (const k of Object.keys(r)) o[k] = cell(r[k]);
+    return o;
+  }));
+  // The data is in the page in one of two forms (site.py). Plain: one JSON block, read here and now. Packed: one
+  // block a dataset, deflated and in base64, which keeps the file at about a third of the size. Packed blocks are
+  // unpacked before the page first draws, except the point replays (data-lazy): a month of those is unpacked when a
+  // match of that month is first shown, and the page redraws when it is there, as a dashboard host loads a source.
+  const DATA = {};
+  const plain = document.getElementById('ed-data');
+  if (plain) {
+    const all = JSON.parse(plain.textContent);
+    for (const id of Object.keys(all)) DATA[id] = asHost(all[id]);
   }
+  const packed = new Map();
+  document.querySelectorAll('script[data-ed]').forEach((el) => packed.set(el.dataset.ed, {el, lazy: el.hasAttribute('data-lazy'), state: ''}));
+  const unpack = async (id) => {
+    const b = packed.get(id);
+    const bin = atob(b.el.textContent);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const text = await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate'))).text();
+    DATA[id] = asHost(JSON.parse(text));
+    b.el.textContent = '';
+    packed.delete(id);
+  };
   const CONF = read('ed-conf');
   const root = document.documentElement;
   const q = new URLSearchParams(location.search);
@@ -33,6 +50,19 @@
 
   const errors = (window.__errors = []);
   window.addEventListener('error', (e) => errors.push(String(e.message)));
+  // a dataset still packed: start unpacking it and say it is loading; the page is redrawn when it is in
+  const fetchPacked = (id) => {
+    const b = packed.get(id);
+    if (b.state === '') {
+      b.state = 'loading';
+      unpack(id).then(() => later(), (e) => {
+        b.state = 'error';
+        errors.push(id + ': ' + e.message);
+        later();
+      });
+    }
+    return {status: b.state, data: []};
+  };
 
   const KEYS = Object.keys(CONF.params);
   const fromHash = () => {
@@ -137,7 +167,10 @@
       toHash();
       later();
     },
-    data: (id) => (Object.prototype.hasOwnProperty.call(DATA, id) ? {status: 'ok', data: DATA[id]} : {status: 'missing', data: []}),
+    data(id) {
+      if (Object.prototype.hasOwnProperty.call(DATA, id)) return {status: 'ok', data: DATA[id]};
+      return packed.has(id) ? fetchPacked(id) : {status: 'missing', data: []};
+    },
     // dash.draw(name, fn) defines a drawing; dash.draw(name) draws it again
     draw(name, fn) {
       if (fn === undefined) {
@@ -147,7 +180,7 @@
       }
       draws.set(name, fn);
     },
-    // all data is in the page from the start; a listener runs now and again whenever a parameter or the width changes
+    // a listener runs now and again whenever a parameter, the width or the data changes
     onData(fn) {
       listeners.push(fn);
       call(fn, 'onData');
@@ -170,20 +203,41 @@
     },
   };
 
-  window.__elevendash = {
-    start() {
-      if (PDF) document.querySelectorAll('details').forEach((d) => (d.open = true));
+  const pages = [];
+  const begin = () => {
+    // the page's scripts, in order; as on a dashboard host, a fault in one stops only that one
+    pages.forEach((fn, i) => call(fn, 'page script ' + (i + 1)));
+    if (PDF) document.querySelectorAll('details').forEach((d) => (d.open = true));
+    runAll();
+    root.dataset.edDrawn = String(errors.length);     // for tests: drawn, with this many errors
+    let t;
+    window.addEventListener('resize', () => {
+      if (printing) return;
+      clearTimeout(t);
+      t = setTimeout(runAll, 60);
+    });
+    window.addEventListener('hashchange', () => {
+      Object.assign(params, CONF.params, fromHash());
       runAll();
-      root.dataset.edDrawn = String(errors.length);     // for tests: drawn, with this many errors
-      let t;
-      window.addEventListener('resize', () => {
-        if (printing) return;
-        clearTimeout(t);
-        t = setTimeout(runAll, 60);
-      });
-      window.addEventListener('hashchange', () => {
-        Object.assign(params, CONF.params, fromHash());
-        runAll();
+    });
+  };
+  const tooOld = () => {
+    const p = document.createElement('p');
+    p.className = 'ed-foot';
+    p.textContent = 'This file needs a newer browser to open (one from 2023 or later). 開啟這個檔案需要較新的瀏覽器（2023 年或之後的版本）。';
+    document.body.prepend(p);
+    root.dataset.edDrawn = 'old';
+  };
+  window.__elevendash = {
+    page: (fn) => pages.push(fn),
+    start() {
+      const first = [...packed].filter(([, b]) => !b.lazy).map(([id]) => id);
+      if (!first.length) return begin();             // plain data: draw now, in this very task
+      if (typeof DecompressionStream !== 'function') return tooOld();
+      first.forEach((id) => (packed.get(id).state = 'loading'));
+      Promise.all(first.map(unpack)).then(begin, (e) => {
+        errors.push('data: ' + e.message);
+        tooOld();
       });
     },
   };

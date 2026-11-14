@@ -28,3 +28,6 @@ jobs:
         run: python -m unittest discover -s tests -v
       - name: Demo from the command line
         run: elevendash demo demo-workspace
+      - name: The demo dashboard in a browser
+        if: runner.os == 'Linux' && matrix.python == '3.12'
+        run: python tools/pagetest/run.py demo-workspace/site/index.html

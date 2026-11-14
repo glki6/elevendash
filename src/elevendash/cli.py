@@ -73,10 +73,13 @@ def do_build(ws, verbose=False, say=print):
     try:
         sink = contextlib.nullcontext() if verbose else contextlib.redirect_stdout(io.StringIO())
         with sink:
-            runpy.run_module('elevendash.builddata', run_name='__main__', alter_sys=False)
+            made = runpy.run_module('elevendash.builddata', run_name='__main__', alter_sys=False)
     finally:
         sys.argv = argv
     say(f'  Data in {ws.build}')
+    from . import health
+    for line in health.advice(made.get('PROBLEMS')):
+        say(line)
 
 
 def do_report(ws, say=print):

@@ -4,9 +4,11 @@ inside it, so it needs no server and no network. Open it in a browser, send it t
 The file holds match data only: no game logs, no account tokens. With videos it also holds the links to your
 (unlisted) YouTube uploads; leave them out with videos=False when you share it more widely.
 """
+import base64
 import json
 import os
 import re
+import zlib
 
 from .page import LANGS, THEMES, WEB, color_tokens, fill
 
@@ -51,6 +53,23 @@ def _json_block(obj):
     return json.dumps(obj, ensure_ascii=False, separators=(',', ':')).replace('<', '\\u003c')
 
 
+def _packed(rows):
+    """Rows as the page stores them when packed: JSON, deflated, in base64. The big tables are mostly repeated keys
+    and digits, so the file comes out at about a third of its plain size; the browser unpacks them as it opens."""
+    raw = json.dumps(rows, ensure_ascii=False, separators=(',', ':')).encode('utf-8')
+    return base64.b64encode(zlib.compress(raw, 9)).decode('ascii')
+
+
+def data_blocks(data, pack):
+    """The data as script blocks of the page. Plain: one JSON block, read at once (the PDF is printed from this, with
+    nothing left to wait for). Packed: one block a dataset; the page unpacks all but the point replays before it draws,
+    and a month of replays (replay_2026_11) only when a match of that month is opened."""
+    if not pack:
+        return [f'<script type="application/json" id="ed-data">{_json_block(data)}</script>']
+    return [f'<script type="application/x-elevendash" data-ed="{name}"{" data-lazy" if name.startswith("replay_") else ""}>'
+            f'{_packed(rows)}</script>' for name, rows in data.items()]
+
+
 def main_level(data):
     """The level the page opens on: your main level (most points in your last five sessions), else your latest session's."""
     main = next((r for r in data.get('findings') or [] if r.get('key') == 'main'), None)
@@ -60,8 +79,9 @@ def main_level(data):
     return sessions[-1]['level'] if sessions else 100
 
 
-def render(build_dir, videos=True, title=TITLE, theme='dark', lang='en'):
-    """The whole dashboard as one HTML string. theme and lang are what it opens with; its switches change them."""
+def render(build_dir, videos=True, title=TITLE, theme='dark', lang='en', pack=True):
+    """The whole dashboard as one HTML string. theme and lang are what it opens with; its switches change them.
+    pack=False keeps the data as plain JSON (a larger file that needs nothing unpacked)."""
     page = fill()
     scripts = re.findall(r'<script>(.*?)</script>', page, flags=re.S)
     markup = re.sub(r'<script>.*?</script>', '', page, flags=re.S).replace('<meta name="dash-one-writer">', '')
@@ -83,20 +103,20 @@ def render(build_dir, videos=True, title=TITLE, theme='dark', lang='en'):
         '<div id="dash-root">', markup, '</div>',
         f'<p class="ed-foot"><span data-l="en">Saved from the {title}, made with elevendash from Eleven Table Tennis game logs.</span>'
         f'<span data-l="zh" lang="zh-Hant">由 elevendash 根據 Eleven Table Tennis 遊戲記錄製作的{FOOT_ZH}。</span></p>',
-        f'<script type="application/json" id="ed-data">{_json_block(data)}</script>',
+        *data_blocks(data, pack),
         f'<script type="application/json" id="ed-conf">{_json_block(conf)}</script>',
         f'<script>{d3}</script>',
         f'<script>{_read("runtime.js")}</script>',
     ]
-    # each page script in its own function scope, as a dashboard host runs them
-    parts += [f'<script>(function(){{\n{s}\n}})();</script>' for s in scripts]
+    # each page script in its own function scope, as a dashboard host runs them; they run once the data is unpacked
+    parts += [f'<script>window.__elevendash.page(function(){{\n{s}\n}});</script>' for s in scripts]
     parts.append('<script>window.__elevendash.start();</script>')
     parts.append('</body></html>\n')
     return '\n'.join(parts)
 
 
-def build_site(build_dir, out_file, videos=True, title=TITLE, theme='dark', lang='en'):
-    html = render(build_dir, videos, title, theme, lang)
+def build_site(build_dir, out_file, videos=True, title=TITLE, theme='dark', lang='en', pack=True):
+    html = render(build_dir, videos, title, theme, lang, pack)
     os.makedirs(os.path.dirname(os.path.abspath(out_file)), exist_ok=True)
     tmp = out_file + '.tmp'
     with open(tmp, 'w', encoding='utf-8', newline='\n') as f:

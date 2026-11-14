@@ -41,8 +41,6 @@ TITLES = {
                    'Your return by pace and by where it lands; the AI\'s return of your serve by pace and by where it lands, with your third ball.'),
     'serve_notes': ('Serve and return notes',
                     'Findings about serves and returns at each AI level, written by the same code that builds the data: a headline, one measure, its bars (bar1, bar1_label, bar1_tone …; unit says percent or m/s) and the sentence in full.'),
-    'replay': ('Point replays',
-               'One row per point: every ball contact from the serve on, as kind,x,z,y,t joined by semicolons, in your view (your half is z below 0, +x your right), in cm and thousandths of a second. Kinds: h bat, b table, n net, o anything else (nearly always the floor), x an estimated last stretch. A bat contact adds who (y or a), speed in 0.1 m/s, topspin (+) or backspin (-) in r/s, the shot letter and 1 if it landed. Every logged contact then ends with the velocity of the ball as it arrived (x, y up, z, in 0.1 m/s), and a bat contact with its velocity and its spin (axis times r/s) just after the hit; a triple the log lacks is empty.'),
     'shots': ('Every shot of yours',
               'One row per match, for the shot explorer: every shot you hit and every ball that landed on your half untouched, in s, joined by semicolons. Each is at (game.point), n (place in the point), role (S serve, R return, A rally shot), shot letter (X not reached), 1 if it landed, how it missed (n net, l long, w wide, x not reached, o other, u not known), speed in 0.1 m/s, topspin (+) or backspin (-) in r/s, 1 if it won the point, where you met the ball (x and height, cm), then the ball that came: shot letter, speed in 0.1 m/s and spin off the bat, where it bounced on your half (x, z in cm), thousandths of a second from that bounce to your bat, r or f if it was rising or falling, and its class: spin (t, n, b), side (B backhand, M middle, F forehand), depth (s, h, l) and speed (f fast, s slower). Last come the angle the ball left your bat at, in tenths of a degree above level, and where you met it, in cm from the net (below zero is your side).'),
     'shot_groups': ('Where your misses pile up',
@@ -86,6 +84,13 @@ TITLES = {
     'report_pdf_zh_light': ('This report as a PDF, Chinese, light',
                             'The same PDF in Traditional Chinese, in the light look.'),
 }
+# Point replays come one dataset a month (replay_2026_11): the page asks for the month of the match on screen, and a
+# month that is over never changes, so it is uploaded once.
+REPLAY = ('One row per point: every ball contact from the serve on, as kind,x,z,y,t joined by semicolons, in your view (your half is z below 0, +x your right), in cm and thousandths of a second. Kinds: h bat, b table, n net, o anything else (nearly always the floor), x an estimated last stretch. A bat contact adds who (y or a), speed in 0.1 m/s, topspin (+) or backspin (-) in r/s, the shot letter and 1 if it landed. Every logged contact then ends with the velocity of the ball as it arrived (x, y up, z, in 0.1 m/s), and a bat contact with its velocity and its spin (axis times r/s) just after the hit; a triple the log lacks is empty.')
+for f in sorted(os.listdir(ws.build)):
+    m = re.fullmatch(r'replay_(\d{4})_(\d\d)\.json', f)
+    if m:
+        TITLES[f[:-5]] = (f'Point replays, {m.group(1)}-{m.group(2)}', 'The points of matches played in that month. ' + REPLAY)
 missing = [ds for ds in TITLES if ds not in PUBLISHED]
 assert not missing, f'upload these first, then run refresh.py record: {missing}'
 BLOBS = {ds: (PUBLISHED[ds]['blob'], t, d) for ds, (t, d) in TITLES.items()}
@@ -132,6 +137,10 @@ for ds, (blob, title, desc) in BLOBS.items():
     doc('datasets', ds, {'title': title, 'description': desc + ' Made from the Quest game logs by elevendash (src/elevendash/builddata.py).',
                          'source': {'kind': 'file', 'url': f'/_blob/{blob}', 'name': f'{ds}.json', 'format': 'json'},
                          'updated': upd, 'fixed': True, 'edit': edit})
+for fn in sorted(os.listdir(out)):     # datasets that are gone (a month of replays, or the single replay file there once was)
+    if fn.startswith('datasets__') and fn.endswith('.json') and fn[len('datasets__'):-len('.json')] not in BLOBS:
+        writes.append({'op': 'delete', 'collection': 'datasets', 'doc_id': fn[len('datasets__'):-len('.json')],
+                       'file_path': os.path.join(out, fn), 'changed': True})
 page, scripts = split_scripts(html)
 doc('files', 'index.html', {'text': page, 'edit': edit})
 for name, text in scripts.items():

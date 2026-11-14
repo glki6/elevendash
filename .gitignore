@@ -19,6 +19,9 @@ claude/
 11hero-match-*
 parse-response.json
 
+# Your own list of words that must never be pushed, read by tools/prepush/check.py
+private-words.txt
+
 # Google client file and token live in %USERPROFILE%\.eleven-youtube, never here
 client_secret*.json
 token*.json

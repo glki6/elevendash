@@ -1,0 +1,6 @@
+#!/bin/sh
+# Refuse a push that would publish private data from the workspace (game logs, tokens, video ids, your own words).
+# Turn it on once per clone:  git config core.hooksPath tools/hooks
+root="$(git rev-parse --show-toplevel)"
+if command -v python3 >/dev/null 2>&1; then py=python3; else py=python; fi
+exec "$py" -I "$root/tools/prepush/check.py" --hook

@@ -10,9 +10,10 @@ import math
 import os
 import random
 
-# (AI level, matches) for each session, one day apart. Two levels, so the level picker has something to pick.
+# (AI level, matches) for each session, one day apart. Two levels, so the level picker has something to pick. The last
+# session falls in the next month, so the demo and the tests cover point replays kept one dataset a month.
 SESSIONS = ((75, 5), (75, 6), (100, 7), (100, 8))
-FIRST = dt.datetime(2026, 1, 5, 18, 0, 0)
+FIRST = dt.datetime(2026, 1, 29, 18, 0, 0)
 NET_Y, TABLE_Y = 0.85, 0.78
 
 

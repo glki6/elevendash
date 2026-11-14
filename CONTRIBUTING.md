@@ -16,6 +16,18 @@ elevendash demo                   a dashboard of made-up matches in elevendash-d
 
 No Quest is needed: `elevendash demo` and the tests use generated logs (`src/elevendash/sample.py`).
 
+If you keep a workspace of your own logs next to the code, turn on the check that runs before every push:
+
+```
+git config core.hooksPath tools/hooks
+```
+
+It refuses a push that holds anything private from that workspace: values from your game logs (ids, names, tokens,
+location), your Google client values and video ids if you use `youtube/`, anything that looks like a log, and any word
+you list in `private-words.txt` (one word or regular expression a line: your name, an address; git ignores the file).
+It reads the files to be committed and every file version in the commits being pushed, and prints file names only.
+`python tools/prepush/check.py` runs it by hand.
+
 ## Ground rules
 
 - **No real logs, ever**, in commits, issues or pull requests: they hold account tokens. Use the generated logs, or a
@@ -34,8 +46,10 @@ No Quest is needed: `elevendash demo` and the tests use generated logs (`src/ele
 
   (The tests run it too.)
 - Page changes: try the dashboard in Firefox and in a Chromium browser, dark and light, English and Chinese, and at
-  about 640 px wide. A click must never move the page. `tools/fxtest/` runs scroll tests in a private headless
-  Firefox.
+  about 640 px wide. A click must never move the page. `python tools/pagetest/run.py SITE --browser all` opens a built
+  dashboard in headless Chrome and Firefox, each with an empty throwaway profile, and checks that every section draws,
+  the shot explorer's filters, the replay in 2D and 3D and both languages (the tests on GitHub run it on the demo in
+  Chrome). `tools/fxtest/` runs scroll tests in a private headless Firefox.
 - Keep the side colours: blue is the player, orange the AI or opponent. Green and red only mean better and worse.
 
 ## Pull requests

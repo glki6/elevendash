@@ -7,6 +7,7 @@ Coordinates are "your view": your half of the table is z < 0, the AI's half z > 
 """
 import glob, json, math, os, sys
 from collections import Counter, defaultdict
+from . import health
 from .extract import extract_log
 from .i18n import Bi, T, W, join, put
 from .i18n import listing as bilist
@@ -61,8 +62,17 @@ def zone(x, z):
 
 # ---------------- extract ----------------
 M = []   # (match dict, you, ai, points)
+PROBLEMS = {}   # log name -> what looks misread in it (health.py); the command line prints these after a build
 for path in logs:
-    for m in extract_log(path):
+    try:
+        found = extract_log(path)
+    except Exception as e:      # a line the reader did not expect: leave this log out and say so, keep the others
+        PROBLEMS[os.path.basename(path)] = [f'could not be read ({type(e).__name__}) and was left out']
+        continue
+    bad = health.check_log(path, found)
+    if bad:
+        PROBLEMS[os.path.basename(path)] = bad
+    for m in found:
         if m['games'] and m.get('end'):
             you = m['you']
             M.append((m, you, 'B' if you == 'A' else 'A', [p for g in m['games'] for p in g['points']]))
@@ -1510,7 +1520,17 @@ write('match_sums', match_sums)
 write('shot_mix', shot_mix)
 write('serves', serves)
 write('points', points)
-write('replay', replay)
+# Point replays are the largest data by far and only one match is on screen at a time, so they are written one file a
+# month (replay_2026_11): the page asks for the month of the match it shows, a finished month never changes again, and
+# no single file keeps growing. A point's key starts with its match's date.
+replay_months = {}
+for r in replay:
+    replay_months.setdefault('replay_' + r['key'][:7].replace('-', '_'), []).append(r)
+for name in sorted(replay_months):
+    write(name, replay_months[name])
+for f in glob.glob(os.path.join(out_dir, 'replay*.json')):       # an earlier build's single file, or months that are gone
+    if os.path.basename(f)[:-5] not in replay_months:
+        os.remove(f)
 write('videos', [{'key': v['id'], 'kind': v['kind'], 'title': v['title'], 'url': v['url'], 'uploaded': v['at'],
                   'session': ms[0].get('session') if ms else v.get('session'), 'matches': len(ms),
                   'duration': round(v.get('duration') or 0)}

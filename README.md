@@ -23,12 +23,53 @@ matches are kept in the browser you wrote them in, never in the file, so they st
 
 ## What it looks like
 
-| | |
-|---|---|
-| ![A table seen from above with the paths of a 16-shot rally, bars for every point of two games, and a shot list with type, speed and spin.](pages/img/replay.png) | ![The same point on a table drawn in 3D, with a ball in the corner showing the spin of the last shot.](pages/img/replay-3d.png) |
-| **Point by point.** Every point of a match as a bar; click one to play it back from the ball contacts, with each shot's type, speed and spin. | **3D replay.** The same point in 3D. "Deciding shot" replays the last shot in slow motion with the camera on the ball and its spin shown. |
-| ![A ranked list of the kinds of ball missed most, each with a bar for the miss rate against the usual rate.](pages/img/shots.png) | ![Training plan items, each with a drill, what it is worth in points a match, and a chart of the number against its target.](pages/img/plan.png) |
-| **Shot explorer.** The kinds of ball you miss most, and a filter that finds any shot by the ball that came at you. | **Training plan.** What to practise next, ranked by points a match, each item with a drill, a target and its trend. |
+### Session report
+
+![A session of eight matches: five won and three lost, written notes, a chip for every match, and each number set against the average before it.](pages/img/session.png)
+
+Written from the logs after every session: what you won, what changed, and each number against your average at the same AI level before it.
+
+### Point by point
+
+![A table seen from above with the paths of a 16-shot rally, bars for every point of two games, and a shot list with type, speed and spin.](pages/img/replay.png)
+
+Every point of a match as a bar. Click one to play it back from the ball contacts, with the type, speed and spin of each shot.
+
+### 3D replay
+
+![The table drawn in 3D with the ball in flight over the net, its path so far, and a ball in the corner turning with the spin of the shot.](pages/img/replay-3d.png)
+
+The same point in 3D, with the spin of the ball shown in the corner. "Deciding shot" replays the last shot in slow motion with the camera following the ball.
+
+### Match card
+
+![A card for one match: the result, a bar for every point, six numbers, how the points ended and you against the AI.](pages/img/card.png)
+
+A picture of any match to send or post. It has no names, links or videos in it.
+
+### Training plan
+
+![Training plan items, each with a drill, what it is worth in points a match, and a chart of the number against its target.](pages/img/plan.png)
+
+What to practise next, ranked by how many points a match each item is worth, with a drill, a target taken from the matches you won, and the trend.
+
+### Shot explorer
+
+![A ranked list of the kinds of ball missed most, each with a bar for the miss rate against the usual rate.](pages/img/shots.png)
+
+The kinds of ball you miss most, each one click away from its replays, and a filter that finds any shot by the ball that came at you.
+
+### Form and stamina
+
+![A line of matches won over the last 10 matches, with a band for the range chance allows.](pages/img/form.png)
+
+Rolling win rates with the range chance allows, so a lucky week does not look like progress, and how you play from the first match of a session to the last.
+
+### Serves and returns
+
+![Points won by the side the serve comes to and by the length of the return, then a bar for each kind of serve showing how its points ended.](pages/img/serves.png)
+
+Where points on each serve end: by the side, spin and depth of the serve, for the AI's serves and your own.
 
 ## Try it without a Quest
 
@@ -115,7 +156,8 @@ or `--dir`, or `ELEVENDASH_HOME`.
 
 ## Sharing the dashboard
 
-`site/index.html` is self-contained (about 15 MB for a few hundred matches): send it as a file, or upload it to any
+`site/index.html` is self-contained (about 5 MB for a few hundred matches; the data in it is compressed, and a browser
+from 2023 or later unpacks it as it opens): send it as a file, or upload it to any
 static host (GitHub Pages, Netlify, Cloudflare Pages). A view's level, session and match are kept in the address after
 `#`, so a link can open a particular match. In the browser, Save as PDF prints it.
 
@@ -137,6 +179,7 @@ recording up with the log by the sound of the ball, so every point on the dashbo
 | Path | What it is |
 |---|---|
 | `src/elevendash/extract.py` | Log to matches, games, points, ball contacts (bat, table, net, floor) |
+| `src/elevendash/health.py` | Warns after a build when a log does not read as expected, as after a game update that changes the log format |
 | `src/elevendash/metrics.py` | Per-player match metrics with 11hero's definitions |
 | `src/elevendash/builddata.py` | All dashboard datasets, including the written session notes and the training plan, by fixed rules |
 | `src/elevendash/web/` | The dashboard page (`index.template.html`), its small runtime, look and the d3 chart library |
@@ -148,6 +191,8 @@ recording up with the log by the sound of the ball, so every point on the dashbo
 | `youtube/` | Optional video uploads and highlight reels |
 | `integrations/claude_dashboard/` | Keeps a hosted copy of the dashboard on claude.ai in step with a workspace (optional) |
 | `research/` | Calibration against 11hero |
+| `tools/pagetest/` | Opens a built dashboard in headless Chrome and Firefox and checks that it works: `python tools/pagetest/run.py site/index.html` |
+| `tools/prepush/`, `tools/hooks/` | A check, run by git before every push, that nothing private from your workspace is about to be published |
 | `tools/fxtest/` | Scroll tests in a private headless Firefox |
 
 Coordinates are your view: your half of the table is z < 0 and +x is your right. Which side is your backhand comes

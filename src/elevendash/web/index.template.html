@@ -678,7 +678,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
     <details class="er-how"><summary>How to read this</summary><p class="er-muted">One bar per point, in order: bars above the line are points you won, bars below are points you lost, and a longer bar is a longer point. Click a bar to watch that point from above, you at the bottom, drawn from every contact the game logged: bat, table, net and floor. Switch to 3D to see how the ball flew, and to replay the shot that ended the point in slow motion with its spin.</p></details>
     <div class="er-replay">
       <div class="er-rstage">
-        <div class="er-chart er-rcourt" id="chart-replay" data-draw="replay" data-nomorph data-source="replay" data-fetchpriority="low"></div>
+        <div class="er-chart er-rcourt" id="chart-replay" data-draw="replay" data-nomorph></div>
         <div class="er-rbar">
           <button class="er-btn er-rplay" type="button" id="replay-play"><span id="replay-play-go">Play</span><span id="replay-play-stop" hidden>Pause</span></button>
           <input type="range" id="replay-seek" min="0" max="1000" step="1" value="1000" aria-label="Position in the point">
@@ -705,7 +705,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
           </div>
           <div class="er-rout" data-draw="replay-result" data-source="points"></div>
         </div>
-        <div class="er-tablewrap"><table class="er-t er-rshots"><thead><tr><th>Shot</th><th>Type</th><th>m/s</th><th>Spin r/s</th><th>Result</th></tr></thead><tbody data-draw="replay-shots" data-source="replay"></tbody></table></div>
+        <div class="er-tablewrap"><table class="er-t er-rshots"><thead><tr><th>Shot</th><th>Type</th><th>m/s</th><th>Spin r/s</th><th>Result</th></tr></thead><tbody data-draw="replay-shots"></tbody></table></div>
         <p class="er-muted">Click a shot to jump to it.</p>
       </div>
     </div>
@@ -1404,6 +1404,9 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
     return !!prev && el.childNodes.length > 0 && prev.length === deps.length && prev.every((d, i) => d === deps[i]);
   };
   ER.failed = (ids) => ids.some((id) => dash.data(id).status === 'error');
+  // Point replays come one dataset a month (replay_2026_11), asked for only when a match of that month is opened.
+  // A match key and a point key both start with the match's date.
+  ER.replayId = (key) => 'replay_' + String(key).slice(0, 4) + '_' + String(key).slice(5, 7);
   ER.enc = (v) => String(v).replace(/%/g, '%25').replace(/&/g, '%26').replace(/=/g, '%3D');
   ER.where = (key) => 'key=' + ER.enc(key);
   // The player's main level: the AI level with the most points in their last five sessions (the builder picks it).
@@ -3734,20 +3737,36 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     const k = ER.matchKey();
     return rows ? rows.filter((r) => r.match === k) : null;
   };
+  // The replays of the month the match on screen was played in (null until they have loaded).
+  // A month with no dataset is a month with no replays.
+  const NONE = [];
+  const monthRows = (key) => {
+    const id = ER.replayId(key);
+    return dash.data(id).status === 'missing' ? NONE : ER.rows(id);
+  };
+  const replayRows = () => monthRows(ER.matchKey());
+  const tracks = new Map();        // month dataset -> its rows by point key, kept while the rows are the same
   const track = (key) => {
-    const rows = ER.rows('replay');
-    const r = rows && rows.find((x) => x.key === key);
-    return r ? r.track : null;
+    const id = ER.replayId(key);
+    const rows = monthRows(key);
+    if (!rows) return null;
+    let m = tracks.get(id);
+    if (!m || m.rows !== rows) {
+      m = {rows, by: new Map(rows.map((x) => [x.key, x.track]))};
+      tracks.set(id, m);
+    }
+    return m.by.get(key) || null;
   };
   // The point to open a match on: its longest point that has a replay.
   const pick = () => {
     const k = ER.matchKey();
     if (st.match === k && st.key) return;
     const pts = matchPoints();
-    if (!pts || !ER.rows('replay')) return;
+    if (!pts || !replayRows()) return;
     const best = pts.slice().sort((a, b) => b.hits - a.hits || a.game - b.game || a.point - b.point).find((r) => track(r.key));
     st.match = k;
-    load(best ? best.key : null, false);
+    const asked = pending && pts.some((r) => r.key === pending.key) && track(pending.key) ? pending.key : null;
+    load(asked || (best ? best.key : null), false);
   };
   const load = (key, play) => {
     stop();
@@ -4157,7 +4176,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   };
   const draw3 = (el, W, H) => {
     const svg = ER.svg(el, W, H, ER.tr("Table tennis table in 3D: the flight of the ball through the chosen point, white for your shots and orange for the opponent's. Drag it, or use the arrow keys, to turn it"));
-    svg.attr('class', 'er-r3d').attr('tabindex', 0).attr('data-source', 'replay').attr('data-field', 'track').attr('data-where', ER.where(st.key));
+    svg.attr('class', 'er-r3d').attr('tabindex', 0).attr('data-source', ER.replayId(st.key)).attr('data-field', 'track').attr('data-where', ER.where(st.key));
     svg.append('rect').attr('width', W).attr('height', H).style('fill', HALL);
     const path = (parent) => parent.append('path').style('fill', 'none');
     const g = {three: true, W, H, marks: [], names: []};
@@ -4303,8 +4322,13 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   };
   // Put a point on the table and play it. The page moves only if the court is not already on screen. With n, the
   // point starts just before the shot that led to its shot n; back says whether the way back to the shot explorer shows.
+  let pending = null;       // a point asked for while its month of replays was still loading
   const show = (key, n, back) => {
-    if (!track(key)) return;
+    if (!track(key)) {
+      pending = monthRows(key) ? null : {key, n, back};
+      return;
+    }
+    pending = null;
     load(key, !calm());
     const lead = n > 1 ? st.hits[n - 2] : null;
     if (lead) st.t = calm() ? st.end : Math.max(0, lead.t - 0.15);
@@ -4324,8 +4348,14 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
 
   const draws = {};
   draws.replay = (el) => {
-    if (!ER.rows('replay') || !ER.rows('points')) return ER.wait(el, ['replay', 'points']);
+    if (!replayRows() || !ER.rows('points')) return ER.wait(el, [ER.replayId(ER.matchKey()), 'points']);
     pick();
+    if (pending) {
+      // the replays a point was asked from are in: show it once this drawing is done, or let it go with its match
+      const p = pending;
+      pending = null;
+      if (st.key === p.key) setTimeout(() => show(p.key, p.n, p.back), 0);
+    }
     // Width first, then empty and redraw with no layout in between. Firefox re-anchors the scroll position at every
     // layout: read with the court emptied, it anchored on the collapsed page and then moved the page down by the
     // court's height, just before the scroll back up to the court.
@@ -4345,7 +4375,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     }
     const sx = (x) => (x + X) / (2 * X) * W, sy = (z) => (Z - z) / (2 * Z) * H;
     const svg = ER.svg(el, W, H, ER.tr("Table seen from above with you at the bottom: the path of the ball through the chosen point, white for your shots and orange for the opponent's"));
-    svg.attr('data-source', 'replay').attr('data-field', 'track').attr('data-where', ER.where(st.key));
+    svg.attr('data-source', ER.replayId(st.key)).attr('data-field', 'track').attr('data-where', ER.where(st.key));
     svg.append('rect').attr('width', W).attr('height', H).style('fill', HALL);
     const tx = sx(-0.7625), tw = sx(0.7625) - tx, ty = sy(1.37), th = sy(-1.37) - ty;
     svg.append('rect').attr('x', tx).attr('y', ty).attr('width', tw).attr('height', th).attr('rx', 3)
@@ -4382,7 +4412,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
 
   draws['replay-select'] = (sel) => {
     const pts = matchPoints();
-    if (!pts || !ER.rows('replay')) {
+    if (!pts || !replayRows()) {
       sel.replaceChildren();
       return;
     }
@@ -4442,8 +4472,10 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     st.rows = [];
     if (!st.ev.length) {
       tb.replaceChildren();
+      tb.removeAttribute('data-source');
       return;
     }
+    tb.setAttribute('data-source', ER.replayId(st.key));
     const hits = st.hits;
     st.rows = hits.map((h, i) => {
       const tr = ER.el('tr');
