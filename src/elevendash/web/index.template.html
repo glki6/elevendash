@@ -3798,10 +3798,28 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   const lens = (yaw, pitch, D, T) => {
     const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
     const c = [T[0] + D * sy * cp, T[1] + D * sp, T[2] - D * cy * cp], f = [-sy * cp, -sp, cy * cp], r = [cy, 0, sy], u = cross(f, r);
-    return {r, u, f, at: (p) => {
+    return {c, r, u, f, at: (p) => {
       const v = [p[0] - c[0], p[1] - c[1], p[2] - c[2]];
       return [dot(v, r), -dot(v, u), dot(v, f)];
     }};
+  };
+  // Whether the table top hides point p from a camera at c: the straight line between them passes through the slab.
+  // The picture is painted in a fixed order, so without this a ball on the floor behind the table would show on it.
+  const SLAB = [[-TW, TW], [TY - 0.06, TY], [-TL, TL]];
+  const hidden = (c, p) => {
+    let t0 = 0, t1 = 0.999;
+    for (let i = 0; i < 3; i += 1) {
+      const d = p[i] - c[i], [lo, hi] = SLAB[i];
+      if (Math.abs(d) < 1e-9) {
+        if (c[i] < lo || c[i] > hi) return false;
+      } else {
+        const a = (lo - c[i]) / d, b = (hi - c[i]) / d;
+        t0 = Math.max(t0, Math.min(a, b));
+        t1 = Math.min(t1, Math.max(a, b));
+        if (t0 > t1) return false;
+      }
+    }
+    return true;
   };
   // Where a shot came down: the first time the ball meets the table or anything else but the net. A serve bounces
   // on the server's own half first: that is not it (you are at z below 0, so your shots land at z above 0).
@@ -3871,9 +3889,25 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     }
     // behind the shot and half a radian to one side, so the curve of the flight shows: the side nearer the present view
     const along = Math.atan2(-dx, dz), near = (a) => a + 2 * Math.PI * Math.round((cam.yaw - a) / (2 * Math.PI));
-    const yaw = [near(along - 0.5), near(along + 0.5)].sort((a, b) => Math.abs(a - cam.yaw) - Math.abs(b - cam.yaw))[0];
+    // A ball that misses the table comes down below its top, and from behind the shot the table can then stand
+    // between the camera and the ball. So the camera takes the first of these places from which the table hides none
+    // of that last stretch: the other side, then further round, then higher. If every one hides some, the least.
+    const D = 2.4, i0 = st.ev.indexOf(h), i1 = st.ev.indexOf(land);
+    const low = [[land.x, Math.max(BR, land.y), land.z]];
+    for (let i = i0; i >= 0 && i < i1; i += 1) st.seg[i].P.forEach((q) => q[1] < TY + BR && low.push(q));
+    const lost = (yaw, pitch) => {
+      const o = [D * Math.sin(yaw) * Math.cos(pitch), D * Math.sin(pitch), -D * Math.cos(yaw) * Math.cos(pitch)];
+      return low.filter((q) => hidden([q[0] + o[0], q[1] + o[1], q[2] + o[2]], q)).length;
+    };
+    let best = null;
+    [0.4, 0.6, 0.8, 1, 1.2].some((pitch) => [0.5, 0.9, 1.3].some((off) => [near(along - off), near(along + off)]
+      .sort((a, b) => Math.abs(a - cam.yaw) - Math.abs(b - cam.yaw)).some((yaw) => {
+        const n = lost(yaw, pitch);
+        if (!best || n < best.n) best = {yaw, pitch, n};
+        return !n;
+      })));
     const a = Math.max(t0, h.t - 0.15);
-    return {a, b: a + 0.15, tl: land.t, w: Math.max(0, Math.min(0.12, (land.t - h.t) / 2)), yaw, pitch: 0.4, D: 2.4};
+    return {a, b: a + 0.15, tl: land.t, w: Math.max(0, Math.min(0.12, (land.t - h.t) / 2)), yaw: best.yaw, pitch: best.pitch, D, lost: best.n};
   };
   // Where the camera is at time t of the point. k is how far it has moved in: 0 the whole table, 1 on the ball.
   // Over the last stretch before the landing it runs a little ahead of the ball and slows, so it settles on the
@@ -3905,7 +3939,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     const F = Math.min((g.W - 12) / (x1 - x0), (g.H - 12) / (y1 - y0));
     // the whole table sits in the middle of the picture; the tracking camera keeps what it looks at there instead
     const ox = g.W / 2 - F * (x0 + x1) / 2 * (1 - v.k), oy = g.H / 2 - F * (y0 + y1) / 2 * (1 - v.k) + g.H * 0.04 * v.k;
-    Object.assign(g, {F, r, u, f, pitch: v.pitch});
+    Object.assign(g, {F, r, u, f, pitch: v.pitch, hid: (q) => hidden(L.c, q)});
     const edge = (x) => Math.max(-30000, Math.min(30000, x));
     const xy = (c) => [edge(ox + F * c[0] / c[2]), edge(oy + F * c[1] / c[2])];
     const str = (c) => {
@@ -3973,17 +4007,20 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       node.setAttribute('x', x.toFixed(1));
       node.setAttribute('y', (under ? s.cy + s.R + 34 : y).toFixed(1));
     });
-    g.marks.forEach((m) => m[2]({P, line, shape}));
+    g.marks.forEach((m) => {
+      m[2]({P, line, shape});
+      m[3] = g.hid([m[1].x, m[1].y, m[1].z]);
+    });
     st.seg.forEach((sg) => {
-      sg.S = sg.P.map(P);
+      sg.S = sg.P.map((q) => (g.hid(q) ? null : P(q)));       // the trail stops where it passes behind the table
     });
   };
   const paint3 = (g) => {
     if (st.chase) look(g);      // the tracking camera moves with the time
     const t = st.t, ev = st.ev, now = at3(t), cur = ev[now.i].by, flying = now.i < ev.length - 1;
-    const q = g.pr(now.p);
+    const q = g.pr(now.p), behind = g.hid(now.p);
     g.trails.forEach((path, s) => {
-      // the pen lifts wherever the trail passes behind the camera
+      // the pen lifts wherever the trail passes behind the camera or behind the table
       let dd = '', pen = false;
       const to = (xy) => {
         if (xy) dd += (pen ? 'L' : 'M') + xy;
@@ -3994,21 +4031,22 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
           if (sg.by !== s || i > now.i) return;
           const upto = i < now.i ? sg.n : Math.floor(sg.n * Math.max(0, Math.min(1, (t - sg.t0) / sg.dt)) + 1e-6);
           for (let j = 0; j <= upto; j += 1) to(sg.S[j]);
-          if (i === now.i && flying) to(q && q[0].toFixed(1) + ',' + q[1].toFixed(1));
+          if (i === now.i && flying) to(q && !behind && q[0].toFixed(1) + ',' + q[1].toFixed(1));
         });
       }
       path.setAttribute('d', dd);
       path.style.opacity = s === cur ? 1 : s === cur - 1 ? 0.5 : 0.2;
     });
-    g.marks.forEach(([node, e]) => {
+    g.marks.forEach(([node, e, fn, gone]) => {
       node.style.display = e.t <= t ? '' : 'none';
-      node.style.opacity = e.by >= cur - 1 ? 1 : 0.35;
+      node.style.opacity = (e.by >= cur - 1 ? 1 : 0.35) * (gone ? 0.3 : 1);       // faint: the table is in the way
     });
     // the landing call, once the last shot has come down
     const called = st.callOn && st.call && t >= st.call.t ? '' : 'none';
     g.gap.style.display = called;
     g.callBox.style.display = called;
     g.ball.style.display = q ? '' : 'none';
+    g.ball.style.opacity = behind ? 0.3 : 1;
     if (q) {
       g.ball.setAttribute('cx', q[0].toFixed(1));
       g.ball.setAttribute('cy', q[1].toFixed(1));
@@ -4016,7 +4054,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     }
     // its shadow, straight below on the table or the floor
     const p = now.p, over = Math.abs(p[0]) <= TW && Math.abs(p[2]) <= TL && p[1] >= TY;
-    const qs = g.pr([p[0], over ? TY : 0, p[2]]);
+    const sh = [p[0], over ? TY : 0, p[2]], qs = g.hid(sh) ? null : g.pr(sh);
     g.shade.style.display = qs ? '' : 'none';
     if (qs) {
       const rs = Math.max(3, g.F * 0.032 / qs[2]);
@@ -4229,7 +4267,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     const n = pts[i + d];
     if (n) show(n.key);
   };
-  ER.replay = {show, mark};
+  ER.replay = {show, mark, camera: () => st.chase};
 
   const draws = {};
   draws.replay = (el) => {
