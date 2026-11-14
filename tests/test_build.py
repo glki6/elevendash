@@ -10,7 +10,7 @@ import tempfile
 import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'src'))
-from elevendash import cli, extract, i18n, sample  # noqa: E402
+from elevendash import cli, extract, i18n, sample, voice  # noqa: E402
 
 
 class Build(unittest.TestCase):
@@ -37,7 +37,7 @@ class Build(unittest.TestCase):
 
     def test_parse(self):
         logs = sorted(os.listdir(os.path.join(self.ws, 'logs')))
-        self.assertEqual(len(logs), len(sample.SESSIONS))
+        self.assertEqual(len(logs), len(sample.SESSIONS) + len(sample.ONLINE))
         for name, (level, count) in zip(logs, sample.SESSIONS):
             ms = extract.extract_log(os.path.join(self.ws, 'logs', name))
             self.assertEqual(len(ms), count)
@@ -63,6 +63,7 @@ class Build(unittest.TestCase):
         self.assertTrue(months and all(re.fullmatch(r'replay_\d{4}_\d\d', m) for m in months), months)
         replay = [r for m in months for r in self.rows(m)]
         self.assertTrue(replay)
+        online = {m['key'] for m in self.rows('matches') if m['vs'] != 'AI'}
         for m in months:                    # one file a month, each holding only its own month's points
             self.assertEqual({'replay_' + r['key'][:7].replace('-', '_') for r in self.rows(m)}, {m})
         self.assertTrue({r['key'] for r in replay} <= {p['key'] for p in self.rows('points')})
@@ -74,7 +75,9 @@ class Build(unittest.TestCase):
                 if e[0] == 'h':
                     vx, vy, vz = (int(x) / 10 for x in e[13:16])
                     self.assertAlmostEqual(math.hypot(vx, vy, vz), int(e[6]) / 10, delta=0.2)      # the logged speed
-                    self.assertTrue(e[16] != '' and e[10] != '')
+                    # an online opponent's hit comes from their game: it says how the ball left, not how it arrived
+                    theirs = e[5] == 'a' and r['key'].split('|')[0] in online
+                    self.assertTrue(e[16] != '' and (theirs or e[10] != ''), r['key'])
             ts = [int(e[4]) for e in ev]
             self.assertEqual(ts, sorted(ts))
         # the shot explorer: every shot of yours once, agreeing with the match totals
@@ -175,7 +178,7 @@ class Build(unittest.TestCase):
         for ses in self.rows('sessions'):
             t = {}
             for m in matches:
-                if m.get('session') == ses['key']:
+                if m.get('session') == ses['key'] and m['vs'] == 'AI':
                     for k, v in by[m['key']].items():
                         if k != 'key':
                             t[k] = t.get(k, 0) + v
@@ -183,6 +186,75 @@ class Build(unittest.TestCase):
             self.assertAlmostEqual(100 * t['servesOk'] / t['serves'], ses['servesLanded'], delta=0.051)
             self.assertAlmostEqual(100 * t['lostMiss'] / t['lost'], ses['missShare'], delta=0.051)
             self.assertAlmostEqual(t['spd'] / t['rally'], ses['rallySpeed'], delta=0.051)
+
+    def test_online_logs(self):
+        """The generated online sessions: matches against people, each with both ratings as the game logs them."""
+        logs = sorted(os.listdir(os.path.join(self.ws, 'logs')))[len(sample.SESSIONS):]
+        rating = sample.START_RATING
+        for name, session in zip(logs, sample.ONLINE):
+            ms = extract.extract_log(os.path.join(self.ws, 'logs', name))
+            self.assertEqual(len(ms), len(session))
+            for m, ranked in zip(ms, session):
+                self.assertFalse(m['ai'])
+                self.assertIsNone(m['difficulty'])
+                r = m['rating']
+                self.assertEqual((r['you'], r['ranked']), (rating, ranked), name)
+                self.assertTrue(1000 < r['opp'] < 2000, r)
+                if ranked:
+                    self.assertTrue(r['win'] > 0 > r['lose'], r)
+                    games = [g['score'] for g in m['games']]
+                    mine = 0 if m['you'] == 'A' else 1
+                    won = sum(g[mine] > g[1 - mine] for g in games) * 2 > len(games)
+                    rating += r['win'] if won else r['lose']
+                else:
+                    self.assertIsNone(r['win'])
+
+    def test_online_side(self):
+        """The online pass: the same sums over the online matches in datasets ending _h, in words that name no AI and
+        no level, and the ratings on top."""
+        ms = [r for r in self.rows('matches') if r['vs'] != 'AI']
+        ranked = [r for r in ms if r['ranked']]
+        self.assertEqual(len(ms), sum(len(s) for s in sample.ONLINE))
+        self.assertEqual(len(ranked), sum(sum(s) for s in sample.ONLINE))
+        self.assertTrue(all(r['level'] == 999 and r['rYou'] and r['rOpp'] for r in ms))
+        self.assertEqual(next(r for r in self.rows('summary') if r['key'] == 'online')['matches'], len(ms))
+        sessions = self.rows('sessions_h')
+        self.assertEqual([s['matches'] for s in sessions], [len(s) for s in sample.ONLINE])
+        self.assertEqual({r['session'] for r in ms}, {s['key'] for s in sessions})
+        ai = {f[:-5] for f in os.listdir(os.path.join(self.ws, 'build'))}
+        sums = {n[:-2] for n in ai if n.endswith('_h')}
+        self.assertTrue({'summary', 'sessions', 'plan', 'form', 'findings', 'levels', 'insights', 'zones', 'rating', 'rating_bands',
+                         'rating_notes'} <= sums, sums)
+        self.assertTrue(sums - {'rating', 'rating_bands', 'rating_notes'} <= ai)       # each stands beside its AI dataset
+        # ratings: every match once, each rating following from the one before, the sums agreeing with the matches
+        rating = self.rows('rating_h')
+        self.assertEqual([r['key'] for r in rating], [r['key'] for r in ms])
+        for r, m in zip(rating, ms):
+            self.assertEqual((r['you'], r['opp'], r['ranked'], r['won']), (m['rYou'], m['rOpp'], m['ranked'], int(m['result'] == 'Won')))
+            self.assertEqual(r['after'], r['you'] + r['change'])
+            self.assertEqual(r['change'], 0 if not r['ranked'] else m['rWin'] if r['won'] else m['rLose'])
+            self.assertAlmostEqual(r['exp'], 100 / (1 + 10 ** ((r['opp'] - r['you']) / 400)), delta=0.06)
+        for a, b in zip(rating, rating[1:]):
+            self.assertEqual(b['you'], a['after'])
+        top = next(r for r in self.rows('summary_h') if r['key'] == 'all')
+        self.assertEqual((top['matches'], top['rankedMatches'], top['rating'], top['ratingFirst']),
+                         (len(ms), len(ranked), rating[-1]['after'], sample.START_RATING))
+        self.assertEqual(top['ratingChange'], top['rating'] - top['ratingFirst'])
+        self.assertTrue(top['ratingLow'] <= top['rating'] <= top['ratingPeak'])
+        bands = {r['key']: r for r in self.rows('rating_bands_h')}
+        self.assertEqual(bands['all']['matches'], sum(bands[k]['matches'] for k in ('lower', 'near', 'higher')))
+        self.assertAlmostEqual(bands['all']['expWins'], sum(r['exp'] for r in rating) / 100, delta=0.06)
+        self.assertEqual(bands['all']['wins'], sum(r['won'] for r in rating))
+        self.assertTrue(all(r['text'] and r['text_zh'] for r in self.rows('rating_notes_h')))
+        # the words: no AI, no level, in either language. Left as they are: key-like fields, and the drills, which send
+        # you to practise against the AI whoever your matches are against
+        for name in sorted(sums):
+            for row in self.rows(name + '_h'):
+                for k, v in row.items():
+                    if isinstance(v, str) and k not in ('key', 'server', 'levels', 'drill', 'drill_zh'):
+                        self.assertIsNone(re.search(r'\bAI\b|[Ll]evel|等級|999', v), (name, k, v))
+        self.assertIn('online', self.printed)
+        self.assertIn('rating', self.printed)
 
     def test_site(self):
         path = os.path.join(self.ws, 'site', 'index.html')
@@ -196,6 +268,43 @@ class Build(unittest.TestCase):
 class Translations(unittest.TestCase):
     def test_complete(self):
         self.assertEqual(i18n.check(out=io.StringIO()), 0)
+
+    def test_online_wording(self):
+        """Every sentence has a wording for matches against people that names no AI and no level (voice.py)."""
+        out = io.StringIO()
+        self.assertEqual(voice.check(out=out), 0, out.getvalue())
+        self.assertEqual(voice.pair("Points won on the AI's serve", 'AI 發球時的得分率'), ("Points won on your opponent's serve", '對手發球時的得分率'))
+        self.assertEqual(voice.en('At level {0} over {1} ({2}, {3} points): {4} of points.'), 'Online over {1} ({2}, {3} points): {4} of points.')
+        page = __import__('elevendash.page', fromlist=['fill']).fill()
+        self.assertIn('data-v="people"', page)
+        self.assertNotIn('{{', page)
+
+
+class Resilience(unittest.TestCase):
+    def test_online_side_fails_alone(self):
+        """If the online pass breaks, the AI side is still built and no half-made online data is left behind."""
+        from elevendash import workspace
+        with tempfile.TemporaryDirectory() as tmp:
+            ws = workspace.init(os.path.join(tmp, 'w'))
+            sample.write_logs(ws.logs)
+            real = i18n.set_voice
+
+            def broken(who):
+                real(who)
+                if who == 'people':
+                    raise RuntimeError('made to fail')
+            i18n.set_voice = broken
+            said = []
+            try:
+                cli.do_build(ws, say=said.append)
+            finally:
+                i18n.set_voice = real
+            names = os.listdir(ws.build)
+            self.assertIn('summary.json', names)
+            self.assertFalse([n for n in names if n.endswith('_h.json')], names)
+            self.assertTrue(any('online side could not be built' in line for line in said), said)
+            with open(os.path.join(ws.build, 'matches.json'), encoding='utf-8') as f:
+                self.assertTrue(any(r['vs'] != 'AI' for r in json.load(f)['rows']))
 
 
 if __name__ == '__main__':

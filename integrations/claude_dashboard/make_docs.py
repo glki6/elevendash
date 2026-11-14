@@ -91,6 +91,31 @@ for f in sorted(os.listdir(ws.build)):
     m = re.fullmatch(r'replay_(\d{4})_(\d\d)\.json', f)
     if m:
         TITLES[f[:-5]] = (f'Point replays, {m.group(1)}-{m.group(2)}', 'The points of matches played in that month. ' + REPLAY)
+# The online side: the same tables over your matches against people online (builddata.py's second pass), each beside
+# its AI table with _h on its name, and the ratings. They are there only when the logs hold online matches.
+ONLINE = {
+    'summary': 'Online win rates', 'sessions': 'Every online session', 'session_notes': 'Online session notes',
+    'plan': 'Online training plan', 'plan_trend': 'Online training plan by session', 'plan_progress': 'Online training plan progress',
+    'serve_flow': 'Where serve points end, online', 'serve_types': 'Serve types, online', 'serve_next': 'The shot after the serve, online',
+    'serve_notes': 'Serve and return notes, online', 'shot_groups': 'Where your misses pile up, online', 'form': 'Rolling results, online',
+    'session_shape': 'From the first match of a session to the last, online', 'form_notes': 'Warm-up and tiring, online',
+    'findings': 'What decides your points, online', 'days': 'Daily results online', 'levels': '11hero metrics, online',
+    'insights': 'How points end, online', 'zones': 'Serve landing zones, online', 'won_vs_lost': 'Matches won vs lost, online',
+}
+RATINGS = {
+    'rating': ('Online rating, match by match',
+               'One row per online match with ratings in the log: your rating before it (you) and after (after), the opponent\'s (opp), the gap between them, whether the match was ranked, the change the game gave you, the share of such matches the two ratings say you win (exp), and the result.'),
+    'rating_bands': ('Results by opponent rating',
+                     'Your online matches added up by how the opponent was rated against you (50 or more below, within 50, 50 or more above, and all of them): matches, wins, the wins the ratings expected, and points, serve and return rates.'),
+    'rating_notes': ('Rating notes',
+                     'Sentences written by fixed rules from the rating tables: where your rating stands, your wins against what the ratings expected, and lower against higher rated opponents.'),
+}
+for f in sorted(os.listdir(ws.build)):
+    if f.endswith('_h.json'):
+        name = f[:-len('_h.json')]
+        TITLES[f[:-5]] = RATINGS[name] if name in RATINGS else (
+            ONLINE[name], f'The same table as "{TITLES[name][0]}", over your matches against people online in place of those against the AI. '
+                          'Where that table has an AI level, every online match stands at 999.')
 missing = [ds for ds in TITLES if ds not in PUBLISHED]
 assert not missing, f'upload these first, then run refresh.py record: {missing}'
 BLOBS = {ds: (PUBLISHED[ds]['blob'], t, d) for ds, (t, d) in TITLES.items()}
@@ -132,7 +157,8 @@ def doc(collection, doc_id, data):
 doc('dash', 'meta', {'title': 'Eleven vs AI Report'})
 find_rows = json.load(open(os.path.join(ws.build, 'findings.json'), encoding='utf-8'))['rows']
 main = next((r for r in find_rows if r['key'] == 'main'), None)
-doc('dash', 'params', {'level': main['level'] if main else 100, 'match': '', 'session': '', 'pick': '', 'theme': 'dark', 'lang': 'en'})
+# vs: the side the page opens on, 'ai' or 'people' (its switch at the top changes it)
+doc('dash', 'params', {'level': main['level'] if main else 100, 'vs': 'ai', 'match': '', 'session': '', 'pick': '', 'theme': 'dark', 'lang': 'en'})
 for ds, (blob, title, desc) in BLOBS.items():
     doc('datasets', ds, {'title': title, 'description': desc + ' Made from the Quest game logs by elevendash (src/elevendash/builddata.py).',
                          'source': {'kind': 'file', 'url': f'/_blob/{blob}', 'name': f'{ds}.json', 'format': 'json'},

@@ -45,6 +45,14 @@ It reads the files to be committed and every file version in the commits being p
   ```
 
   (The tests run it too.)
+- The dashboard has a second side for matches against people online, which shows the same sentences reworded for an
+  opponent (`src/elevendash/voice.py`). After adding a sentence that names the AI or an AI level, run this from the
+  repository with `src` on `PYTHONPATH`; it must print `voice: 0 to fix`, and `list` in place of `check` shows every
+  sentence in both wordings:
+
+  ```
+  python -X utf8 -m elevendash.voice check
+  ```
 - Page changes: try the dashboard in Firefox and in a Chromium browser, dark and light, English and Chinese, and at
   about 640 px wide. A click must never move the page. `python tools/pagetest/run.py SITE --browser all` opens a built
   dashboard in headless Chrome and Firefox, each with an empty throwaway profile, and checks that every section draws,

@@ -124,7 +124,48 @@
       root.lang + ' ' + words().map((e) => e.innerText.slice(0, 20)).join(' / '));
     await wait(200);
 
-    // 8. nothing went wrong on the way
+    // 8. the online side, when the file has matches on both sides: the switch shows it, in its own words
+    const side = q('#side');
+    if (side && !side.hidden) {
+      const page = q('.er-page');
+      q('[data-side="people"]').click();
+      const on = await until(() => page.classList.contains('er-people') && q('#chart-rating svg path') && qa('[data-draw="rating-bands"] tr').length, 8000);
+      check('the switch shows the online side', on, 'rating rows: ' + qa('[data-draw="rating-bands"] tr').length);
+      await wait(500);
+      const ms = ER.rows('matches') || [];
+      check('online: only online matches are listed', ms.length > 0 && ms.every((r) => r.vs === 'Online') && ER.matchRow() && ER.matchRow().vs === 'Online', ms.length);
+      for (const id of ['session', 'match', 'plan', 'shots', 'pick', 'progress', 'form', 'findings', 'serve', 'by-level']) {
+        const s = q('#' + id);
+        if (!(s && s.textContent.trim().length > 40)) check('online: section ' + id, false, s ? s.textContent.trim().length + ' characters' : 'not in the page');
+      }
+      check('online: nothing failed to load', qa('.er-fail').length === 0, qa('.er-fail').length);
+      // what may still name the AI or a level: the way back, the drills against the AI, and a standard you reached
+      const kept = ['AI matches', 'the AI at a low level', 'the AI at a level you beat', 'level of the matches you won', 'level of your matches won', 'above level',
+        'Matches against the AI are not in these totals'];
+      qa('details').forEach((d) => {
+        d.open = true;
+      });
+      await wait(400);
+      let text = page.innerText;
+      kept.forEach((k) => {
+        text = text.split(k).join('');
+      });
+      const left = text.match(/.{0,30}(\bAI\b|[Ll]evel|999).{0,30}/g) || [];
+      check('online: no sentence names the AI or a level', left.length === 0, left.slice(0, 3).join(' | '));
+      q('#pref-lang').click();
+      const zhOn = await until(() => root.lang === 'zh-Hant' && cjk(q('#rating-run h3')) && cjk(q('[data-draw="rating-notes"]')), 5000);
+      check('online: the page switches to Chinese', zhOn);
+      await wait(500);
+      q('#pref-lang').click();
+      await until(() => root.lang === 'en', 5000);
+      await wait(300);
+      q('[data-side="ai"]').click();
+      const back = await until(() => !page.classList.contains('er-people') && ER.matchRow() && ER.matchRow().vs === 'AI', 8000);
+      check('and back to the AI side', back);
+      await wait(300);
+    }
+
+    // 9. nothing went wrong on the way
     check('no drawing errors', (window.__errors || []).length === 0, (window.__errors || []).join(' | '));
     check('no script errors', errs.length === 0, errs.join(' | '));
   };

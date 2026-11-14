@@ -13,6 +13,31 @@ POST = re.compile(r'postCollisionState:\{pos:\(([^)]*)\),vel:\(([^)]*)\),rRate:\
 # (the same post-hit velocity and rotation rate a local hit logs). These are the only record of the opponent's shots.
 REMOTE = re.compile(r'\[MPMatch\]Received ball (hit|toss) from opponent: pos:\(([^)]*)\) vel:\(([^)]*)\) rrate:\(([^)]*)\)')
 ATTACK = ('Drive', 'SlowLoop', 'FastLoop')
+# Online, the game's server messages carry both players' ratings. Only numbers are read from them, never a name; the
+# player ids are used to tell which rating is yours and are not kept.
+SELF = re.compile(r'"user":\{"Id":"(\d+)"')
+SNAPSHOT = re.compile(r'"PlayerIds":\[([^\]]*)\],"PlayerELOs":\[([^\]]*)\]')
+STAKES = ('HomeUserId', 'AwayUserId', 'winnerELODiffIfHomeWins', 'winnerELODiffIfAwayWins', 'loserELODiffIfHomeWins',
+          'loserELODiffifAwayWins')
+
+
+def _field(text, key):
+    m = re.search('"' + key + r'":"?(-?\d+)', text)
+    return m and m[1]
+
+
+def rating(self_id, snap, stakes):
+    """Your rating and your opponent's as an online match starts, and what the match is worth to you: {you, opp,
+    ranked, win, lose} (win and lose: the change to your rating either way, None when the log does not say)."""
+    if not snap or self_id not in snap['ids'] or len(snap['ids']) != 2:
+        return None
+    i = snap['ids'].index(self_id)
+    out = {'you': snap['elos'][i], 'opp': snap['elos'][1 - i], 'ranked': snap['ranked'], 'win': None, 'lose': None}
+    if stakes and {stakes['HomeUserId'], stakes['AwayUserId']} == set(snap['ids']):
+        home = stakes['HomeUserId'] == self_id
+        out['win'] = int(stakes['winnerELODiffIfHomeWins' if home else 'winnerELODiffIfAwayWins'])
+        out['lose'] = int(stakes['loserELODiffifAwayWins' if home else 'loserELODiffIfHomeWins'])
+    return out
 
 
 def v3(s):
@@ -93,6 +118,8 @@ def extract_log(path):
     score = {'A': 0, 'B': 0}
     date = None
     ms = None                # milliseconds since app start, from the latest line that carried them
+    self_id = None           # your player id, from the sign-in reply: tells which of two ratings is yours
+    snap = stakes = None     # the ratings and the rating stakes of the online match about to start
 
     def close_block():
         nonlocal block, pending_post
@@ -176,6 +203,21 @@ def extract_log(path):
         if 'Dynamic Collision...' in line:
             pending_post = 'wait'
             continue
+        if 'ELO' in line and m is None:
+            text = line.replace('\\', '')
+            mm = SELF.search(text)
+            if mm:
+                self_id = mm[1]
+            mm = SNAPSHOT.search(text)
+            if mm:
+                ids, elos = re.findall(r'\d+', mm[1]), re.findall(r'-?\d+', mm[2])
+                if len(ids) == len(elos) == 2:
+                    snap = {'ids': ids, 'elos': [int(x) for x in elos], 'ranked': '"Ranked":"True"' in text}
+            if '"winnerELODiffIfHomeWins"' in text and _field(text, 'Winner') == '-1':
+                got = {k: _field(text, k) for k in STAKES}
+                if all(got.values()):
+                    stakes = got
+            continue
         if pending_post == 'wait' and 'postCollisionState:' in line:
             mm = POST.search(line)
             pending_post = (v3(mm[1]), v3(mm[2]), v3(mm[3])) if mm else None
@@ -194,9 +236,12 @@ def extract_log(path):
             m = {'log': path.replace('\\', '/').split('/')[-1], 'date': date, 'start': clock, 'ai': ai,
                  'difficulty': diff if ai else None, 'strict': strict, 'you': user_side, 'hand': hand, 'games': [],
                  't0': ms / 1000 if ms is not None else None}
+            if not ai:
+                m['rating'] = rating(self_id, snap, stakes)
             matches.append(m)
             ai = False
             game = None
+            snap = stakes = None
         elif 'adding a round' in line and m is not None:
             game = {'points': []}
             m['games'].append(game)

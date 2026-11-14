@@ -18,6 +18,8 @@ import re
 import sys
 from html.parser import HTMLParser
 
+from .voice import pair
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 WEB = os.path.join(HERE, 'web')
 CATALOG = os.path.join(WEB, 'zh-Hant.json')
@@ -69,6 +71,12 @@ def bi(v):
 
 
 MISSING = set()
+_voice = [None]
+
+
+def set_voice(who):
+    """'people' makes T write every sentence in its wording for matches against people (voice.py); None, as written."""
+    _voice[0] = who
 
 
 def T(template, **kw):
@@ -78,6 +86,9 @@ def T(template, **kw):
     if zh_t is None:
         MISSING.add(template)
         zh_t = template
+    if _voice[0] == 'people':
+        from .voice import pair
+        template, zh_t = pair(template, zh_t)
     en = template.format(**{k: (v.en if isinstance(v, Bi) else v) for k, v in kw.items()})
     zh = zh_t.format(**{k: (v.zh if isinstance(v, Bi) else v) for k, v in kw.items()})
     return Bi(en, zh)
@@ -221,7 +232,7 @@ class _Page:
             self.missing.add(en)
         return zh
 
-    def unit(self, run):
+    def unit(self, run, voiced=False):
         """A sentence: its words, and the values drawn inside it."""
         i, j = 0, len(run)
         while i < j and ((isinstance(run[i], str) and not run[i].strip()) or (not isinstance(run[i], str) and not _drawn(run[i]))):
@@ -235,38 +246,57 @@ class _Page:
         tail = re.search(r'\s*$', core[-1]).group() if isinstance(core[-1], str) else ''
         key = _key(core)
         zh = self.word(key)
-        if zh is None or zh == key:
+        if zh is None:
+            zh = key
+        # the wording for matches against people, where it differs (voice.py); not inside a part of the page that
+        # one side alone shows (data-v)
+        p_en, p_zh = (key, zh) if voiced else pair(key, zh)
+        two = (p_en, p_zh) != (key, zh)
+        if zh == key and not two:
             return run
         atoms = [k for k in core if not isinstance(k, str)]
         en_html = ''.join(k if isinstance(k, str) else k.html() for k in core)
         en_html = en_html[len(lead):len(en_html) - len(tail)] if tail else en_html[len(lead):]
-        zh_html = re.sub(r'\{(\d+)\}', lambda m: atoms[int(m.group(1)) - 1].html(), zh)
-        out = f'{lead}<span data-l="en">{en_html}</span><span data-l="zh" lang="zh-Hant">{zh_html}</span>{tail}'
-        return run[:i] + [out] + run[j:]
+        fill = lambda t: re.sub(r'\{(\d+)\}', lambda m: atoms[int(m.group(1)) - 1].html(), t)
+
+        def spans(en, zh_text, v):
+            if en == zh_text:
+                return f'<span{v}>{en}</span>'
+            return f'<span data-l="en"{v}>{en}</span><span data-l="zh"{v} lang="zh-Hant">{fill(zh_text)}</span>'
+        if two:
+            out = spans(en_html, zh, ' data-v="ai"') + spans(fill(p_en), p_zh, ' data-v="people"')
+        else:
+            out = spans(en_html, zh, '')
+        return run[:i] + [lead + out + tail] + run[j:]
 
     def attrs(self, e):
         label = e.attr('aria-label')
         if label and WORD.search(label) and 'data-aria-zh' not in e.start:
             zh = self.word(label)
             if zh and zh != label:
-                esc = zh.replace('&', '&amp;').replace('"', '&quot;')
-                e.start = re.sub(r'(\s*/?>)$', lambda m: f' data-aria-en="{label}" data-aria-zh="{esc}"' + m.group(1), e.start, count=1)
+                esc = lambda t: t.replace('&', '&amp;').replace('"', '&quot;')
+                more = f' data-aria-en="{label}" data-aria-zh="{esc(zh)}"'
+                p_en, p_zh = pair(label, zh)
+                if (p_en, p_zh) != (label, zh):
+                    more += f' data-aria-pen="{esc(p_en)}" data-aria-pzh="{esc(p_zh)}"'
+                e.start = re.sub(r'(\s*/?>)$', lambda m: more + m.group(1), e.start, count=1)
 
-    def walk(self, e):
+    def walk(self, e, voiced=False):
         if e.tag:
             self.attrs(e)
         if e.attr('translate') == 'no' or e.tag in ('svg', 'script', 'style'):
             return
+        voiced = voiced or (bool(e.tag) and e.attr('data-v') is not None)
         out, run = [], []
         for k in e.kids + [None]:
             if k is not None and (isinstance(k, str) or _atom(k)):
                 run.append(k)
                 continue
             if run:
-                out += self.unit(run)
+                out += self.unit(run, voiced)
                 run = []
             if k is not None:
-                self.walk(k)
+                self.walk(k, voiced)
                 out.append(k)
         e.kids = out
 
@@ -293,6 +323,20 @@ def bilingual(html, collect=None, strict=False):
 def script_words():
     """The Chinese words the page's scripts look up (ER.tr), as a JSON object for the page."""
     return json.dumps(catalog()['script'], ensure_ascii=False, separators=(',', ':')).replace('<', '\\u003c')
+
+
+def voice_words():
+    """The wording for matches against people of the words the page's scripts look up, where it differs (voice.py):
+    {en: {key: English}, zh: {key: Chinese}}, as a JSON object for the page."""
+    zh = catalog()['script']
+    out = {'en': {}, 'zh': {}}
+    for key in sorted(script_keys() | set(zh)):
+        p_en, p_zh = pair(key, zh.get(key))
+        if p_en != key:
+            out['en'][key] = p_en
+        if p_zh != zh.get(key, key):
+            out['zh'][key] = p_zh
+    return json.dumps(out, ensure_ascii=False, separators=(',', ':')).replace('<', '\\u003c')
 
 
 # ---------------- check ----------------
@@ -345,8 +389,9 @@ def page_keys():
 
 
 def script_keys():
-    from .page import fill
-    html = fill(collect=set())
+    # the scripts as the template has them: filling the page changes none of their words
+    with open(os.path.join(WEB, 'index.template.html'), encoding='utf-8') as f:
+        html = f.read()
     keys = set()
     for block in re.findall(r'<script>(.*?)</script>', html, flags=re.S):
         keys |= _js_keys(block)

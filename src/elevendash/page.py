@@ -6,7 +6,7 @@ parameters. site.py supplies that host for the standalone file; a hosted dashboa
 import json
 import os
 
-from .i18n import bilingual, script_words
+from .i18n import bilingual, script_words, voice_words
 from .metrics import SUMS
 
 WEB = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'web')
@@ -96,6 +96,7 @@ def fill(collect=None, strict=False):
     with open(os.path.join(WEB, 'index.template.html'), encoding='utf-8') as f:
         html = f.read()
     html = html.replace('{{I18N_SCRIPT}}', script_words())
+    html = html.replace('{{VOICE_SCRIPT}}', voice_words())
     html = html.replace('{{METRIC_SUMS}}', json.dumps(SUMS, separators=(',', ':')))
     wvl = '\n'.join(f'      <tr><th>{label}</th>{td("won_vs_lost", "{L}|Won", f, fmt)}{td("won_vs_lost", "{L}|Lost", f, fmt)}</tr>'
                     for f, label, fmt in WVL)

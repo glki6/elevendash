@@ -8,7 +8,7 @@ import unittest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, 'src'))
-from elevendash import cli  # noqa: E402
+from elevendash import cli, sample  # noqa: E402
 
 
 class Mistakes(unittest.TestCase):
@@ -34,7 +34,7 @@ class Mistakes(unittest.TestCase):
 
     def test_plan(self):
         mk = self.mk
-        log = sorted(os.listdir(os.path.join(self.ws, 'logs')))[-1]
+        log = sorted(os.listdir(os.path.join(self.ws, 'logs')))[len(sample.SESSIONS) - 1]      # the last session against the AI
         row = {'sync': [{'log': log, 'lag': -30.0}], 'audio_start': 0.1, 'duration': 1e6}
         cands, missing = mk.candidates(row, os.path.join(self.ws, 'logs'), os.path.join(self.ws, 'build'))
         self.assertEqual(missing, [])

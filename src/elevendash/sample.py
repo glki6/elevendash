@@ -1,9 +1,10 @@
 """Made-up game logs, for trying elevendash without a Quest and for its tests.
 
-A seeded random player plays a few sessions against the AI at levels 75 and 100. The files use the lines elevendash
-reads from real Eleven Table Tennis logs (match start and end, AI level, scores, and every ball contact with its
-position, velocity and spin), and nothing else: no account data at all. The first line of each file says it was
-generated.
+A seeded random player plays a few sessions against the AI at levels 75 and 100, then a few online against made-up
+people. The files use the lines elevendash reads from real Eleven Table Tennis logs (match start and end, AI level,
+scores, every ball contact with its position, velocity and spin and, online, the opponent's shots as messages and both
+players' ratings), and nothing else: no account data at all. The names and ids in the online lines are invented. The
+first line of each file says it was generated.
 """
 import datetime as dt
 import math
@@ -14,6 +15,10 @@ import random
 # session falls in the next month, so the demo and the tests cover point replays kept one dataset a month.
 SESSIONS = ((75, 5), (75, 6), (100, 7), (100, 8))
 FIRST = dt.datetime(2026, 1, 29, 18, 0, 0)
+# Online sessions, on the days after the AI ones: for each, whether each match is ranked. They draw from a random
+# stream of their own, so the AI matches come out the same with or without them.
+ONLINE = ((True,) * 6, (True, True, True, False, False, True, True, True), (True,) * 9)
+ME, MY_ID, START_RATING = 'sample.player', 1000001, 1500
 NET_Y, TABLE_Y = 0.85, 0.78
 
 
@@ -35,6 +40,7 @@ class Log:
         self.start = start          # the wall clock at app second 0
         self.lines = []
         self.prev = None            # where and when the ball last touched something
+        self.remote = None          # online: the opponent's side, whose tosses and hits arrive as messages
 
     def say(self, t, text):
         w = self.start + dt.timedelta(seconds=t)
@@ -43,6 +49,11 @@ class Log:
     def contact(self, t, kind, pos, vel=(0.0, 0.0, 0.0), rr=(0.0, 0.0, 0.0), sender='', game_time=None):
         # A contact's own block gives the ball's velocity as it arrived, as the game logs it: here, what a free flight
         # under gravity from the contact before arrives with. (The 3D replay curves its flights from these.)
+        if self.remote and kind in ('Toss' + self.remote, 'Hit' + self.remote):
+            self.prev = (pos, t)
+            what = 'toss' if kind.startswith('Toss') else 'hit'
+            self.say(t, f'[MPMatch]Received ball {what} from opponent: pos:{vec(pos)} vel:{vec(vel)} rrate:{vec(rr)}')
+            return
         pre = vel
         if not kind.startswith('Toss') and self.prev and t > self.prev[1]:
             (x0, y0, z0), T = self.prev[0], t - self.prev[1]
@@ -155,6 +166,48 @@ def play_match(log, rng, t, level, miss):
     return t
 
 
+def expected(mine, theirs):
+    """The share of matches a player rated `mine` is expected to win against one rated `theirs`."""
+    return 1 / (1 + 10 ** ((theirs - mine) / 400))
+
+
+def play_online_match(log, rng, t, n, mine, theirs, ranked, miss):
+    """One match against a made-up person, with the server messages that carry the ratings. Returns (time, won)."""
+    opp_id, opp = 2000000 + n, f'rival.{n}'
+    home = n % 2 == 0           # you are the home player in every other match
+    ids = (MY_ID, opp_id) if home else (opp_id, MY_ID)
+    elos = (mine, theirs) if home else (theirs, mine)
+    names = (ME, opp) if home else (opp, ME)
+    e_home = expected(*elos)
+    if ranked:
+        up_home, up_away = max(1, round(32 * (1 - e_home))), max(1, round(32 * e_home))
+        players = ','.join(f'{{"userId":"{i}","userName":"{nm}","CurrentELO":"{e}","Team":"{k}"}}'
+                           for k, (i, nm, e) in enumerate(zip(ids, names, elos)))
+        log.say(t, '[TCPSERVERCOMMUNICATIONS][SERVER-JSON][INBOUND]Received message from server:{"msgType":"Message",'
+                   f'"key":"MatchCreated","data":[{{"Id":"{9000 + n}","Ranked":"True","Strict":"True","ELOChange":"{up_away}",'
+                   f'"Winner":"-1","HomeScore":"0","AwayScore":"0","HomeUserId":"{ids[0]}","AwayUserId":"{ids[1]}",'
+                   f'"winnerELODiffIfHomeWins":"{up_home}","winnerELODiffIfAwayWins":"{up_away}",'
+                   f'"loserELODiffIfHomeWins":"-{up_home}","loserELODiffifAwayWins":"-{up_away}","Players":[{players}]}}]}}')
+    log.say(t + 0.5, '[RoomPosition]calling MoveUserIntoPosition(TableSideA)')
+    log.say(t + 0.5, '[Settings] Setting StrictServingRules from False to True')
+    log.say(t + 1, f'Snapshot reads: {{"PlayerIds":[{ids[0]},{ids[1]}],"PlayerELOs":[{elos[0]},{elos[1]}],'
+                   f'"PlayerNames":["{names[0]}","{names[1]}"],"RoundScores":[],"MatchId":"{9000 + n}",'
+                   f'"Ranked":"{ranked}","StrictServingRules":"True","OnlineMode":"True","BestOf":"3"}}')
+    log.say(t + 2, '[GameLogic]Changing [matchRunning] from [False] to [True] from changeIndex:3')
+    t += 2
+    log.remote = 'B'
+    won = {'A': 0, 'B': 0}
+    g = 0
+    while max(won.values()) < 2:
+        winner, t = play_game(log, rng, t, 'A' if g % 2 == 0 else 'B', miss)
+        won[winner] += 1
+        g += 1
+        t += rng.uniform(15, 30)
+    log.remote = None
+    log.say(t, '[GameLogic]Changing [matchRunning] from [True] to [False] from changeIndex:9')
+    return t, won['A'] > won['B']
+
+
 def log_name(when):
     hour = when.hour % 12 or 12
     return f'ALL-{when:%m.%d.%Y}.{hour}.{when:%M.%S}.{"AM" if when.hour < 12 else "PM"}.log'
@@ -180,5 +233,37 @@ def write_logs(logs_dir, seed=8):
         name = log_name(start)
         with open(os.path.join(logs_dir, name), 'w', encoding='utf-8', newline='\n') as f:
             f.write('\n'.join(log.lines) + '\n')
+        names.append(name)
+    return names + write_online_logs(logs_dir, seed + 1000, len(SESSIONS))
+
+
+def write_online_logs(logs_dir, seed, day):
+    """One generated log per online session, from `day` days after the first AI session. Your rating moves with every
+    ranked match as the game moves it; opponents are drawn around it, and the stronger ones miss less."""
+    rng = random.Random(seed)
+    names, mine, n = [], START_RATING, 0
+    for i, session in enumerate(ONLINE):
+        start = FIRST + dt.timedelta(days=day + i, hours=2, minutes=rng.randint(0, 50))
+        log = Log(start)
+        log.say(0, 'elevendash sample log: generated by elevendash (src/elevendash/sample.py), not recorded from a game. '
+                   'It holds no account data: the players in it are made up.')
+        log.say(0.5, '[Settings] Paddle settings loaded: {"paddleHand":"Right","gripAngle":50}')
+        t = 40.0
+        for ranked in session:
+            n += 1
+            log.say(t - 20, '[TCPSERVERCOMMUNICATIONS][SERVER-JSON][INBOUND]Received message from server:{"msgType":"Response",'
+                            f'"messageId":"{n}","data":[{{"response":"LoginResponse","user":{{"Id":"{MY_ID}","UserName":"{ME}",'
+                            f'"ELO":"{mine}","Rank":"0"}}}}]}}')
+            theirs = mine + rng.randint(-160, 160)
+            miss = {'A': 0.22 - 0.01 * i, 'B': min(0.34, max(0.14, 0.22 + (mine - theirs) / 1600))}
+            t, won = play_online_match(log, rng, t, n, mine, theirs, ranked, miss)
+            if ranked:
+                e = expected(mine, theirs)
+                mine += max(1, round(32 * (1 - e))) if won else -max(1, round(32 * e))
+            t += rng.uniform(40, 80)
+        log.say(t, '[App] Quit')
+        name = log_name(start)
+        with open(os.path.join(logs_dir, name), 'w', encoding='utf-8', newline=chr(10)) as f:
+            f.write(chr(10).join(log.lines) + chr(10))
         names.append(name)
     return names

@@ -68,16 +68,36 @@ def do_build(ws, verbose=False, say=print):
     if not n:
         raise SystemExit(f'No game logs in {ws.logs} yet. Run "elevendash fetch" or "elevendash import" first.')
     say(f'Building match data from {n} log file(s) ...')
-    argv = sys.argv
-    sys.argv = ['elevendash.builddata', ws.logs, ws.build, ws.videos, ws.config().get('hand', 'auto')]
-    try:
-        sink = contextlib.nullcontext() if verbose else contextlib.redirect_stdout(io.StringIO())
-        with sink:
-            made = runpy.run_module('elevendash.builddata', run_name='__main__', alter_sys=False)
-    finally:
-        sys.argv = argv
+    from . import health, i18n
+
+    def run(side, **given):
+        """One pass of the builder: 'ai' writes every match and the sums against the AI, 'people' the online sums."""
+        argv = sys.argv
+        sys.argv = ['elevendash.builddata', ws.logs, ws.build, ws.videos, ws.config().get('hand', 'auto'), side]
+        try:
+            sink = contextlib.nullcontext() if verbose else contextlib.redirect_stdout(io.StringIO())
+            with sink:
+                return runpy.run_module('elevendash.builddata', init_globals=given, run_name='__main__', alter_sys=False)
+        finally:
+            sys.argv = argv
+            i18n.set_voice(None)
+
+    def drop_online():
+        for name in os.listdir(ws.build):
+            if name.endswith('_h.json'):
+                os.remove(os.path.join(ws.build, name))
+
+    made = run('ai')
+    if any(not m['ai'] for m, *_ in made['M']):
+        try:        # the online side is built from the same matches; if it fails, the rest of the dashboard stands
+            run('people', PARSED=(made['M'], made['PROBLEMS']))
+        except Exception as e:
+            drop_online()
+            say(f'  The online side could not be built ({type(e).__name__}: {e}). Everything else is unaffected; '
+                'please report this at https://github.com/glki6/elevendash/issues.')
+    else:
+        drop_online()
     say(f'  Data in {ws.build}')
-    from . import health
     for line in health.advice(made.get('PROBLEMS')):
         say(line)
 
@@ -134,7 +154,7 @@ def do_demo(path, say=print):
         return 2
     ws.set(sample=True)
     names = sample.write_logs(ws.logs)
-    say(f'Demo workspace: {ws.root} ({len(names)} made-up sessions against the AI)')
+    say(f'Demo workspace: {ws.root} ({len(names)} made-up sessions: {len(sample.SESSIONS)} against the AI, {len(sample.ONLINE)} online)')
     do_build(ws, say=say)
     say('')
     do_report(ws, say=say)

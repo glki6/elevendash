@@ -6,6 +6,9 @@
 .er-page{background:var(--color-bg);color:var(--color-fg);border-radius:12px}
 /* Every piece of text is in the page in both languages; the language switch shows one. */
 .er-page:not(.er-zh) [data-l=zh],.er-page.er-zh [data-l=en]{display:none!important}
+/* Two sides: your matches against the AI, and your matches against people online. The switch at the top shows one;
+   a part marked data-v belongs to one side, and a sentence that names the AI is in the page in both wordings. */
+.er-page:not(.er-people) [data-v=people],.er-page.er-people [data-v=ai]{display:none!important}
 
 /* Layout: one reading column. A scoreboard strip opens it, findings run as an open two-column list,
    and only charts and tables sit in cards. Blue is you and points you won, orange is the AI and points you lost. */
@@ -42,10 +45,10 @@
 /* scoreboard strip */
 .er-board{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));background:var(--color-panel);border:1px solid var(--er-line);border-radius:calc(var(--cds-radius)*1.5);overflow:hidden}
 .er-panel{display:grid;gap:12px;align-content:start;min-width:0;padding:20px 22px 22px;border-left:1px solid var(--er-line)}
-.er-panel:first-child{border-left:0;background:var(--er-you-wash)}
+.er-panel.er-lead{border-left:0;background:var(--er-you-wash)}
 .er-label{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);text-transform:uppercase;letter-spacing:.07em}
 .er-score{display:flex;align-items:baseline;gap:.1em;font-family:var(--er-display);font-weight:600;font-stretch:84%;font-size:clamp(40px,5.6cqi,52px);line-height:.9}
-.er-panel:first-child .er-score{font-size:clamp(52px,7.4cqi,68px)}
+.er-panel.er-lead .er-score{font-size:clamp(52px,7.4cqi,68px)}
 .er-score b{font-weight:600;font-variant-numeric:normal}
 .er-score .er-dash{color:var(--color-fg-muted);font-weight:300}
 .er-score .er-los{color:var(--color-fg-muted)}
@@ -97,6 +100,9 @@
 .er-save .er-btn[aria-busy=true]{opacity:.6;cursor:progress}
 .er-save svg{display:block;flex:none}
 .er-prefs{display:inline-flex;gap:6px}
+.er-side .er-tab{padding:6px 16px;font-size:var(--cds-font-size-body)}
+.er-rpair{display:flex;flex-wrap:wrap;gap:4px 18px;font-variant-numeric:tabular-nums}
+.er-rpair b{font-weight:var(--cds-font-weight-medium)}
 .er-save .er-ibtn{justify-content:center;min-width:34px;min-height:32px;padding:5px 8px}
 .er-ibtn [data-l]{line-height:1}
 .er-page:not(.er-light) .er-moon,.er-page.er-light .er-sun{display:none}
@@ -351,6 +357,7 @@
 .er-legend span{display:inline-flex;align-items:center;gap:6px}
 .er-sw{width:10px;height:10px;border-radius:3px;display:inline-block;background:var(--er-you);flex:none}
 .er-sw.ai{background:var(--er-ai)}
+.er-sw.aihollow{border-radius:50%;background:var(--color-panel);box-shadow:inset 0 0 0 2px var(--er-ai)}
 .er-sw.alt{background:var(--er-alt)}
 .er-sw.line{height:3px;width:16px;border-radius:2px}
 .er-sw.dot{border-radius:50%}
@@ -463,7 +470,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
 @container (max-width:800px){
   .er-board{grid-template-columns:minmax(0,1fr)}
   .er-panel{border-left:0;border-top:1px solid var(--er-line)}
-  .er-panel:first-child{border-top:0}
+  .er-panel.er-lead{border-top:0}
   .er-grid,.er-finds,.er-mgrid,.er-pitem,.er-plan.keep,.er-sxout{grid-template-columns:minmax(0,1fr)}
   .er-sxgroups>li{grid-template-columns:1.5em minmax(0,1fr) auto}
   .er-sxgroups>li>.er-cmp{grid-column:2 / -1;grid-row:2}
@@ -546,6 +553,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
 <div class="er-top">
 <header class="er-mast" id="summary">
   <div class="er-eyebrow"><i class="er-ball"></i><span>Eleven Table Tennis</span><span>Quest game logs</span><span><span data-draw="v" data-ds="summary" data-k="all" data-f="from" data-fmt="date">—</span> to <span data-draw="v" data-ds="summary" data-k="all" data-f="to" data-fmt="date">—</span></span></div>
+  <div class="er-side" id="side" hidden><div class="er-tabs" role="group" aria-label="Matches shown"><button class="er-tab" type="button" data-side="ai" aria-pressed="true">AI matches</button><button class="er-tab" type="button" data-side="people" aria-pressed="false">Online matches</button></div></div>
   <h1>Eleven vs AI Report</h1>
   <p class="er-lede">At <span data-draw="v" data-ds="findings" data-k="main" data-f="levelText">—</span> you have won <b data-draw="v" data-ds="summary" data-k="L{TOP}" data-f="wins" data-fmt="int">—</b> of <b data-draw="v" data-ds="summary" data-k="L{TOP}" data-f="matches" data-fmt="int">—</b> matches and <b data-draw="v" data-ds="summary" data-k="L{TOP}" data-f="pointRate" data-fmt="pct">—</b> of points. In your last session, on <span data-draw="v" data-ds="summary" data-k="last" data-f="from" data-fmt="date">—</span> at <span data-draw="v" data-ds="summary" data-k="last" data-f="start" data-fmt="time">—</span>, you won <b data-draw="v" data-ds="summary" data-k="last" data-f="wins" data-fmt="int">—</b> of <b data-draw="v" data-ds="summary" data-k="last" data-f="matches" data-fmt="int">—</b> matches and <b data-draw="v" data-ds="summary" data-k="last" data-f="pointRate" data-fmt="pct">—</b> of points.</p>
   <div class="er-save" id="save">
@@ -563,7 +571,16 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
 </header>
 
 <div class="er-board" id="tiles">
-  <div class="er-panel" id="tile-main">
+  <div class="er-panel er-lead" id="tile-rating" data-v="people">
+    <div class="er-label">Your rating · <span data-draw="v" data-ds="summary" data-k="all" data-f="from" data-fmt="date">—</span> to <span data-draw="v" data-ds="summary" data-k="all" data-f="to" data-fmt="date">—</span></div>
+    <div class="er-score"><b data-draw="v" data-ds="summary" data-k="all" data-f="rating" data-fmt="rating">—</b></div>
+    <div>Since your first rated match in the logs: <b data-draw="v" data-ds="summary" data-k="all" data-f="ratingChange" data-fmt="signed">—</b></div>
+    <div class="er-rows">
+      <div class="er-row"><span>Ranked matches won</span><div class="er-meter" data-draw="meter" data-ds="summary" data-k="all" data-f="rankedRate" data-num="rankedWins" data-den="rankedMatches"></div></div>
+      <div class="er-rpair"><span>Highest <b data-draw="v" data-ds="summary" data-k="all" data-f="ratingPeak" data-fmt="rating">—</b></span><span>Lowest <b data-draw="v" data-ds="summary" data-k="all" data-f="ratingLow" data-fmt="rating">—</b></span></div>
+    </div>
+  </div>
+  <div class="er-panel er-lead" id="tile-main" data-v="ai">
     <div class="er-label"><span data-draw="v" data-ds="findings" data-k="main" data-f="levelTitle">—</span> · <span data-draw="v" data-ds="summary" data-k="L{TOP}" data-f="from" data-fmt="date">—</span> to <span data-draw="v" data-ds="summary" data-k="L{TOP}" data-f="to" data-fmt="date">—</span></div>
     <div class="er-score"><b data-draw="v" data-ds="summary" data-k="L{TOP}" data-f="wins" data-fmt="int">—</b><span class="er-dash">–</span><span class="er-los" data-draw="v" data-ds="summary" data-k="L{TOP}" data-f="losses" data-fmt="int">—</span></div>
     <div>Matches won and lost: <b data-draw="v" data-ds="summary" data-k="L{TOP}" data-f="matchRate" data-fmt="pct">—</b> won</div>
@@ -582,7 +599,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
     </div>
   </div>
 </div>
-<p class="er-muted" id="online-note">On the last day you played, <span data-draw="v" data-ds="summary" data-k="lastDay" data-f="from" data-fmt="date">—</span>, you won <span data-draw="v" data-ds="summary" data-k="lastDay" data-f="wins" data-fmt="int">—</span> of <span data-draw="v" data-ds="summary" data-k="lastDay" data-f="matches" data-fmt="int">—</span> matches in all.<span data-showif data-ds="summary" data-k="online" data-f="matches" hidden> Online matches are left out of these totals: <span data-draw="v" data-ds="summary" data-k="online" data-f="matches" data-fmt="int">—</span> in the logs, <span data-draw="v" data-ds="summary" data-k="online" data-f="wins" data-fmt="int">—</span> won. Pick one in the match explorer below.</span></p>
+<p class="er-muted" id="online-note">On the last day you played, <span data-draw="v" data-ds="summary" data-k="lastDay" data-f="from" data-fmt="date">—</span>, you won <span data-draw="v" data-ds="summary" data-k="lastDay" data-f="wins" data-fmt="int">—</span> of <span data-draw="v" data-ds="summary" data-k="lastDay" data-f="matches" data-fmt="int">—</span> matches in all.<span data-showif data-ds="summary" data-k="online" data-f="matches" hidden> Online matches are left out of these totals: <span data-draw="v" data-ds="summary" data-k="online" data-f="matches" data-fmt="int">—</span> in the logs, <span data-draw="v" data-ds="summary" data-k="online" data-f="wins" data-fmt="int">—</span> won. Switch to Online matches at the top of the page to see them.</span></p>
 </div>
 
 <section class="er-section" id="session">
@@ -643,6 +660,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
       </div>
       <dl class="er-meta">
         <div><dt>Opponent</dt><dd><span data-showif data-ds="matches" data-k="{M}" data-f="vs" data-eq="AI"><span data-draw="v" data-tr data-ds="matches" data-k="{M}" data-f="vs">—</span>, level <span data-draw="v" data-ds="matches" data-k="{M}" data-f="level" data-fmt="int">—</span></span><span data-showif data-ds="matches" data-k="{M}" data-f="vs" data-eq="Online" hidden>A player online</span></dd></div>
+        <div data-showif data-ds="matches" data-k="{M}" data-f="rYou" hidden><dt>Ratings</dt><dd>You <span data-draw="v" data-ds="matches" data-k="{M}" data-f="rYou" data-fmt="rating">—</span>, opponent <span data-draw="v" data-ds="matches" data-k="{M}" data-f="rOpp" data-fmt="rating">—</span><span data-showif data-ds="matches" data-k="{M}" data-f="ranked" data-eq="1" hidden> · ranked, <span data-draw="v" data-ds="matches" data-k="{M}" data-f="rChange" data-fmt="signed">—</span> for you</span><span data-showif data-ds="matches" data-k="{M}" data-f="ranked" data-eq="0" hidden> · not ranked</span></dd></div>
         <div><dt>Played</dt><dd><span data-draw="v" data-ds="matches" data-k="{M}" data-f="date" data-fmt="date">—</span>, <span data-draw="v" data-ds="matches" data-k="{M}" data-f="start" data-fmt="time">—</span> to <span data-draw="v" data-ds="matches" data-k="{M}" data-f="end" data-fmt="time">—</span></dd></div>
         <div><dt>Points won</dt><dd><span data-draw="v" data-ds="matches" data-k="{M}" data-f="pointRate" data-fmt="pct">—</span> of <span data-draw="v" data-ds="matches" data-k="{M}" data-f="points" data-fmt="int">—</span></dd></div>
         <div><dt>Shots per point</dt><dd><span data-draw="v" data-ds="matches" data-k="{M}" data-f="rallyLength" data-fmt="n1">—</span></dd></div>
@@ -862,7 +880,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
   <div class="er-card" id="form-rolling">
     <h3>Rolling results</h3>
     <details class="er-how"><summary>How to read this</summary><p class="er-muted">Each point on the line is the share over the matches up to that one. The band is where the share you would settle at over many matches most likely sits (9 times in 10). A short run of matches leaves a wide band, so a line that stays inside the band of a month ago has not really moved.</p></details>
-    <div class="er-controls"><span class="er-ctl" id="form-level-label">AI level</span><div class="er-tabs" id="form-level" role="group" aria-labelledby="form-level-label" data-draw="level-tabs"></div></div>
+    <div class="er-controls" data-v="ai"><span class="er-ctl" id="form-level-label">AI level</span><div class="er-tabs" id="form-level" role="group" aria-labelledby="form-level-label" data-draw="level-tabs"></div></div>
     <div class="er-controls"><span class="er-ctl" id="form-w-label">Over the last</span><div class="er-tabs" id="form-w" role="group" aria-labelledby="form-w-label"><button class="er-tab" type="button" data-w="10" aria-pressed="false">10 matches</button><button class="er-tab" type="button" data-w="20" aria-pressed="true">20 matches</button><button class="er-tab" type="button" data-w="50" aria-pressed="false">50 matches</button></div><div class="er-tabs" id="form-f" role="group" aria-label="What is counted"><button class="er-tab" type="button" data-f="m" aria-pressed="true">Matches won</button><button class="er-tab" type="button" data-f="p" aria-pressed="false">Points won</button></div></div>
     <p class="er-pstat" data-draw="form-now" data-source="form" role="status"></p>
     <div class="er-legend"><span><i class="er-sw line"></i>Share over the last matches</span><span><i class="er-sw band"></i>Likely range</span><span><i class="er-sw dash"></i>All your matches at this level</span></div>
@@ -885,7 +903,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
 <section class="er-section" id="serve">
   <div class="er-sechead">
     <div><h2>Serves and returns</h2><p class="er-muted">Over <span data-draw="v" data-ds="levels" data-k="{L}" data-f="matches" data-fmt="int">—</span> matches at this level.</p></div>
-    <div class="er-controls"><span class="er-ctl" id="serve-level-label">AI level</span><div class="er-tabs" id="serve-level" role="group" aria-labelledby="serve-level-label" data-draw="level-tabs"></div></div>
+    <div class="er-controls" data-v="ai"><span class="er-ctl" id="serve-level-label">AI level</span><div class="er-tabs" id="serve-level" role="group" aria-labelledby="serve-level-label" data-draw="level-tabs"></div></div>
   </div>
 
   <h3 class="er-subhead" id="recv">When the AI serves</h3>
@@ -942,7 +960,19 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
 <section class="er-section" id="by-level">
   <div class="er-sechead">
     <div><h2>Breakdown by AI level</h2><p class="er-muted">Over <span data-draw="v" data-ds="levels" data-k="{L}" data-f="matches" data-fmt="int">—</span> matches at this level.</p></div>
-    <div class="er-controls"><span class="er-ctl" id="level-label">AI level</span><div class="er-tabs" id="level-select" role="group" aria-labelledby="level-label" data-draw="level-tabs"></div></div>
+    <div class="er-controls" data-v="ai"><span class="er-ctl" id="level-label">AI level</span><div class="er-tabs" id="level-select" role="group" aria-labelledby="level-label" data-draw="level-tabs"></div></div>
+  </div>
+  <div class="er-card" id="rating-run" data-v="people">
+    <h3>Your rating, match by match</h3>
+    <details class="er-how"><summary>How to read this</summary><p class="er-muted">The line is your rating after each online match in the logs, in the order played. A dot is that match's opponent, at their rating: filled when you won, hollow when you lost. A ranked match moves your rating, by more when the result was the less likely one; an unranked match leaves it where it was. A jump straight up or down between two matches is a change the logs do not hold.</p></details>
+    <div class="er-legend"><span><i class="er-sw line"></i>Your rating</span><span><i class="er-sw ai dot"></i>Opponent you beat</span><span><i class="er-sw aihollow"></i>Opponent you lost to</span></div>
+    <div class="er-chart" id="chart-rating" data-draw="rating-chart" data-source="rating_h"></div>
+    <ul class="er-notes" data-draw="rating-notes" data-source="rating_notes_h"></ul>
+  </div>
+  <div class="er-card" id="rating-bands" data-v="people">
+    <h3>Results by opponent rating</h3>
+    <p class="er-muted">Expected is the share of matches the two ratings alone say you win, added up over the matches in the row.</p>
+    <div class="er-tablewrap"><table class="er-t"><thead><tr><th>Opponents</th><th>Matches</th><th>Won</th><th>Expected</th><th>Wins against expected</th><th>Points won</th><th>On your serve</th><th>On their serve</th></tr></thead><tbody data-draw="rating-bands" data-source="rating_bands_h"></tbody></table></div>
   </div>
   <div class="er-grid">
     <div class="er-card" id="how-lost">
@@ -1026,7 +1056,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
     <li>Left and right are as you face the AI.<span data-showif data-ds="findings" data-k="main" data-f="hand" data-eq="right" hidden> You hold the paddle in your right hand, so your left is your backhand side.</span><span data-showif data-ds="findings" data-k="main" data-f="hand" data-eq="left" hidden> You hold the paddle in your left hand, so your right is your backhand side.</span> The game's paddle settings in the logs say which hand holds the paddle; <code translate="no">elevendash config hand=left</code> (or right) sets it instead. The direction was checked against a video recording.</li>
     <li>The opening line, the second scoreboard and What decides your points cover your main level: the AI level with the most points in your last five sessions. The findings there are written by code with fixed rules. A headline calls one thing better than another only when the gap is at least 5 percentage points (3 for landing rates, which rest on thousands of shots, and 0.5 m/s for speed). A finding with fewer than 3 matches won and 3 lost, 30 serves or 50 shots of a type behind it is left out.</li>
     <li>The AI level is the game's difficulty setting; 100 is legendary. On days you changed level, the progress chart labels the day with the higher one.</li>
-    <li>Lets are left out. Online matches appear in the match explorer but not in the AI totals.</li>
+    <li>Lets are left out. Online matches are not in the AI totals: the switch at the top of the page shows them.</li>
     <li>Small groups swing a lot. The zone map and the rally-length chart show how many serves or points each number covers, and the zone map colours only zones with 30 serves or more.</li>
   </ul>
 </details>
@@ -1046,8 +1076,44 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
   // Words the builder wrote come in both languages: a field and the same field with _zh (ER.tx).
   ER.I18N = {{I18N_SCRIPT}};
   ER.lang = () => (dash.params().lang === 'zh' ? 'zh' : 'en');
+  // Two sides. The builder adds up your matches against the AI and your matches against people online apart. An
+  // online dataset has the AI one's name with _h (summary_h) and the same shape, so every drawing serves both:
+  // ER.rows(id) hands over the side shown (the vs parameter, 'ai' or 'people'), and of the match list, that side's
+  // matches. Online matches all stand at one level, ER.H_LEVEL, where the AI side has the AI's levels. A dashboard
+  // with matches on one side only shows that side, and no switch.
+  ER.H_LEVEL = 999;
+  ER.H_SETS = new Set(['summary', 'sessions', 'session_notes', 'plan', 'plan_trend', 'plan_progress', 'form', 'session_shape',
+    'form_notes', 'serve_flow', 'serve_types', 'serve_next', 'serve_notes', 'days', 'levels', 'insights', 'zones', 'won_vs_lost',
+    'shot_groups', 'findings', 'rating', 'rating_bands', 'rating_notes']);
+  const raw = (id) => {
+    const d = dash.data(id);
+    return d.status === 'ok' && Array.isArray(d.data) ? d.data : null;
+  };
+  ER.sides = () => {
+    const a = raw('summary'), h = raw('summary_h');
+    return {ai: !a || a.some((r) => r.key === 'all'), people: !!h && h.length > 0};
+  };
+  ER.people = () => {
+    const s = ER.sides();
+    return s.people && (dash.params().vs === 'people' || !s.ai);
+  };
+  ER.vs = () => (ER.people() ? 'Online' : 'AI');     // as the vs field of a match says it
+  ER.ds = (id) => (ER.H_SETS.has(id) && ER.people() ? id + '_h' : id);
+  let sided = {src: null, vs: '', out: null};
+  ER.rows = (id) => {
+    const rows = raw(ER.ds(id));
+    if (id !== 'matches' || !rows) return rows;
+    const s = ER.sides();
+    if (!s.people || !s.ai) return rows;
+    const vs = ER.vs();
+    if (sided.src !== rows || sided.vs !== vs) sided = {src: rows, vs, out: rows.filter((r) => r.vs === vs)};
+    return sided.out;
+  };
+  // The words for matches against people, where a sentence names the AI or a level (voice.py makes the list).
+  ER.VOICE = {{VOICE_SCRIPT}};
   ER.tr = (key, ...args) => {
-    const s = (ER.lang() === 'zh' && ER.I18N[key]) || key;
+    const zh = ER.lang() === 'zh';
+    const s = (ER.people() && ER.VOICE[zh ? 'zh' : 'en'][key]) || (zh && ER.I18N[key]) || key;
     return args.length ? s.replace(/\{(\d+)\}/g, (m, i) => (args[i] == null ? '' : String(args[i]))) : s;
   };
   ER.txf = (f) => (ER.lang() === 'zh' ? f + '_zh' : f);
@@ -1060,6 +1126,8 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
     pct: (v) => (v == null ? '—' : fmt1(v) + '%'),
     date: (v) => (v ? (ER.lang() === 'zh' ? zhDate(String(v)) : dayFmt(new Date(v + 'T00:00:00Z'))) : '—'),
     time: (v) => (v ? String(v).slice(0, 5) : '—'),
+    rating: (v) => (v == null ? '—' : String(Math.round(v))),       // 1558, as the game writes it
+    signed: (v) => (v == null ? '—' : (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(Math.round(v))),
   };
   // ER.k marks a word for the word list (i18n check) where the word is kept to look up later
   ER.k = (s) => s;
@@ -1390,20 +1458,17 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
     };
     dash.setParams(p);
   };
-  ER.rows = (id) => {
-    const d = dash.data(id);
-    return d.status === 'ok' && Array.isArray(d.data) ? d.data : null;
-  };
   // Every switch redraws every drawing. One that depends on nothing a switch changes keeps what it drew:
   // ER.same(el, deps) is true when el was last drawn with the same deps (language, width, data rows) and still holds
   // that drawing. The slow charts use it, so a click on a level or a session redraws only what it changes.
   const lastDeps = new WeakMap();
-  ER.same = (el, deps) => {
+  ER.same = (el, given) => {
+    const deps = given.concat(ER.vs());
     const prev = lastDeps.get(el);
     lastDeps.set(el, deps);
     return !!prev && el.childNodes.length > 0 && prev.length === deps.length && prev.every((d, i) => d === deps[i]);
   };
-  ER.failed = (ids) => ids.some((id) => dash.data(id).status === 'error');
+  ER.failed = (ids) => ids.some((id) => dash.data(ER.ds(id)).status === 'error');
   // Point replays come one dataset a month (replay_2026_11), asked for only when a match of that month is opened.
   // A match key and a point key both start with the match's date.
   ER.replayId = (key) => 'replay_' + String(key).slice(0, 4) + '_' + String(key).slice(5, 7);
@@ -1415,6 +1480,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
     return m && m.level != null ? m.level : null;
   };
   ER.level = () => {
+    if (ER.people()) return ER.H_LEVEL;
     const v = Number(dash.params().level);
     if (Number.isFinite(v) && v > 0) return v;
     const m = ER.mainLevel();
@@ -1620,7 +1686,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
   };
   ER.span = (text, src, field, key, cls) => {
     const s = ER.el('span', cls, text);
-    s.setAttribute('data-source', src);
+    s.setAttribute('data-source', ER.ds(src));
     s.setAttribute('data-field', field);
     if (key != null) s.setAttribute('data-where', ER.where(key));
     return s;
@@ -1674,14 +1740,14 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
     a.href = 'https://youtu.be/' + encodeURIComponent(id) + (t > 0 ? '?t=' + Math.floor(t) : '');
     a.target = '_blank';
     a.rel = 'noopener';
-    a.setAttribute('data-source', src);
+    a.setAttribute('data-source', ER.ds(src));
     a.setAttribute('data-field', field);
     if (key != null) a.setAttribute('data-where', ER.where(key));
     return a;
   };
   ER.mmss = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
   ER.markSvg = (sel, src, field, key) =>
-    sel.attr('data-source', src).attr('data-field', field).attr('data-where', key == null ? null : ER.where(key));
+    sel.attr('data-source', ER.ds(src)).attr('data-field', field).attr('data-where', key == null ? null : ER.where(key));
   ER.wait = (el, ids) => {
     el.replaceChildren();
     if (ER.failed(ids)) el.appendChild(ER.el('div', 'er-fail', ER.tr('Failed to load')));
@@ -1850,6 +1916,7 @@ document.querySelectorAll('[data-step]').forEach((b) => {
   };
   const apply = () => {
     const light = dash.params().theme === 'light', zh = ER.lang() === 'zh';
+    const sides = ER.sides(), people = ER.people();
     // switches fade in over the time a typical shot takes to cross (the builder measures it from the replays)
     const main = ER.find('findings', 'main');
     const secs = main && Number(main.shotSecs) > 0.2 && Number(main.shotSecs) < 2 ? Number(main.shotSecs) : null;
@@ -1857,6 +1924,7 @@ document.querySelectorAll('[data-step]').forEach((b) => {
       el.classList.toggle('er-light', light);
       el.classList.toggle('er-dark', !light);
       el.classList.toggle('er-zh', zh);
+      el.classList.toggle('er-people', people);
       const fade = secs ? secs + 's' : '';
       if (el.style.getPropertyValue('--er-fade') !== fade) {
         if (fade) el.style.setProperty('--er-fade', fade);
@@ -1865,13 +1933,22 @@ document.querySelectorAll('[data-step]').forEach((b) => {
     });
     each('#pref-theme', (b) => b.setAttribute('aria-label', ER.tr(light ? 'Switch to the dark look' : 'Switch to the light look')));
     each('#pref-lang', (b) => b.setAttribute('aria-label', ER.tr(zh ? 'Switch to English' : 'Switch to Chinese')));
-    each('[data-aria-zh]', (el) => el.setAttribute('aria-label', zh ? el.dataset.ariaZh : el.dataset.ariaEn));
+    each('[data-aria-zh]', (el) => el.setAttribute('aria-label', people && el.dataset.ariaPen ? (zh ? el.dataset.ariaPzh : el.dataset.ariaPen)
+      : zh ? el.dataset.ariaZh : el.dataset.ariaEn));
+    each('#side', (el) => {
+      el.hidden = !(sides.ai && sides.people);
+    });
+    each('[data-side]', (b) => b.setAttribute('aria-pressed', String((b.dataset.side === 'people') === people)));
     each('[data-showif]', (el) => {
       el.hidden = !shown(el);
     });
   };
   each('#pref-theme', (b) => b.addEventListener('click', () => ER.set({theme: dash.params().theme === 'light' ? 'dark' : 'light'}, b, {whole: true})));
   each('#pref-lang', (b) => b.addEventListener('click', () => ER.set({lang: ER.lang() === 'zh' ? 'en' : 'zh'}, b, {whole: true})));
+  // the other side has its own matches and sessions: what was picked on this one does not carry over
+  each('[data-side]', (b) => b.addEventListener('click', () => {
+    if (b.getAttribute('aria-pressed') !== 'true') ER.set({vs: b.dataset.side, match: '', session: '', pick: ''}, b, {whole: true});
+  }));
   dash.onData(apply);
 })();
 </script>
@@ -2062,7 +2139,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       const g = document.createElement('optgroup');
       g.label = ER.F.date(date);
       ms.slice().reverse().forEach((r) => {
-        const who = r.vs === 'AI' ? ER.tr('level {0}', r.level) : ER.tr('online');
+        const who = r.vs === 'AI' ? ER.tr('level {0}', r.level) : r.rOpp ? ER.tr('rated {0}', ER.F.rating(r.rOpp)) : ER.tr('online');
         const note = ER.notes.has(r.key) ? ` · ${ER.tr('your note')}` : '';
         g.appendChild(new Option(`${ER.F.time(r.start)} · ${ER.tr(r.result === 'Won' ? 'Won' : 'Lost')} ${r.gamesWon}–${r.gamesLost} · ${who}${note}`, r.key));
       });
@@ -2311,7 +2388,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   ];
   const MIN_TRIES = 20, MIN_Z = 1.64;     // as the session report: a gap this large turns up by chance about one time in ten
 
-  // AI matches by session, numbered by place in the matches source
+  // The matches of the side shown by session, numbered by place in its match list
   let idx = null;
   const index = () => {
     const ms = ER.rows('matches'), ss = ER.rows('sessions');
@@ -2321,13 +2398,13 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     const ord = new Map();
     ms.forEach((r, i) => {
       ord.set(i + 1, r);
-      if (r.vs === 'AI' && bySession.has(r.session)) bySession.get(r.session).push(i + 1);
+      if (r.vs === ER.vs() && bySession.has(r.session)) bySession.get(r.session).push(i + 1);
     });
     idx = {ms, ss, ord, bySession, ai: [...bySession.values()].flat()};
     return idx;
   };
   const lastSessions = (x, n) => x.ss.slice(-n).flatMap((s) => x.bySession.get(s.key) || []);
-  const isAI = (x, o) => x.ord.has(o) && x.ord.get(o).vs === 'AI' && x.bySession.has(x.ord.get(o).session);
+  const isAI = (x, o) => x.ord.has(o) && x.ord.get(o).vs === ER.vs() && x.bySession.has(x.ord.get(o).session);
   const parse = (x, p) => {
     const out = new Set();
     String(p).split(',').forEach((part) => {
@@ -3008,12 +3085,13 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     const last = rows[rows.length - 1];
     const ml = Math.ceil(Math.max(d3.max(ticks, (t) => ER.textW(svg, t + '%')), ER.textW(svg, ER.tr('Level')))) + 10;
     const mr = Math.ceil(d3.max(series, (s) => ER.textW(svg, ER.F.pct(last[s.f]), 'er-strong'))) + 14;
-    const m = {t: 40, r: mr, b: 26, l: ml};
+    const strip = !ER.people();      // online matches have no level
+    const m = {t: strip ? 40 : 12, r: mr, b: 26, l: ml};
     y.range([H - m.b, m.t]);
     const x = d3.scaleUtc().domain([half(rows[0].date, -12), half(last.date, 12)]).range([m.l, W - m.r]);
     // level strip
-    svg.append('text').attr('x', m.l - 8).attr('y', 15).attr('text-anchor', 'end').attr('dominant-baseline', 'middle').text(ER.tr('Level'));
-    ER.levelRuns(rows).forEach((run, i) => {
+    if (strip) svg.append('text').attr('x', m.l - 8).attr('y', 15).attr('text-anchor', 'end').attr('dominant-baseline', 'middle').text(ER.tr('Level'));
+    (strip ? ER.levelRuns(rows) : []).forEach((run, i) => {
       const x0 = x(half(run.from, -12)), x1 = x(half(run.to, 12));
       svg.append('rect').attr('x', x0 + 1).attr('y', 6).attr('width', Math.max(0, x1 - x0 - 2)).attr('height', 18).attr('rx', 4)
         .style('fill', run.level === 100 ? 'var(--er-you-tint)' : 'var(--er-track)');
@@ -3501,7 +3579,8 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     const f = facts(pts), won = m.result === 'Won', o = [];
     const D = {font: c.display, weight: 600};
     // against the AI, or online against a person: only the words for the other side change
-    const ai = m.vs === 'AI', title = ai ? ER.tr('Match against the AI, level {0}', m.level) : ER.tr('Online match');
+    const ai = m.vs === 'AI', title = ai ? ER.tr('Match against the AI, level {0}', m.level)
+      : m.rYou ? ER.tr('Online match, {0} against {1}', ER.F.rating(m.rYou), ER.F.rating(m.rOpp)) : ER.tr('Online match');
     face = c.text;
     o.push(rect(0, 0, W, H, 0, c.bg));
 
@@ -4622,6 +4701,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     const rows = ER.rows('shots'), ms = ER.rows('matches'), ps = ER.rows('points'), ss = ER.rows('sessions'), plan = ER.rows('plan');
     if (!rows || !ms || !ps || !ss || !plan) return null;
     if (memo && memo.rows === rows && memo.ms === ms && memo.ps === ps && memo.ss === ss && memo.plan === plan) return memo;
+    if (memo && memo.vs !== ER.vs()) Object.assign(f, NONE);     // filters set for the other side's matches do not carry over
     const mBy = new Map(ms.map((m) => [m.key, m])), pBy = new Map(ps.map((r) => [r.key, r]));
     const recs = [];
     rows.forEach((row) => {
@@ -4638,7 +4718,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       });
     });
     recs.reverse();
-    memo = {rows, ms, ps, ss, plan, recs, online: ms.some((m) => m.vs !== 'AI'),
+    memo = {rows, ms, ps, ss, plan, recs, vs: ER.vs(), online: !ER.people() && ms.some((m) => m.vs !== 'AI'),
       levels: [...new Set(ms.filter((m) => m.vs === 'AI').map((m) => m.level))].sort((a, b) => a - b),
       recentFrom: plan.length ? plan[0].recentFrom : null, last: ss.length ? ss[ss.length - 1].key : null};
     return memo;
@@ -4989,7 +5069,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   // Where your misses pile up: the builder's groups for the period chosen. A button sets the filters to the group.
   const apply = (g, out) => {
     Object.assign(f, NONE, {role: g.role, spin: g.spin, side: g.side, depth: g.depth || '', pace: g.pace || '', out,
-      level: String(g.level), period: g.scope === 'recent' ? 'recent' : ''});
+      level: ER.people() ? '' : String(g.level), period: g.scope === 'recent' ? 'recent' : ''});
     st.limit = PAGE;
     redraw(['sx-filter', ...OUT]);
     const card = $('shots-find');
@@ -5069,6 +5149,136 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
 </script>
 
 <script>
+// Online ratings. `rating` has one row per rated online match: your rating before it (you) and after (after), the
+// opponent's (opp), whether it was ranked, and the share of such matches the two ratings say you win (exp).
+// `rating_bands` adds your matches up by how the opponent was rated against you; `rating_notes` says it in words.
+(() => {
+  const ER = window.ER;
+  const MARK = {good: ['+', ER.k('Better')], bad: ['−', ER.k('Worse')], note: ['·', ER.k('Note')]};
+  dash.draw('rating-chart', (el) => {
+    const rows = ER.rows('rating');
+    if (!rows) return ER.wait(el, ['rating']);
+    const W = Math.max(280, el.clientWidth || 600), H = 300;      // before emptying: see ER.tableFrame
+    if (ER.same(el, [ER.lang(), W, rows])) return;
+    el.replaceChildren();
+    if (!rows.length) {
+      el.appendChild(ER.el('p', 'er-muted', ER.tr('No rated matches in the logs yet.')));
+      return;
+    }
+    const svg = ER.svg(el, W, H, ER.tr('Line chart of your rating after each online match, with the rating of each opponent as a dot'));
+    const last = rows[rows.length - 1];
+    const vals = rows.flatMap((r) => [r.you, r.after, r.opp]);
+    const y = d3.scaleLinear().domain([d3.min(vals) - 10, d3.max(vals) + 10]).nice(5);
+    const ticks = y.ticks(5);
+    const ml = Math.ceil(d3.max(ticks, (t) => ER.textW(svg, String(t)))) + 10;
+    const mr = Math.ceil(ER.textW(svg, ER.F.rating(last.after), 'er-strong')) + 16;
+    const m = {t: 12, r: mr, b: 26, l: ml};
+    y.range([H - m.b, m.t]);
+    // place 0 is your rating before the first match; match i sits at place i
+    const x = d3.scaleLinear().domain([0, rows.length]).range([m.l, W - m.r]);
+    ticks.forEach((t) => {
+      svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(t)).attr('y2', y(t)).style('stroke', 'var(--cds-chart-grid)');
+      svg.append('text').attr('x', m.l - 8).attr('y', y(t)).attr('text-anchor', 'end').attr('dominant-baseline', 'middle').attr('class', 'er-num').text(String(t));
+    });
+    // a faint rule where a new session starts
+    rows.forEach((r, i) => {
+      if (i > 0 && r.session !== rows[i - 1].session) {
+        svg.append('line').attr('x1', x(i + 0.5)).attr('x2', x(i + 0.5)).attr('y1', m.t).attr('y2', H - m.b).style('stroke', 'var(--cds-chart-grid)');
+      }
+    });
+    svg.append('text').attr('x', m.l).attr('y', H - 6).attr('text-anchor', 'start').text(`${ER.tr('match {0}', 1)} · ${ER.F.date(rows[0].date)}`);
+    if (rows.length > 1) {
+      svg.append('text').attr('x', W - m.r).attr('y', H - 6).attr('text-anchor', 'end').text(`${ER.tr('match {0}', rows.length)} · ${ER.F.date(last.date)}`);
+    }
+    // your rating: before the first match, then after each; a change the logs do not hold shows as a step
+    const pts = [[0, rows[0].you]];
+    rows.forEach((r, i) => {
+      if (i > 0 && r.you !== rows[i - 1].after) pts.push([i, r.you]);
+      pts.push([i + 1, r.after]);
+    });
+    svg.append('path').datum(pts).attr('d', d3.line().x((q) => x(q[0])).y((q) => y(q[1])))
+      .style('fill', 'none').style('stroke', ER.YOU).style('stroke-width', 2).style('stroke-linejoin', 'round').style('stroke-linecap', 'round');
+    // each opponent at their rating: filled when you won, hollow when you lost
+    rows.forEach((r, i) => {
+      ER.markSvg(svg.append('circle').attr('cx', x(i + 1)).attr('cy', y(r.opp)).attr('r', r.won ? 4.5 : 3.5)
+        .style('fill', r.won ? ER.AI : 'var(--color-panel)').style('stroke', r.won ? 'var(--color-panel)' : ER.AI).style('stroke-width', 2), 'rating', 'opp', r.key);
+    });
+    svg.append('circle').attr('cx', x(rows.length)).attr('cy', y(last.after)).attr('r', 4).style('fill', ER.YOU).style('stroke', 'var(--color-panel)').style('stroke-width', 2);
+    ER.markSvg(svg.append('text').attr('x', x(rows.length) + 9).attr('y', y(last.after)).attr('dominant-baseline', 'middle')
+      .attr('class', 'er-strong er-num').text(ER.F.rating(last.after)), 'rating', 'after', last.key);
+    const tip = ER.tip(el);
+    const rule = svg.append('line').attr('y1', m.t).attr('y2', H - m.b).style('stroke', 'var(--cds-chart-reference)').style('display', 'none');
+    svg.append('rect').attr('x', m.l).attr('y', m.t).attr('width', Math.max(0, W - m.l - m.r + 8)).attr('height', H - m.t - m.b)
+      .style('fill', 'transparent').style('cursor', 'crosshair')
+      .on('pointermove pointerdown', (evt) => {
+        const [px] = d3.pointer(evt);
+        const i = Math.max(1, Math.min(rows.length, Math.round(x.invert(px))));
+        const r = rows[i - 1];
+        rule.attr('x1', x(i)).attr('x2', x(i)).style('display', null);
+        tip.show(evt, [
+          `${ER.tr('match {0}', i)} · ${ER.F.date(r.date)} ${ER.F.time(r.start)}`,
+          `${ER.tr(r.won ? 'Won' : 'Lost')} ${r.score}`,
+          r.ranked ? ER.tr('Your rating: {0} to {1} ({2})', ER.F.rating(r.you), ER.F.rating(r.after), ER.F.signed(r.change))
+            : ER.tr('Your rating: {0} (not ranked)', ER.F.rating(r.you)),
+          ER.tr('Opponent: {0}', ER.F.rating(r.opp)),
+          ER.tr('The ratings give you {0} of matches like this', ER.F.pct(r.exp)),
+        ]);
+      })
+      .on('pointerleave', () => {
+        rule.style('display', 'none');
+        tip.hide();
+      });
+  });
+  dash.draw('rating-notes', (el) => {
+    const rows = ER.rows('rating_notes');
+    if (!rows) return ER.wait(el, ['rating_notes']);
+    el.replaceChildren(...rows.slice().sort((a, b) => a.rank - b.rank).map((r) => {
+      const li = ER.el('li');
+      const [glyph, name] = MARK[r.tone] || MARK.note;
+      const mark = ER.el('span', 'er-mark ' + (r.tone || 'note'), glyph);
+      mark.setAttribute('role', 'img');
+      mark.setAttribute('aria-label', ER.tr(name));
+      li.append(mark, ER.span(ER.tx(r, 'text'), 'rating_notes', 'text', r.key));
+      return li;
+    }));
+  });
+  // One row for each kind of opponent. Wins against expected is coloured only when the gap is too large for chance.
+  dash.draw('rating-bands', (tb) => {
+    const rows = ER.rows('rating_bands');
+    if (!rows) return ER.wait(tb, ['rating_bands']);
+    const cols = [['matches', 'int'], ['matchRate', 'pct'], ['expRate', 'pct'], ['diff', 'diff'], ['pointRate', 'pct'], ['servePointRate', 'pct'],
+      ['returnPointRate', 'pct']];
+    const list = rows.filter((r) => r.matches > 0).sort((a, b) => a.order - b.order);
+    if (!list.length) {
+      const tr = ER.el('tr'), td = ER.el('td', 'er-muted', ER.tr('No rated matches in the logs yet.'));
+      td.colSpan = cols.length + 1;
+      tr.appendChild(td);
+      tb.replaceChildren(tr);
+      return;
+    }
+    tb.replaceChildren(...list.map((r) => {
+      const tr = ER.el('tr');
+      const th = ER.el('th');
+      th.appendChild(ER.span(ER.tx(r, 'label'), 'rating_bands', 'label', r.key));
+      tr.appendChild(th);
+      cols.forEach(([f, fmt]) => {
+        const td = ER.el('td');
+        if (fmt === 'diff') {
+          const v = r[f] == null ? '—' : (r[f] > 0 ? '+' : r[f] < 0 ? '−' : '') + ER.fmt1(Math.abs(r[f]));
+          const sp = ER.span(v, 'rating_bands', f, r.key, r.move > 0 ? 'er-chg good' : r.move < 0 ? 'er-chg bad' : null);
+          td.appendChild(sp);
+        } else {
+          td.appendChild(ER.span(ER.F[fmt](r[f]), 'rating_bands', f, r.key));
+        }
+        tr.appendChild(td);
+      });
+      return tr;
+    }));
+  });
+})();
+</script>
+
+<script>
 // Form and stamina. `form` has one row per AI match with the share of matches (m) and points (p) won over the last
 // 10, 20 and 50 matches at its level, each with a likely range (lo, hi). `session_shape` has one row per place in a
 // session. The window and what is counted are this card's own state; the level is the dashboard's.
@@ -5084,7 +5294,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   };
   // the share over every match at the level
   const overall = (L) => {
-    const ms = (ER.rows('matches') || []).filter((r) => r.vs === 'AI' && r.level === L);
+    const ms = (ER.rows('matches') || []).filter((r) => r.level === L);
     if (!ms.length) return null;
     const a = st.f === 'm' ? ms.filter((r) => r.result === 'Won').length : d3.sum(ms, (r) => r.pointsWonN);
     const b = st.f === 'm' ? ms.length : d3.sum(ms, (r) => r.points);
