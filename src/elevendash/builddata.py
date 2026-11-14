@@ -155,6 +155,92 @@ def replay_track(p, you, sx):
     return ';'.join(','.join(map(str, f)) for f in out)
 
 
+# ---------------- every shot of yours, for the shot explorer ----------------
+# One record for each shot you hit, and one for each ball that beat you without a touch (shot X). It says what came
+# at you (the opponent's shot, its speed and spin off their bat, where it bounced on your half), what you did with it
+# and, for a miss, how it missed. In your view: your half is z below 0 and your shots travel to z above 0.
+TABLE_W, TABLE_L, FAST = 0.7625, 1.37, 10       # half the table's width and length, in metres; a fast ball, in m/s
+SPIN_C = {'topspin': 't', 'little spin': 'n', 'backspin': 'b'}
+SHOT_FIELDS = ['n', 'role', 'shot', 'ok', 'miss', 'speed', 'top', 'win', 'cx', 'cy', 'inShot', 'inSpeed', 'inTop', 'bx', 'bz',
+               'since', 'rise', 'cls']
+
+
+def miss_kind(e, after, you, sx, serve):
+    """How a shot of yours missed: n it never got over the net (into it, short of it, or down on your own half),
+    l long past the end of the table, w wide of its side, o anything else, u the log does not say."""
+    land = None
+    for a in after:
+        if a['k'] == 'hit':
+            break
+        if a['k'] == 'net' or (serve and a['k'] == 'table' and a['side'] == you):
+            continue        # a serve bounces on your own half first
+        land = a
+        break
+    if land is None or not land.get('pos'):
+        return 'u'
+    x, z = land['pos'][0] * sx, land['pos'][2] * sx
+    if land['k'] == 'table':
+        return 'n' if land['side'] == you else 'o'
+    if z <= 0:
+        return 'n'
+    if z <= TABLE_L:
+        return 'w'          # it came down beside the table
+    x0, z0 = e['pos'][0] * sx, e['pos'][2] * sx
+    across = x0 + (x - x0) * (TABLE_L - z0) / (z - z0) if z > z0 else x     # where its line passes the end of the table
+    return 'l' if abs(across) <= TABLE_W else 'w'
+
+
+def shot_records(p, you, sx):
+    tr = [e for e in (p.get('track') or []) if e['k'] != 'toss']
+    first = next((i for i, e in enumerate(tr) if e['k'] == 'hit'), None)
+    hits = p['hits']
+    if first is None or not hits:
+        return []
+    tr = tr[first:]
+    at = [i for i, e in enumerate(tr) if e['k'] == 'hit']
+    if len(at) != len(hits):
+        return []
+    out = []
+
+    def incoming(r, j, contact):
+        """Fill in what came at you: the opponent's shot j, and its first bounce on your half."""
+        prev = hits[j]
+        b = next((e for e in tr[at[j] + 1:at[j + 1] if j + 1 < len(at) else len(tr)] if e['k'] == 'table' and e['side'] == you), None)
+        r.update(inShot=SHOT_CODE[prev['shot']], inSpeed=round(prev['speed'] * 10), inTop=round(prev['top']))
+        if b:
+            r.update(bx=round(b['pos'][0] * sx * 100), bz=round(b['pos'][2] * sx * 100))
+        x = b['pos'][0] * sx if b else contact
+        side = '-' if x is None else SIDE_OF(x)
+        depth = (lambda d: 's' if d < 0.5 else 'h' if d < 1.0 else 'l')(abs(b['pos'][2])) if b else '-'
+        r['cls'] = (SPIN_C[spin_kind(prev)] + {BH: 'B', FH: 'F', 'middle': 'M', '-': '-'}[side] + depth
+                    + ('f' if prev['speed'] >= FAST else 's'))
+        return b
+
+    for i, h in enumerate(hits):
+        if h['side'] != you:
+            continue
+        e = tr[at[i]]
+        r = {'n': h['n'], 'role': 'S' if i == 0 else 'R' if i == 1 else 'A', 'shot': SHOT_CODE[h['shot']], 'ok': int(h['ok']),
+             'miss': '' if h['ok'] else miss_kind(e, tr[at[i] + 1:], you, sx, i == 0), 'speed': round(h['speed'] * 10),
+             'top': round(h['top']), 'win': int(bool(h.get('win'))), 'cx': round(e['pos'][0] * sx * 100), 'cy': round(e['pos'][1] * 100)}
+        if i:
+            b = incoming(r, i - 1, e['pos'][0] * sx)
+            if b and e.get('gt') and b.get('gt'):
+                r['since'] = max(0, round((e['gt'] - b['gt']) * 1000))      # from the bounce to your bat, in 1/1000 s
+            if e.get('pre') and any(e['pre']):
+                r['rise'] = 'r' if e['pre'][1] > 0 else 'f'                 # the ball was still rising, or already falling
+        out.append(r)
+    last = hits[-1]
+    if last['side'] != you and last['ok'] and p['winner'] != you:           # it landed and you never touched it
+        r = {'n': last['n'] + 1, 'role': 'R' if len(hits) == 1 else 'A', 'shot': 'X', 'ok': 0, 'miss': 'x', 'win': 0}
+        incoming(r, len(hits) - 1, None)
+        out.append(r)
+    return out
+
+
+shots, shot_items = [], {}              # the packed rows; match key -> its records, AI matches only
+
+
 # ---------------- session recordings on YouTube ----------------
 # videos.json in the workspace lists what was uploaded (always unlisted). A full recording carries, for each log it covers, the
 # offset between the app's clock and the video, found from the sound of the ball (youtube/session_video.py). That
@@ -191,6 +277,7 @@ for m, you, ai, pts in M:
     day_n[m['date']] += 1
     pm_you, pm_ai, mm = player_metrics(pts, you), player_metrics(pts, ai), match_metrics(pts)
     won_n = sum(p['winner'] == you for p in pts)
+    mshots = []
     row = {'key': mid, 'date': m['date'], 'start': m['start'], 'end': m['end'], 'dayMatch': day_n[m['date']],
            'vs': 'AI' if m['ai'] else 'Online', 'level': m['difficulty'], 'result': 'Won' if gw > gl else 'Lost',
            'gamesWon': gw, 'gamesLost': gl, 'score': ', '.join(f'{a}-{b}' for a, b in games),
@@ -215,6 +302,7 @@ for m, you, ai, pts in M:
             trk = replay_track(p, you, sx)
             if trk:
                 replay.append({'key': f'{mid}|{gi + 1}|{pi + 1}', 'track': trk})
+                mshots.extend(dict(r, at=f'{gi + 1}.{pi + 1}') for r in shot_records(p, you, sx))
             if p['hits']:
                 sv = p['hits'][0]
                 rb = next((b for b in p['bounces'] if b['side'] != sv['side']), None)
@@ -224,7 +312,11 @@ for m, you, ai, pts in M:
                                'x': None if not rb else round(rb['pos'][0] * sx, 3),
                                'z': None if not rb else round(rb['pos'][2] * sx, 3)})
     shot_mix.extend(mix_rows(mid, [(you, p) for p in pts]))
+    if mshots:      # one row a match: its shots as at,n,role,... (SHOT_FIELDS) joined by semicolons
+        shots.append({'key': mid, 'n': len(mshots),
+                      's': ';'.join(','.join(str(r.get(f, '')) for f in ['at'] + SHOT_FIELDS) for r in mshots)})
     if m['ai']:
+        shot_items[mid] = mshots
         level_items[m['difficulty']].extend((you, p) for p in pts)
         day_items[m['date']].append((row, you, pts))
         ai_items[mid] = (you, pts)
@@ -942,6 +1034,50 @@ for lvl in sorted(level_items):
         if its:
             wvl.append({'key': f'{lvl}|{res}', 'level': lvl, 'result': res,
                         'matches': sum(1 for r in ms if r['result'] == res), **agg(its)})
+
+# ---------------- shot explorer: the kinds of ball that cost you most ----------------
+# At the plan's level, your returns are grouped by the serve (side, spin, depth) and your rally shots by the ball that
+# came (spin, side, fast or slower). A try is a ball you hit or one that landed untouched; it fails when you miss it or
+# never reach it. A group's cost is how many more of its balls fail in a match than would at your usual rate for that
+# kind of shot. Two scopes: recent (every match at that level from the plan's recent sessions on) and all.
+assert FAST == PACE
+MIN_GROUP, TOP_GROUPS = 30, 8
+SIDE_TO = {'B': W('to your backhand side'), 'M': W('into the middle'), 'F': W('to your forehand side')}
+PACE_WORD = {'f': W('fast'), 's': W('slower')}
+C_SPIN = {v: k for k, v in SPIN_C.items()}
+C_DEPTH = {'s': 'short', 'h': 'half-long', 'l': 'long'}
+shot_groups = []
+recent_from = plan[0]['recentFrom']
+for scope, ms in (('recent', [r for r in lv_ms if r['date'] >= recent_from]), ('all', lv_ms)):
+    base, groups = defaultdict(Counter), defaultdict(Counter)
+    for r in (r for m in ms for r in shot_items.get(m['key'], [])):
+        c = r.get('cls')
+        if r['role'] == 'S' or not c or c[1] == '-' or (r['role'] == 'R' and c[2] == '-'):
+            continue
+        key = (r['role'], c[0], c[1], c[2], '') if r['role'] == 'R' else (r['role'], c[0], c[1], '', c[3])
+        for t in (base[r['role']], groups[key]):
+            t['n'] += 1
+            t['failed'] += not r['ok']
+            t['miss_' + r['miss']] += 1
+    found = []
+    for (role, spin, side, depth, pace), t in groups.items():
+        usual = base[role]['failed'] / base[role]['n']
+        if t['n'] >= MIN_GROUP and t['failed'] / t['n'] > usual:
+            found.append((round((t['failed'] / t['n'] - usual) * t['n'] / len(ms), 3), role, spin, side, depth, pace, t, usual))
+    found.sort(key=lambda g: (-g[0], g[1:6]))
+    for i, (extra, role, spin, side, depth, pace, t, usual) in enumerate(found[:TOP_GROUPS]):
+        row = {'key': f'{scope}|{i + 1}', 'scope': scope, 'rank': i + 1, 'level': plan_level, 'matches': len(ms),
+               'from': recent_from if scope == 'recent' else None, 'role': role, 'spin': spin, 'side': side, 'depth': depth,
+               'pace': pace, 'n': t['n'], 'failed': t['failed'], 'rate': pc(t['failed'], t['n']), 'usual': r1(100 * usual),
+               'extra': round(extra, 2), 'net': t['miss_n'], 'long': t['miss_l'], 'wide': t['miss_w'], 'unreached': t['miss_x']}
+        put(row, 'label', T('Returns of serves: {type}', type=lower(type_label('recv', {'B': BH, 'M': 'middle', 'F': FH}[side],
+                                                                                C_SPIN[spin], C_DEPTH[depth])))
+            if role == 'R' else T('Rally shots against {pace} {spin} {side}', pace=PACE_WORD[pace], spin=SPIN_WORD[C_SPIN[spin]],
+                                  side=SIDE_TO[side]))
+        shot_groups.append(row)
+write('shots', shots)
+write('shot_groups', shot_groups)
+
 
 # ---------------- findings: what decides your points at your main level ----------------
 # The six findings at the top of the page. Each headline is picked by a fixed rule from the numbers in its text, so it

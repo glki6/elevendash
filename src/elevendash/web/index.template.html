@@ -257,6 +257,35 @@
 .er-sw.rx::after{transform:rotate(-45deg)}
 .er-rnav .er-btn{flex:1 1 0;white-space:nowrap;padding-inline:6px}
 .er-rshots td:last-child{white-space:normal}
+.er-sxfilters{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:10px 14px}
+.er-sxfilters>div{display:grid;gap:4px;min-width:0}
+.er-sxfilters label{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.er-sxfilters select{width:100%;min-width:0}
+.er-sxout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,320px);gap:18px 32px;align-items:start}
+.er-sxout>div{display:grid;gap:10px;min-width:0;align-content:start}
+.er-sxbars{display:grid;gap:7px}
+.er-sxbar{display:grid;grid-template-columns:minmax(0,7.2rem) minmax(0,1fr) 3.4em 3.8em;gap:10px;align-items:center;font-size:var(--cds-font-size-caption);font-variant-numeric:tabular-nums;color:var(--color-fg-muted)}
+.er-sxbar.on>span:first-child{color:var(--color-fg);font-weight:var(--cds-font-weight-medium)}
+.er-sxbar b{color:var(--color-fg);font-weight:var(--cds-font-weight-medium);text-align:right}
+.er-sxbar>span:last-child{text-align:right}
+.er-sxtrack{background:var(--er-track);border-radius:0 4px 4px 0;min-width:0}
+.er-sxtrack i{display:block;height:8px;min-width:1px;border-radius:0 4px 4px 0;background:var(--er-ai)}
+.er-sxbar.ok .er-sxtrack i{background:var(--er-you)}
+.er-sw.ball.ring{background:transparent;box-shadow:inset 0 0 0 2px var(--er-ai),0 0 0 3px var(--er-court)}
+.er-sxgroups{list-style:none;margin:0;padding:0;display:grid}
+.er-sxgroups>li{display:grid;grid-template-columns:1.5em minmax(0,1fr) auto;gap:6px 12px;align-items:start;padding:13px 0;border-top:1px solid var(--er-line)}
+.er-sxgroups>li>div{display:grid;gap:4px;min-width:0}
+.er-sxgroups>li>div:last-child{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
+.er-sxrank{font-variant-numeric:tabular-nums;color:var(--color-fg-muted)}
+.er-sxgroups p{margin:0}
+.er-sxlist tbody tr{cursor:pointer}
+.er-sxlist tbody tr:hover th,.er-sxlist tbody tr:hover td{background:var(--er-you-wash)}
+.er-t.er-sxlist th,.er-t.er-sxlist td{text-align:left}
+.er-t.er-sxlist th:last-child,.er-t.er-sxlist td:last-child{text-align:right}
+.er-sxlist tbody th:first-child{white-space:nowrap}
+.er-sxlist tbody th span{display:block}
+.er-sxopen{display:inline-flex;gap:8px;align-items:center}
+.er-sxmap svg circle{cursor:pointer}
 .er-rpoint{display:grid;gap:8px;padding-top:12px;border-top:1px solid var(--er-line)}
 .er-rlong{display:grid;gap:6px;font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
 .er-rstage .er-tab{padding-inline:9px}
@@ -383,7 +412,9 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
   .er-board{grid-template-columns:minmax(0,1fr)}
   .er-panel{border-left:0;border-top:1px solid var(--er-line)}
   .er-panel:first-child{border-top:0}
-  .er-grid,.er-finds,.er-mgrid,.er-pitem,.er-plan.keep{grid-template-columns:minmax(0,1fr)}
+  .er-grid,.er-finds,.er-mgrid,.er-pitem,.er-plan.keep,.er-sxout{grid-template-columns:minmax(0,1fr)}
+  .er-sxgroups>li{grid-template-columns:1.5em minmax(0,1fr)}
+  .er-sxgroups>li>div:last-child{grid-column:2;justify-content:flex-start}
   .er-match{grid-template-columns:minmax(0,1fr)}
 }
 @container (max-width:540px){
@@ -409,7 +440,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
 <nav class="er-nav" id="section-menu" aria-label="Sections">
   <button class="er-navbtn" type="button" id="section-toggle" aria-expanded="false" aria-controls="section-list">
     <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 3.5h10M2 7h10M2 10.5h6.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-    <span class="er-navnow"><span data-now="summary">Overview</span><span data-now="session" hidden>Session report</span><span data-now="plan" hidden>Training plan</span><span data-now="match" hidden>Match explorer</span><span data-now="pick" hidden>Matches you pick</span><span data-now="progress" hidden>Progress by day</span><span data-now="findings" hidden>What decides points</span><span data-now="serve" hidden>Serves and returns</span><span data-now="by-level" hidden>By AI level</span><span data-now="notes" hidden>How it's worked out</span></span>
+    <span class="er-navnow"><span data-now="summary">Overview</span><span data-now="session" hidden>Session report</span><span data-now="plan" hidden>Training plan</span><span data-now="match" hidden>Match explorer</span><span data-now="shots" hidden>Shot explorer</span><span data-now="pick" hidden>Matches you pick</span><span data-now="progress" hidden>Progress by day</span><span data-now="findings" hidden>What decides points</span><span data-now="serve" hidden>Serves and returns</span><span data-now="by-level" hidden>By AI level</span><span data-now="notes" hidden>How it's worked out</span></span>
     <svg class="er-navchev" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </button>
   <ol id="section-list">
@@ -425,6 +456,11 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
       </ol></li>
     <li><a href="#plan">Training plan</a></li>
     <li class="er-navgroup">All-time analysis</li>
+    <li><a href="#shots">Shot explorer</a>
+      <ol>
+        <li><a href="#shots-groups">Where misses pile up</a></li>
+        <li><a href="#shots-find">Find shots</a></li>
+      </ol></li>
     <li><a href="#pick">Matches you pick</a></li>
     <li><a href="#progress">Progress by day</a></li>
     <li><a href="#findings">What decides points</a></li>
@@ -601,6 +637,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
           <button class="er-btn" type="button" id="replay-prev">← Previous point</button>
           <button class="er-btn" type="button" id="replay-next">Next point →</button>
         </div>
+        <div class="er-rbar"><button class="er-btn" type="button" id="replay-back" hidden>← Back to the shot explorer</button></div>
         <div class="er-rbar"><span class="er-ctl" id="replay-view-label">View</span><div class="er-tabs" id="replay-view" role="group" aria-labelledby="replay-view-label"><button class="er-tab" type="button" data-view="2d" aria-pressed="true">2D</button><button class="er-tab" type="button" data-view="3d" aria-pressed="false">3D</button></div><button class="er-btn" type="button" id="replay-last" hidden>Deciding shot</button><button class="er-btn er-tog" type="button" id="replay-call" aria-pressed="false" hidden>Landing call</button></div>
         <div class="er-rbar"><span class="er-ctl" id="replay-rate-label">Speed</span><div class="er-tabs" id="replay-rate" role="group" aria-labelledby="replay-rate-label"><button class="er-tab" type="button" data-rate="1" aria-pressed="true">Full</button><button class="er-tab" type="button" data-rate="0.5" aria-pressed="false">Half</button><button class="er-tab" type="button" data-rate="0.25" aria-pressed="false">Quarter</button></div></div>
         <div class="er-legend court"><span><i class="er-sw ball"></i>Your shots</span><span><i class="er-sw ball ai"></i>Opponent's shots</span><span><i class="er-sw rx"></i>Shot that missed</span></div>
@@ -653,6 +690,50 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
   <ol class="er-plan" id="plan-items" data-draw="plan-items" data-source="plan"></ol>
   <div class="er-keephead"><h3>Already working</h3><p class="er-muted">At or close to the level of the matches you won. Nothing to drill here; keep doing it.</p></div>
   <ul class="er-plan keep" id="plan-keep" data-draw="plan-keep" data-source="plan"></ul>
+</section>
+
+<section class="er-section" id="shots">
+  <div class="er-sechead">
+    <div><h2>Shot explorer</h2><p class="er-muted">Every shot you played and every ball you did not reach, by the ball that came at you. Start from a kind of ball that costs you points, or set the filters yourself. Each shot opens its point in the replay.</p></div>
+  </div>
+  <div class="er-card" id="shots-groups">
+    <h3>Where your misses pile up</h3>
+    <p class="er-muted" data-draw="sx-groups-note" data-source="shot_groups"></p>
+    <div class="er-rbar"><span class="er-ctl" id="sx-scope-label">Matches</span><div class="er-tabs" id="sx-scope" role="group" aria-labelledby="sx-scope-label"><button class="er-tab" type="button" data-scope="recent" aria-pressed="true">Recent sessions</button><button class="er-tab" type="button" data-scope="all" aria-pressed="false">All at this level</button></div></div>
+    <ol class="er-sxgroups" data-draw="sx-groups" data-source="shot_groups"></ol>
+    <p class="er-muted">A kind of ball is listed when you had 30 or more of it and missed or did not reach it more often than your usual for returns of serve, or for rally shots. The order is by the points a match it costs you beyond that usual rate.</p>
+  </div>
+  <div class="er-card" id="shots-find">
+    <h3>Find shots</h3>
+    <div class="er-sxfilters">
+      <div><label for="sx-role">Kind of shot</label><select class="dash-select" id="sx-role" data-draw="sx-filter" data-f="role"></select></div>
+      <div><label for="sx-shot">Your stroke</label><select class="dash-select" id="sx-shot" data-draw="sx-filter" data-f="shot"></select></div>
+      <div><label for="sx-out">Result</label><select class="dash-select" id="sx-out" data-draw="sx-filter" data-f="out"></select></div>
+      <div><label for="sx-spin">Spin on the ball</label><select class="dash-select" id="sx-spin" data-draw="sx-filter" data-f="spin"></select></div>
+      <div><label for="sx-side">Side it came to</label><select class="dash-select" id="sx-side" data-draw="sx-filter" data-f="side"></select></div>
+      <div><label for="sx-depth">Depth</label><select class="dash-select" id="sx-depth" data-draw="sx-filter" data-f="depth"></select></div>
+      <div><label for="sx-pace">Speed of the ball</label><select class="dash-select" id="sx-pace" data-draw="sx-filter" data-f="pace"></select></div>
+      <div><label for="sx-level">Opponent</label><select class="dash-select" id="sx-level" data-draw="sx-filter" data-f="level"></select></div>
+      <div><label for="sx-period">Sessions</label><select class="dash-select" id="sx-period" data-draw="sx-filter" data-f="period"></select></div>
+      <div><label for="sx-moment">Score</label><select class="dash-select" id="sx-moment" data-draw="sx-filter" data-f="moment"></select></div>
+      <div><label for="sx-rally">Length of the point</label><select class="dash-select" id="sx-rally" data-draw="sx-filter" data-f="rally"></select></div>
+    </div>
+    <div class="er-rbar"><button class="er-btn" type="button" id="sx-clear">Clear the filters</button></div>
+    <div class="er-sxout">
+      <div>
+        <p class="er-pstat" data-draw="sx-summary" data-source="shots" role="status"></p>
+        <div class="er-sxbars" data-draw="sx-bars" data-source="shots"></div>
+        <p class="er-muted">The bars count every shot the other filters pick, whatever Result is set to.</p>
+      </div>
+      <div class="er-sxmap">
+        <div class="er-legend court"><span><i class="er-sw ball"></i>Landed</span><span><i class="er-sw ball ai"></i>Missed</span><span><i class="er-sw ball ring"></i>Not reached</span></div>
+        <div class="er-chart" data-draw="sx-map" data-source="shots"></div>
+        <p class="er-muted">Your half of the table from above: where each ball bounced before it reached you. The latest 400 are drawn.</p>
+      </div>
+    </div>
+    <div class="er-tablewrap" id="sx-list-wrap"><table class="er-t er-sxlist"><thead><tr><th>Point</th><th>Shot</th><th>Came at you</th><th>You played</th><th>Result</th><th>Open</th></tr></thead><tbody data-draw="sx-list" data-source="shots"></tbody></table></div>
+    <div class="er-rbar"><button class="er-btn" type="button" id="sx-more" hidden>Show more</button><span class="er-muted" data-draw="sx-count" data-source="shots"></span></div>
+  </div>
 </section>
 
 <section class="er-section" id="pick">
@@ -838,6 +919,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
     <li>In Serves and returns, depth is where the serve first bounces on the receiver's half: short is within 50 cm of the net, half-long is 50 cm to 1 m from it, long is the last 37 cm. A serve has topspin or backspin when it carries more than 20 r/s of it, otherwise little spin. A point is won by the return when the AI does not reach it or misses its next shot; it is lost to the AI's next shot when you do not reach that shot or miss it. The same goes for your serve and third ball. Rows and serve types with fewer than 30 serves are left out, and the written notes use only groups of 50 or more.</li>
     <li>The point replay moves the ball in straight lines between the contacts the game logged, at the logged times, so a ball that curved with sidespin is drawn straight. The ball is drawn larger the higher it is; its height between contacts is worked out from the contact heights and gravity. When the log stops with the ball in the air, the last stretch carries on the way the ball was going for 0.4 seconds. The 3D view curves each flight instead: the log gives the ball's velocity just after every hit and as it arrives at every contact, and the curve is the smooth path that leaves and arrives with those. Where the two can be compared, on a shot from bat to table, this path and a simpler one sit about 2 cm apart at mid-flight. The log has nothing between contacts, no bats and no players, and the spin shown is the spin as the ball left the bat.</li>
     <li>The landing call measures from where the log says the ball met the table to the nearest edge of that half. A ball that missed the table is measured where its drawn flight comes down to the height of the table, and the height over the net is read off the drawn flight where it crosses the net, so those two are estimates, good to a few centimetres.</li>
+    <li>The shot explorer lists every shot you hit, and every ball that landed on your half and you never touched. The ball that came at you is described by the shot before yours: its spin as it left the bat (topspin or backspin above 20 r/s, otherwise little spin), fast when it left the bat at 10 m/s or more, its side by where it bounced on your half (the middle is the 50 cm down the centre of the table; a ball that did not bounce is placed where you met it), and its depth as for serves. A miss is into the net when the ball never got over it, long when the line of the shot passes the end of the table between its sides, and wide otherwise. Where your misses pile up is worked out for the level of the training plan.</li>
     <li>Videos are the headset recording of a session, uploaded whole to YouTube as unlisted: only someone with the link can open one. A recording is lined up with the log by sound, sliding the log's contact times along the soundtrack until they sit on the clicks of the ball. A point's link starts two seconds before its toss. Sessions that were not recorded have no links.</li>
     <li>The highlight reel is cut from the same recording by code, from the log alone. Each point scores two for every shot in the rally, one for every m/s over 10 on your winning shot, and extra for a point won at game point, late in a close game, or to win a match. Points you won need three shots or more; up to two rallies of six shots or more that you lost go in too. The best-scoring points are taken until the reel is about 90 seconds long, then shown in the order they were played, one rally fading into the next.</li>
     <li>The metrics use 11hero.com's definitions. They were checked against 11hero on a real online match, with both players read from the game's log: every hit came out the same (speed, spin, shot type, whether it landed and whether it won the point), and so did 37 of the 42 numbers on its page. The other five are the shares of points won by each kind of shot, which move a little because 11hero counts one more, empty point at the end of the match.</li>
@@ -4015,10 +4097,14 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     });
     mark();
   };
-  // Put a point on the table and play it. The page moves only if the court is not already on screen.
-  const show = (key) => {
+  // Put a point on the table and play it. The page moves only if the court is not already on screen. With n, the
+  // point starts just before the shot that led to its shot n; back says whether the way back to the shot explorer shows.
+  const show = (key, n, back) => {
     if (!track(key)) return;
     load(key, !calm());
+    const lead = n > 1 ? st.hits[n - 2] : null;
+    if (lead) st.t = calm() ? st.end : Math.max(0, lead.t - 0.15);
+    if (back != null && $('replay-back')) $('replay-back').hidden = !back;
     redraw();
     const court = $('chart-replay');
     if (court) court.scrollIntoView({behavior: calm() ? 'auto' : 'smooth', block: 'nearest'});
@@ -4190,6 +4276,11 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     whole();
     play();
   });
+  on('replay-back', 'click', () => {
+    $('replay-back').hidden = true;
+    const list = $('sx-list-wrap');
+    if (list) list.scrollIntoView({behavior: calm() ? 'auto' : 'smooth', block: 'center'});
+  });
   on('replay-prev', 'click', () => step(-1));
   on('replay-next', 'click', () => step(1));
   on('replay-seek', 'input', (ev) => {
@@ -4253,6 +4344,302 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     st.rate = +b.dataset.rate;
     document.querySelectorAll('#replay-rate [data-rate]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
   });
+})();
+</script>
+
+<script>
+// Shot explorer. A row of `shots` is one match: every shot you hit and every ball you did not reach (shot X), each as
+// at,n,role,shot,ok,miss,speed,top,win,cx,cy,inShot,inSpeed,inTop,bx,bz,since,rise,cls and joined by ';' (see the
+// dataset's note). The filters, the length of the list and the period of the groups are this section's own state, not
+// dashboard settings: its drawings read them, and a change redraws this section only.
+(() => {
+  const ER = window.ER;
+  const PAGE = 25, DOTS = 400;
+  const HALL = 'color-mix(in oklab, var(--er-court) 30%, #0b111c)';
+  const NONE = {role: '', shot: '', out: '', spin: '', side: '', depth: '', pace: '', level: '', period: '', moment: '', rally: ''};
+  const f = Object.assign({}, NONE);
+  const st = {limit: PAGE, scope: 'recent'};
+  const SRC = ['shots', 'matches', 'points', 'sessions', 'plan'];
+  const $ = (id) => document.getElementById(id);
+  const calm = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const STROKE = {S: ER.k('Serve'), D: ER.k('Drive'), L: ER.k('Slow loop'), F: ER.k('Fast loop'), P: ER.k('Push'), C: ER.k('Chop')};
+  const OPTS = {
+    role: [['', ER.k('Any kind')], ['S', ER.k('Serves')], ['R', ER.k('Returns of serve')], ['A', ER.k('Rally shots')]],
+    shot: [['', ER.k('Any stroke')], ['D', ER.k('Drive')], ['L', ER.k('Slow loop')], ['F', ER.k('Fast loop')], ['P', ER.k('Push')], ['C', ER.k('Chop')]],
+    out: [['', ER.k('Any result')], ['ok', ER.k('Landed')], ['fail', ER.k('Missed or not reached')], ['n', ER.k('Into the net')],
+      ['l', ER.k('Long')], ['w', ER.k('Wide')], ['x', ER.k('Not reached')]],
+    spin: [['', ER.k('Any spin')], ['t', ER.k('Topspin')], ['n', ER.k('Little spin')], ['b', ER.k('Backspin')]],
+    side: [['', ER.k('Any side')], ['B', ER.k('Backhand side')], ['M', ER.k('Middle')], ['F', ER.k('Forehand side')]],
+    depth: [['', ER.k('Any depth')], ['s', ER.k('Short')], ['h', ER.k('Half-long')], ['l', ER.k('Long ball')]],
+    pace: [['', ER.k('Any speed')], ['f', ER.k('Fast, 10 m/s or more')], ['s', ER.k('Slower')]],
+    moment: [['', ER.k('Any score')], ['tight', ER.k('Game point or deuce')]],
+    rally: [['', ER.k('Any length')], ['long', ER.k('5 shots or more')]],
+  };
+  const KINDS = [['ok', ER.k('Landed')], ['n', ER.k('Into the net')], ['l', ER.k('Long')], ['w', ER.k('Wide')], ['x', ER.k('Not reached')],
+    ['o', ER.k('Other misses')]];
+  const RESULT = {n: ER.k('Into the net'), l: ER.k('Long'), w: ER.k('Wide'), x: ER.k('Not reached')};
+
+  // Every record, newest first, joined to its match and its point.
+  let memo = null;
+  const data = () => {
+    const rows = ER.rows('shots'), ms = ER.rows('matches'), ps = ER.rows('points'), ss = ER.rows('sessions'), plan = ER.rows('plan');
+    if (!rows || !ms || !ps || !ss || !plan) return null;
+    if (memo && memo.rows === rows && memo.ms === ms && memo.ps === ps && memo.ss === ss && memo.plan === plan) return memo;
+    const mBy = new Map(ms.map((m) => [m.key, m])), pBy = new Map(ps.map((r) => [r.key, r]));
+    const recs = [];
+    rows.forEach((row) => {
+      const m = mBy.get(row.key);
+      if (!m || !row.s) return;
+      row.s.split(';').forEach((one) => {
+        const a = one.split(','), at = a[0].split('.');
+        const pt = pBy.get(`${row.key}|${at[0]}|${at[1]}`);
+        if (!pt) return;
+        const num = (i, k) => (a[i] == null || a[i] === '' ? null : +a[i] / k);
+        recs.push({m, pt, n: +a[1], role: a[2], shot: a[3], ok: a[4] === '1', miss: a[5], speed: num(6, 10), win: a[8] === '1',
+          inShot: a[11] || '', inSpeed: num(12, 10), inTop: num(13, 1), bx: num(14, 100), bz: num(15, 100), cls: a[18] || '----'});
+      });
+    });
+    recs.reverse();
+    memo = {rows, ms, ps, ss, plan, recs, online: ms.some((m) => m.vs !== 'AI'),
+      levels: [...new Set(ms.filter((m) => m.vs === 'AI').map((m) => m.level))].sort((a, b) => a - b),
+      recentFrom: plan.length ? plan[0].recentFrom : null, last: ss.length ? ss[ss.length - 1].key : null};
+    return memo;
+  };
+  const outOk = (r, o) => !o || (o === 'ok' ? r.ok : o === 'fail' ? !r.ok : r.miss === o);
+  // every filter but Result
+  const pass = (d, r, q) =>
+    (!q.role || r.role === q.role) && (!q.shot || r.shot === q.shot) && (!q.spin || r.cls[0] === q.spin) && (!q.side || r.cls[1] === q.side)
+    && (!q.depth || r.cls[2] === q.depth) && (!q.pace || r.cls[3] === q.pace)
+    && (!q.level || (q.level === 'online' ? r.m.vs !== 'AI' : r.m.vs === 'AI' && String(r.m.level) === q.level))
+    && (!q.period || (q.period === 'last' ? r.m.session === d.last : d.recentFrom != null && r.m.date >= d.recentFrom))
+    && (!q.moment || Math.max(r.pt.youBefore, r.pt.aiBefore) >= 10) && (!q.rally || r.pt.hits >= 5);
+  // What the filters pick: base is everything but Result (the bars), list is base with Result (the map and the list),
+  // ref is the same kind of shot over the same matches with nothing else set (your usual).
+  let was = null;
+  const chosen = () => {
+    const d = data();
+    if (!d) return null;
+    const key = JSON.stringify(f);
+    if (was && was.d === d && was.key === key) return was;
+    const base = d.recs.filter((r) => pass(d, r, f));
+    const list = f.out ? base.filter((r) => outOk(r, f.out)) : base;
+    let ref = null;
+    if ((f.shot || f.spin || f.side || f.depth || f.pace || f.moment || f.rally) && base.length) {
+      const roles = new Set(base.map((r) => r.role));
+      const q = Object.assign({}, NONE, {level: f.level, period: f.period});
+      const all = d.recs.filter((r) => roles.has(r.role) && pass(d, r, q));
+      ref = {n: all.length, ok: all.filter((r) => r.ok).length};
+    }
+    was = {d, key, base, list, ref};
+    return was;
+  };
+  const rate = (a, b) => ER.F.pct(Math.round(1000 * a / b) / 10);
+
+  const draws = {};
+  const redraw = (names) => names.forEach((n) => document.querySelectorAll(`[data-draw="${n}"]`).forEach((el) => draws[n](el)));
+  const OUT = ['sx-summary', 'sx-bars', 'sx-map', 'sx-list', 'sx-count'];
+
+  // The filters. Each select is drawn once for a language, then only told what is chosen.
+  const options = (k, d) => {
+    if (k === 'level') {
+      return [['', ER.tr('Any opponent')], ...d.levels.map((l) => [String(l), ER.tr('AI level {0}', l)]),
+        ...(d.online ? [['online', ER.tr('Online matches')]] : [])];
+    }
+    if (k === 'period') {
+      return [['', ER.tr('All sessions')], ...(d.recentFrom ? [['recent', ER.tr('From {0} on', ER.F.date(d.recentFrom))]] : []),
+        ['last', ER.tr('Last session')]];
+    }
+    return OPTS[k].map(([v, label]) => [v, ER.tr(label)]);
+  };
+  draws['sx-filter'] = (sel) => {
+    const d = data(), k = sel.dataset.f;
+    if (!d || !(k in f)) return sel.replaceChildren();
+    if (!ER.same(sel, [ER.lang(), d])) sel.replaceChildren(...options(k, d).map(([v, text]) => new Option(text, v)));
+    sel.value = f[k];
+    sel.onchange = () => {
+      f[k] = sel.value;
+      st.limit = PAGE;
+      redraw(OUT);
+    };
+  };
+
+  draws['sx-summary'] = (el) => {
+    const s = chosen();
+    if (!s) return ER.wait(el, SRC);
+    const n = s.base.length;
+    if (!n) return el.replaceChildren(ER.tr('No shots match these filters.'));
+    const b = (t) => ER.el('b', null, t);
+    const ok = s.base.filter((r) => r.ok).length;
+    const out = ER.trn('{0} shots, counting the balls you did not reach: {1} landed.', b(ER.F.int(n)), b(rate(ok, n)));
+    if (s.ref && s.ref.n) out.push(' ', ...ER.trn('Your usual for the same kind of shot over the same matches is {0}.', b(rate(s.ref.ok, s.ref.n))));
+    el.replaceChildren(...out);
+  };
+
+  draws['sx-bars'] = (el) => {
+    const s = chosen();
+    if (!s || !s.base.length) return el.replaceChildren();
+    const n = s.base.length, c = {ok: 0, n: 0, l: 0, w: 0, x: 0, o: 0};
+    s.base.forEach((r) => {
+      c[r.ok ? 'ok' : r.miss in c ? r.miss : 'o'] += 1;
+    });
+    const on = (k) => !!f.out && (f.out === 'fail' ? k !== 'ok' : f.out === k);
+    el.replaceChildren(...KINDS.filter(([k]) => k !== 'o' || c.o).map(([k, label]) => {
+      const row = ER.el('div', 'er-sxbar' + (k === 'ok' ? ' ok' : '') + (on(k) ? ' on' : ''));
+      const track = ER.el('div', 'er-sxtrack'), fill = ER.el('i');
+      fill.style.width = (100 * c[k] / n).toFixed(1) + '%';
+      track.appendChild(fill);
+      row.append(ER.el('span', null, ER.tr(label)), track, ER.el('b', null, ER.F.int(c[k])), ER.el('span', null, rate(c[k], n)));
+      return row;
+    }));
+  };
+
+  const spin = (t) => (Math.abs(t) < 1 ? ER.tr('no spin') : ER.tr(t > 0 ? '{0} top' : '{0} back', Math.abs(t)));
+  const came = (r) => (r.inShot ? `${ER.tr(STROKE[r.inShot] || r.inShot)} · ${ER.fmt1(r.inSpeed)} m/s · ${spin(r.inTop)}` : '—');
+  const played = (r) => (r.shot === 'X' ? '—' : `${ER.tr(STROKE[r.shot] || r.shot)} · ${ER.fmt1(r.speed)} m/s`);
+  const result = (r) => (r.ok ? ER.tr(r.win ? 'Winner' : 'Landed') : ER.tr(RESULT[r.miss] || ER.k('Missed')));
+  const where = (r) => `${ER.F.date(r.m.date)} · ${r.m.vs === 'AI' ? ER.tr('level {0}', r.m.level) : ER.tr('online')}`;
+  const point = (r) => ER.tr('Game {0}, point {1} · {2}–{3} before', r.pt.game, r.pt.point, r.pt.youBefore, r.pt.aiBefore);
+  // Put the shot's point on the table in the match explorer, from the shot that led to it.
+  const open = (r) => {
+    const go = () => ER.replay && ER.replay.show(r.pt.key, r.n, true);
+    if (ER.matchKey() === r.m.key) return go();
+    ER.set({match: r.m.key}, null, {after: go});
+  };
+
+  // Your half of the table from above, with the bounce of each ball that came at you.
+  draws['sx-map'] = (el) => {
+    const s = chosen();
+    if (!s) return ER.wait(el, SRC);
+    const cw = el.clientWidth;      // before emptying: see ER.tableFrame
+    el.replaceChildren();
+    const W = Math.max(220, Math.min(320, cw || 300));
+    const X = 0.95, Z0 = 0.14, Z1 = -1.56;     // metres across, and from just past the net back to behind your end
+    const H = Math.round(W * (Z0 - Z1) / (2 * X));
+    const sx = (x) => (x + X) / (2 * X) * W, sy = (z) => (Z0 - z) / (Z0 - Z1) * H;
+    const svg = ER.svg(el, W, H, ER.tr('Your half of the table seen from above, with a mark where each ball bounced before it reached you: white for shots you landed, orange for shots you missed and an orange ring for balls you did not reach'));
+    svg.append('rect').attr('width', W).attr('height', H).attr('rx', 4).style('fill', HALL);
+    svg.append('rect').attr('x', sx(-0.7625)).attr('y', sy(0)).attr('width', sx(0.7625) - sx(-0.7625)).attr('height', sy(-1.37) - sy(0))
+      .style('fill', 'var(--er-court)').style('stroke', '#fff').style('stroke-width', 2);
+    svg.append('line').attr('x1', sx(0)).attr('x2', sx(0)).attr('y1', sy(0)).attr('y2', sy(-1.37)).style('stroke', '#fff').style('stroke-opacity', 0.45);
+    const label = (y, t) => svg.append('text').attr('x', 8).attr('y', y).style('fill', '#fff').style('fill-opacity', 0.75)
+      .style('font-size', '11px').style('letter-spacing', '.08em').text(t);
+    label(sy(0) - 6, ER.tr('Net').toUpperCase());
+    label(H - 8, ER.tr('You').toUpperCase());
+    const dots = s.list.filter((r) => r.bx != null && r.bz != null).slice(0, DOTS).reverse();
+    const tip = ER.tip(el);
+    svg.append('g').selectAll('circle').data(dots).join('circle')
+      .attr('cx', (r) => sx(Math.max(-0.9, Math.min(0.9, r.bx)))).attr('cy', (r) => sy(Math.max(-1.5, Math.min(0.08, r.bz))))
+      .attr('r', 4.5)
+      .style('fill', (r) => (r.ok ? '#fff' : r.miss === 'x' ? 'var(--er-court)' : ER.AI))
+      .style('stroke', (r) => (r.miss === 'x' ? ER.AI : 'var(--er-court)')).style('stroke-width', (r) => (r.miss === 'x' ? 2 : 1.5))
+      .attr('data-source', 'points').attr('data-field', 'ending').attr('data-where', (r) => ER.where(r.pt.key))
+      .on('click', (evt, r) => open(r))
+      .on('pointermove pointerdown', (evt, r) => tip.show(evt, [`${where(r)} · ${point(r)}`, came(r), `${played(r)} · ${result(r)}`]))
+      .on('pointerleave', () => tip.hide());
+    svg.append('line').attr('x1', sx(-0.915)).attr('x2', sx(0.915)).attr('y1', sy(0)).attr('y2', sy(0))
+      .style('stroke', '#fff').style('stroke-width', 3).style('stroke-linecap', 'round');
+  };
+
+  draws['sx-list'] = (tb) => {
+    const s = chosen();
+    if (!s) return ER.wait(tb, SRC);
+    tb.replaceChildren(...s.list.slice(0, st.limit).map((r) => {
+      const tr = ER.el('tr'), th = ER.el('th');
+      th.append(ER.el('span', null, where(r)), ER.el('span', 'er-muted', point(r)));
+      const kind = r.role === 'S' ? ER.tr('Serve') : r.role === 'R' ? ER.tr('Return of serve') : ER.tr('Rally, shot {0}', r.n);
+      const last = ER.el('td'), acts = ER.el('div', 'er-sxopen');
+      const b = ER.el('button', 'er-btn', ER.tr('Replay'));
+      b.type = 'button';
+      last.appendChild(acts);
+      acts.appendChild(b);
+      if (r.pt.video) acts.appendChild(ER.watch(ER.tr('Video'), r.pt.video, r.pt.videoT, 'points', 'videoT', r.pt.key));
+      tr.append(th, ER.el('td', null, kind), ER.el('td', null, came(r)), ER.el('td', null, played(r)),
+        ER.el('td', r.ok ? null : 'er-strongcell', result(r)), last);
+      tr.addEventListener('click', (ev) => {
+        if (ev.target.closest && ev.target.closest('a')) return;      // the video link opens on its own
+        open(r);
+      });
+      return tr;
+    }));
+  };
+
+  draws['sx-count'] = (el) => {
+    const s = chosen(), more = $('sx-more');
+    const n = s ? s.list.length : 0;
+    if (more) more.hidden = n <= st.limit;
+    el.replaceChildren(...(n ? [ER.tr('Showing {0} of {1}, newest first.', ER.F.int(Math.min(n, st.limit)), ER.F.int(n))] : []));
+  };
+
+  // Where your misses pile up: the builder's groups for the period chosen. A button sets the filters to the group.
+  const apply = (g, out) => {
+    Object.assign(f, NONE, {role: g.role, spin: g.spin, side: g.side, depth: g.depth || '', pace: g.pace || '', out,
+      level: String(g.level), period: g.scope === 'recent' ? 'recent' : ''});
+    st.limit = PAGE;
+    redraw(['sx-filter', ...OUT]);
+    const card = $('shots-find');
+    if (card) card.scrollIntoView({behavior: calm() ? 'auto' : 'smooth', block: 'start'});
+  };
+  const groups = () => {
+    const rows = ER.rows('shot_groups');
+    return rows ? rows.filter((r) => r.scope === st.scope).sort((a, b) => a.rank - b.rank) : null;
+  };
+  draws['sx-groups-note'] = (el) => {
+    const gs = groups();
+    if (!gs || !gs.length) return el.replaceChildren();
+    const g = gs[0];
+    el.replaceChildren(g.scope === 'recent'
+      ? ER.tr('Level {0}: your {1} matches from {2} on.', g.level, ER.F.int(g.matches), ER.F.date(g.from))
+      : ER.tr('Level {0}: all {1} of your matches.', g.level, ER.F.int(g.matches)));
+  };
+  draws['sx-groups'] = (el) => {
+    const gs = groups();
+    if (!gs) return ER.wait(el, ['shot_groups']);
+    if (!gs.length) {
+      return el.replaceChildren(ER.el('li', 'er-muted', ER.tr('No kind of ball stands out here: none has 30 balls and more misses than usual.')));
+    }
+    el.replaceChildren(...gs.map((g) => {
+      const li = ER.el('li'), body = ER.el('div'), btns = ER.el('div');
+      const b = (t) => ER.el('b', null, t);
+      const line = ER.el('p', 'er-muted');
+      line.append(...ER.trn('{0} of {1} missed or not reached ({2}); your usual is {3}. About {4} points a match beyond usual.',
+        b(ER.F.int(g.failed)), ER.F.int(g.n), b(ER.F.pct(g.rate)), ER.F.pct(g.usual), b(ER.fmt1(g.extra))));
+      const kinds = [[g.net, ER.k('{0} into the net')], [g.long, ER.k('{0} long')], [g.wide, ER.k('{0} wide')], [g.unreached, ER.k('{0} not reached')]]
+        .filter(([v]) => v > 0).map(([v, label]) => ER.tr(label, ER.F.int(v))).join(' · ');
+      body.append(ER.span(ER.tx(g, 'label'), 'shot_groups', 'label', g.key, 'er-strong'), line, ER.el('p', 'er-muted', kinds));
+      [['fail', ER.k('See the misses')], ['ok', ER.k('See the ones you landed')]].forEach(([out, label]) => {
+        const btn = ER.el('button', 'er-btn', ER.tr(label));
+        btn.type = 'button';
+        btn.addEventListener('click', () => apply(g, out));
+        btns.appendChild(btn);
+      });
+      li.append(ER.el('span', 'er-sxrank', String(g.rank)), body, btns);
+      return li;
+    }));
+  };
+
+  Object.keys(draws).forEach((n) => dash.draw(n, draws[n]));
+
+  const on = (id, type, fn) => {
+    const el = $(id);
+    if (el) el.addEventListener(type, fn);
+  };
+  on('sx-clear', 'click', () => {
+    Object.assign(f, NONE);
+    st.limit = PAGE;
+    redraw(['sx-filter', ...OUT]);
+  });
+  on('sx-more', 'click', () => {
+    st.limit += PAGE;
+    redraw(['sx-list', 'sx-count']);
+  });
+  on('sx-scope', 'click', (ev) => {
+    const b = ev.target.closest && ev.target.closest('[data-scope]');
+    if (!b || b.dataset.scope === st.scope) return;
+    st.scope = b.dataset.scope;
+    document.querySelectorAll('#sx-scope [data-scope]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    redraw(['sx-groups-note', 'sx-groups']);
+  });
+  ER.shots = {filters: f, chosen, apply, groups};
 })();
 </script>
 

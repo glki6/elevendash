@@ -70,6 +70,33 @@ class Build(unittest.TestCase):
                     self.assertTrue(e[16] != '' and e[10] != '')
             ts = [int(e[4]) for e in ev]
             self.assertEqual(ts, sorted(ts))
+        # the shot explorer: every shot of yours once, agreeing with the match totals
+        sums = {r['key']: r for r in self.rows('match_sums')}
+        points = {r['key'] for r in self.rows('points')}
+        self.assertTrue(self.rows('shots'))
+        for row in self.rows('shots'):
+            n = {}
+            recs = [s.split(',') for s in row['s'].split(';')]
+            self.assertEqual(row['n'], len(recs))
+            for a in recs:
+                self.assertEqual(len(a), 19, a)
+                self.assertIn(row['key'] + '|' + a[0].replace('.', '|'), points)
+                self.assertIn(a[2], 'SRA')
+                self.assertEqual(a[5] == '', a[4] == '1', a)        # a miss says how, a shot that landed does not
+                self.assertEqual(a[3] == 'X', a[5] == 'x', a)       # a ball you did not reach
+                self.assertEqual(len(a[18]), 0 if a[2] == 'S' else 4, a)
+                if a[3] != 'X':
+                    n[a[2]] = n.get(a[2], 0) + 1
+                    n[a[2] + 'ok'] = n.get(a[2] + 'ok', 0) + int(a[4])
+            t = sums[row['key']]
+            g = lambda k: n.get(k, 0)
+            self.assertEqual([g('S'), g('R'), g('R') + g('A'), g('Sok'), g('Rok'), g('Rok') + g('Aok')],
+                             [t['serves'], t['ret'], t['rally'], t['servesOk'], t['retOk'], t['rallyOk']])
+        for r in self.rows('shot_groups'):
+            self.assertIn(r['scope'], ('recent', 'all'))
+            self.assertTrue(r['n'] >= 30 and r['rate'] > r['usual'] and r['extra'] >= 0, r)
+            self.assertTrue(r['failed'] >= r['net'] + r['long'] + r['wide'] + r['unreached'], r)
+            self.assertTrue(r['label'] and r['label_zh'])
         main = next(r for r in self.rows('findings') if r['key'] == 'main')
         self.assertEqual(main['level'], 100)                    # the level of the latest sessions
         self.assertTrue(0.3 < main['shotSecs'] < 1.5)
