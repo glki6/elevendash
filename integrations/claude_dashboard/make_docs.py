@@ -5,7 +5,7 @@ Usage, from the workspace: python -I <repo>/integrations/claude_dashboard/make_d
 Keep <out-dir> between runs (claude/store): writes.json then says which documents changed and need writing.
 Asset ids come from claude/published.json, kept by refresh.py record after each upload.
 """
-import json, os, sys
+import json, os, re, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(HERE)), 'src'))
@@ -55,6 +55,8 @@ TITLES = {
                     'Your serve, return and rally numbers in matches you won and in matches you lost, per AI level.'),
     'matches': ('Every match',
                 'One row per match: result, game scores and 11hero metrics for you and your opponent.'),
+    'match_sums': ('Match totals',
+                   'One row per match, in the same order as Every match: the counts and sums behind its rates (points, serves, returns, rally shots, how points ended) and behind each 11hero metric for you (you_) and your opponent (ai_), so the page can work out the numbers over any matches picked.'),
     'shot_mix': ('Rally shots by type',
                  'Shots, landing rate, speed, spin and winners by shot type, per match and per AI level.'),
     'serves': ('Every serve',
@@ -78,12 +80,30 @@ BLOBS = {ds: (PUBLISHED[ds]['blob'], t, d) for ds, (t, d) in TITLES.items()}
 writes = []
 
 
+MAX_DOC = 262144      # bytes: the most one store document (and one page file) may hold
+
+
 def body(d):
     return {k: v for k, v in d.items() if k not in ('edit', 'updated')}
 
 
+def split_scripts(page):
+    """The page with each of its scripts moved to a file of its own (page-01.js, ...), which the host loads from the
+    files collection in place of the <script src> tag, so index.html keeps under MAX_DOC. Each runs as before: in order,
+    one at a time, and a fault in one stops only that one."""
+    scripts = {}
+
+    def take(m):
+        name = f'page-{len(scripts) + 1:02d}.js'
+        scripts[name] = m.group(1)
+        return f'<script src="{name}"></script>'
+    return re.sub(r'<script>(.*?)</script>', take, page, flags=re.S), scripts
+
+
 def doc(collection, doc_id, data):
     """Write one store document. `changed` is False when it matches the file left by the previous run, timestamps aside."""
+    size = len(json.dumps(data, ensure_ascii=False).encode())
+    assert size <= MAX_DOC, f'{collection}/{doc_id} is {size} bytes; a store document holds {MAX_DOC} at most'
     path = os.path.join(out, f'{collection.replace("/", "_")}__{doc_id}.json')
     old = json.load(open(path, encoding='utf-8')) if os.path.exists(path) else None
     changed = old is None or body(old) != body(data)
@@ -95,14 +115,24 @@ def doc(collection, doc_id, data):
 doc('dash', 'meta', {'title': 'Eleven vs AI Report'})
 find_rows = json.load(open(os.path.join(ws.build, 'findings.json'), encoding='utf-8'))['rows']
 main = next((r for r in find_rows if r['key'] == 'main'), None)
-doc('dash', 'params', {'level': main['level'] if main else 100, 'match': '', 'session': '', 'theme': 'dark', 'lang': 'en'})
+doc('dash', 'params', {'level': main['level'] if main else 100, 'match': '', 'session': '', 'pick': '', 'theme': 'dark', 'lang': 'en'})
 for ds, (blob, title, desc) in BLOBS.items():
     doc('datasets', ds, {'title': title, 'description': desc + ' Made from the Quest game logs by elevendash (src/elevendash/builddata.py).',
                          'source': {'kind': 'file', 'url': f'/_blob/{blob}', 'name': f'{ds}.json', 'format': 'json'},
                          'updated': upd, 'fixed': True, 'edit': edit})
-doc('files', 'index.html', {'text': html, 'edit': edit})
+page, scripts = split_scripts(html)
+doc('files', 'index.html', {'text': page, 'edit': edit})
+for name, text in scripts.items():
+    doc('files', name, {'text': text, 'edit': edit})
+for fn in sorted(os.listdir(out)):     # script files an earlier, longer page had
+    if fn.startswith('files__page-') and fn.endswith('.js.json') and fn[len('files__'):-len('.json')] not in scripts:
+        writes.append({'op': 'delete', 'collection': 'files', 'doc_id': fn[len('files__'):-len('.json')],
+                       'file_path': os.path.join(out, fn), 'changed': True})
 # The look (colours for light and dark) is the same file the standalone dashboard uses.
 doc('dash', 'look', json.load(open(os.path.join(WEB, 'look.json'), encoding='utf-8')))
 json.dump(writes, open(os.path.join(out, 'writes.json'), 'w'), indent=1)
-print(len(writes), 'docs; page', len(html.encode()) // 1024, 'KB')
-print('changed:', ' '.join(f"{w['collection']}/{w['doc_id']}" for w in writes if w['changed']) or 'none')
+print(len(writes), 'docs; page', len(page.encode()) // 1024, 'KB and', len(scripts), 'script files', sum(len(t.encode()) for t in scripts.values()) // 1024, 'KB')
+print('changed:', ' '.join(f"{w['collection']}/{w['doc_id']}" for w in writes if w['changed'] and w['op'] == 'set') or 'none')
+gone = [f"{w['collection']}/{w['doc_id']}" for w in writes if w['op'] == 'delete']
+if gone:
+    print('delete:', ' '.join(gone), '(then remove their files from', out + ')')

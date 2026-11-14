@@ -131,6 +131,24 @@
 .er-chip:hover{border-color:var(--color-fg-muted)}
 .er-chip[aria-pressed=true],.er-chip.on{border-color:var(--color-fg);box-shadow:inset 0 0 0 1px var(--color-fg)}
 .er-chip:focus-visible{outline:2px solid var(--er-you);outline-offset:2px}
+/* matches you pick: a match not picked is drawn hollow, a session's box is full, part full or empty */
+.er-ptop{display:grid;gap:8px}
+.er-pstat{margin:0;font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);font-variant-numeric:tabular-nums}
+.er-pstat b{color:var(--color-fg);font-weight:var(--cds-font-weight-medium)}
+.er-plist{display:grid;gap:12px;align-content:start;max-height:25rem;overflow-y:auto;scrollbar-width:thin;padding:4px 6px 4px 2px;margin:0 -6px 0 -2px;border-top:1px solid var(--er-line);border-bottom:1px solid var(--er-line)}
+.er-pgroup{display:grid;gap:6px}
+.er-pses{font:inherit;font-size:var(--cds-font-size-caption);font-variant-numeric:tabular-nums;display:flex;align-items:center;flex-wrap:wrap;gap:2px 8px;width:100%;text-align:left;padding:4px 6px;border:0;border-radius:var(--cds-radius);background-color:transparent;color:var(--color-fg);cursor:pointer}
+.er-pses:hover{background-color:var(--er-track)}
+.er-pses:focus-visible{outline:2px solid var(--er-you);outline-offset:1px}
+.er-pses::before{content:"";flex:none;width:12px;height:12px;border-radius:3px;box-shadow:inset 0 0 0 1.5px var(--color-fg-muted);background-color:transparent}
+.er-pses[aria-pressed=true]::before{background-color:var(--er-you);box-shadow:inset 0 0 0 1.5px var(--er-you)}
+.er-pses[aria-pressed=mixed]::before{background:linear-gradient(var(--er-you),var(--er-you)) center/6px 2px no-repeat}
+.er-pses b{font-weight:var(--cds-font-weight-medium)}
+.er-pses span{color:var(--color-fg-muted)}
+.er-plist .er-chips{padding-left:26px}
+.er-plist .er-chip[aria-pressed=false]{background-color:transparent;border-color:var(--er-line);box-shadow:none;color:var(--color-fg-muted)}
+.er-plist .er-chip[aria-pressed=true]{border-color:var(--color-fg-muted);box-shadow:none}
+.er-plist .er-chip[aria-pressed=true]:not(.won){background-color:var(--er-track)}
 .er-cmprows{display:grid;gap:13px;--er-rowlabel:13rem;--er-valw:8.2em;margin-top:6px}
 .er-cmp{position:relative;display:block}
 .er-ref{position:absolute;top:-4px;bottom:-4px;width:2px;margin-left:-1px;border-radius:1px;background:var(--color-fg);box-shadow:0 0 0 1.5px var(--color-panel)}
@@ -360,7 +378,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
 <nav class="er-nav" id="section-menu" aria-label="Sections">
   <button class="er-navbtn" type="button" id="section-toggle" aria-expanded="false" aria-controls="section-list">
     <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 3.5h10M2 7h10M2 10.5h6.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-    <span class="er-navnow"><span data-now="summary">Overview</span><span data-now="session" hidden>Session report</span><span data-now="plan" hidden>Training plan</span><span data-now="match" hidden>Match explorer</span><span data-now="progress" hidden>Progress by day</span><span data-now="findings" hidden>What decides points</span><span data-now="serve" hidden>Serves and returns</span><span data-now="by-level" hidden>By AI level</span><span data-now="notes" hidden>How it's worked out</span></span>
+    <span class="er-navnow"><span data-now="summary">Overview</span><span data-now="session" hidden>Session report</span><span data-now="plan" hidden>Training plan</span><span data-now="match" hidden>Match explorer</span><span data-now="pick" hidden>Matches you pick</span><span data-now="progress" hidden>Progress by day</span><span data-now="findings" hidden>What decides points</span><span data-now="serve" hidden>Serves and returns</span><span data-now="by-level" hidden>By AI level</span><span data-now="notes" hidden>How it's worked out</span></span>
     <svg class="er-navchev" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </button>
   <ol id="section-list">
@@ -376,6 +394,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
       </ol></li>
     <li><a href="#plan">Training plan</a></li>
     <li class="er-navgroup">All-time analysis</li>
+    <li><a href="#pick">Matches you pick</a></li>
     <li><a href="#progress">Progress by day</a></li>
     <li><a href="#findings">What decides points</a></li>
     <li><a href="#serve">Serves and returns</a>
@@ -576,6 +595,44 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
   <ol class="er-plan" id="plan-items" data-draw="plan-items" data-source="plan"></ol>
   <div class="er-keephead"><h3>Already working</h3><p class="er-muted">At or close to the level of the matches you won. Nothing to drill here; keep doing it.</p></div>
   <ul class="er-plan keep" id="plan-keep" data-draw="plan-keep" data-source="plan"></ul>
+</section>
+
+<section class="er-section" id="pick">
+  <div class="er-sechead">
+    <div><h2>Matches you pick</h2><p class="er-muted">Your numbers over any of your AI matches: whole sessions, single matches or a mix. Each bar's tick is your other AI matches at the same levels, so you can see what was different about the ones you picked.</p></div>
+  </div>
+  <div class="er-grid">
+    <div class="er-card" id="pick-choose">
+      <div class="er-ptop">
+        <div class="er-tabs" id="pick-quick" role="group" aria-label="Quick picks" data-draw="pick-quick" data-source="matches"></div>
+        <p class="er-pstat" data-draw="pick-now" data-source="matches" role="status"></p>
+      </div>
+      <div class="er-plist" id="pick-list" data-draw="pick-list" data-source="matches"></div>
+      <p class="er-muted" id="pick-hint">Click a session to pick or drop all its matches, or a match to pick or drop just that one.</p>
+    </div>
+    <div class="er-card" id="pick-sum">
+      <div class="er-label" data-draw="pick-label" data-source="matches"></div>
+      <div class="er-shead">
+        <div class="er-score" data-draw="pick-score" data-source="matches"></div>
+        <div class="er-rows" data-draw="pick-meters" data-source="matches"></div>
+      </div>
+      <h3>Against your other matches</h3>
+      <p class="er-muted" data-draw="pick-base" data-source="matches"></p>
+      <div class="er-legend"><span><i class="er-sw"></i>Matches picked</span><span><i class="er-sw ref"></i>Your other matches</span></div>
+      <div class="er-cmprows" data-draw="pick-compare" data-source="match_sums" data-fetchpriority="low"></div>
+      <h3>How the points ended</h3>
+      <div class="er-cmprows" data-draw="pick-ends" data-source="match_sums" data-fetchpriority="low"></div>
+      <p class="er-muted" data-draw="pick-more" data-source="match_sums"></p>
+      <p class="er-muted">The last column is the gap in percentage points. It is coloured when the gap is bigger than chance gives about one time in ten with this many points.</p>
+    </div>
+  </div>
+  <div class="er-card" id="metrics-pick">
+    <h3>11hero metrics over the matches you picked</h3>
+    <p class="er-muted">Your other matches are your other AI matches at the same levels.</p>
+    <div class="er-mgrid">
+{{METRICS_PICK}}
+    </div>
+  </div>
 </section>
 
 <section class="er-section" id="progress">
@@ -1748,6 +1805,343 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       row.appendChild(meter);
       return row;
     }));
+  });
+})();
+</script>
+
+<script>
+// Matches you pick. The pick parameter lists AI matches by their place in the matches source (1 is the first match in
+// the logs), as ranges such as "401-421,430"; empty means your last session and "none" nothing. match_sums holds each
+// match's counts and sums; they are added up over the matches picked, and over your other AI matches at the same
+// levels for the ticks. The rates are worked out as the builder works them out (builddata rates(), metrics.SUMS).
+(() => {
+  const ER = window.ER;
+  ER.SUMS = {{METRIC_SUMS}};
+  // [label, numerator, denominator, higher is better]; the tally fields of match_sums
+  const RATES = [
+    [ER.k('Points won'), 'won', 'pts', true],
+    [ER.k('Points won on your serve'), 'svWon', 'sv', true],
+    [ER.k("Points won on the AI's serve"), 'rvWon', 'rv', true],
+    [ER.k('Serves that landed'), 'servesOk', 'serves', true],
+    [ER.k('Returns that landed'), 'retOk', 'ret', true],
+    [ER.k('Rally shots that landed'), 'rallyOk', 'rally', true],
+    [ER.k('Points won once a point reaches a third shot'), 'p3Won', 'p3', true],
+    [ER.k('Lost points that ended on your own miss'), 'lostMiss', 'lost', false],
+  ];
+  // how points ended, as a share of all points (e0 to e3 in builddata's ENDS order); won ones blue, lost ones orange
+  const ENDS = [
+    [ER.k('Won on your winner'), 'e0', 'pts', true, 'you'],
+    [ER.k('Won on an AI miss'), 'e1', 'pts', true, 'you'],
+    [ER.k('Lost on your miss'), 'e2', 'pts', false, 'ai'],
+    [ER.k('Lost on an AI winner'), 'e3', 'pts', false, 'ai'],
+  ];
+  const MIN_TRIES = 20, MIN_Z = 1.64;     // as the session report: a gap this large turns up by chance about one time in ten
+
+  // AI matches by session, numbered by place in the matches source
+  let idx = null;
+  const index = () => {
+    const ms = ER.rows('matches'), ss = ER.rows('sessions');
+    if (!ms || !ss) return null;
+    if (idx && idx.ms === ms && idx.ss === ss) return idx;
+    const bySession = new Map(ss.map((s) => [s.key, []]));
+    const ord = new Map();
+    ms.forEach((r, i) => {
+      ord.set(i + 1, r);
+      if (r.vs === 'AI' && bySession.has(r.session)) bySession.get(r.session).push(i + 1);
+    });
+    idx = {ms, ss, ord, bySession, ai: [...bySession.values()].flat()};
+    return idx;
+  };
+  const lastSessions = (x, n) => x.ss.slice(-n).flatMap((s) => x.bySession.get(s.key) || []);
+  const isAI = (x, o) => x.ord.has(o) && x.ord.get(o).vs === 'AI' && x.bySession.has(x.ord.get(o).session);
+  const parse = (x, p) => {
+    const out = new Set();
+    String(p).split(',').forEach((part) => {
+      const m = /^\s*(\d+)\s*(?:-\s*(\d+)\s*)?$/.exec(part);
+      if (!m) return;
+      const a = Number(m[1]), b = m[2] ? Number(m[2]) : a;
+      for (let o = Math.min(a, b); o <= Math.min(Math.max(a, b), x.ms.length); o++) if (isAI(x, o)) out.add(o);
+    });
+    return out;
+  };
+  const enc = (set) => {
+    const os = [...set].sort((a, b) => a - b);
+    if (!os.length) return 'none';
+    const parts = [];
+    for (let i = 0; i < os.length; ) {
+      let j = i;
+      while (j + 1 < os.length && os[j + 1] === os[j] + 1) j++;
+      parts.push(j > i ? `${os[i]}-${os[j]}` : String(os[i]));
+      i = j + 1;
+    }
+    return parts.join(',');
+  };
+  // what the pick parameter holds for a set: empty when it is the default (the last session)
+  const param = (x, set) => {
+    const s = enc(set);
+    return s === enc(new Set(lastSessions(x, 1))) ? '' : s;
+  };
+  const picked = (x) => {
+    const p = dash.params().pick;
+    if (p == null || p === '') return new Set(lastSessions(x, 1));
+    if (p === 'none') return new Set();
+    return parse(x, p);
+  };
+  const add = (acc, r) => {
+    if (r) for (const k in r) if (k !== 'key' && typeof r[k] === 'number') acc[k] = (acc[k] || 0) + r[k];
+    return acc;
+  };
+  // The matches picked and their totals: {set, rows, levels, wins, games, ..., sum, ref, refN}; sum and ref wait for match_sums.
+  let memo = null;
+  const pick = () => {
+    const x = index();
+    if (!x) return null;
+    const sums = ER.rows('match_sums');
+    const set = picked(x), key = enc(set);
+    if (memo && memo.x === x && memo.sums === sums && memo.key === key) return memo;
+    const os = [...set].sort((a, b) => a - b), rows = os.map((o) => x.ord.get(o));
+    const levels = [...new Set(rows.map((r) => r.level))].sort((a, b) => a - b);
+    const a = {x, sums, key, set, rows, levels, n: rows.length, wins: rows.filter((r) => r.result === 'Won').length,
+      gamesWon: d3.sum(rows, (r) => r.gamesWon), games: d3.sum(rows, (r) => r.gamesWon + r.gamesLost),
+      pointsWonN: d3.sum(rows, (r) => r.pointsWonN), points: d3.sum(rows, (r) => r.points),
+      from: rows.length ? rows[0].date : null, to: rows.length ? rows[rows.length - 1].date : null,
+      sessions: new Set(rows.map((r) => r.session)).size, sum: null, ref: null, refN: 0};
+    if (sums && rows.length) {
+      const byKey = new Map(sums.map((r) => [r.key, r]));
+      a.sum = rows.reduce((acc, r) => add(acc, byKey.get(r.key)), {});
+      const lv = new Set(levels);
+      const others = x.ai.filter((o) => !set.has(o) && lv.has(x.ord.get(o).level));
+      a.refN = others.length;
+      a.ref = others.length ? others.reduce((acc, o) => add(acc, byKey.get(x.ord.get(o).key)), {}) : null;
+    }
+    memo = a;
+    return a;
+  };
+  ER.pick = pick;
+  const set = (x, s, control) => ER.set({pick: param(x, s)}, control);
+  const levelText = (lv) => lv.join(' / ');
+
+  // Quick picks. Each is pressed while the pick is exactly its matches.
+  const QUICK = [
+    ['last', ER.k('Last session')], ['last3', ER.k('Last 3 sessions')], ['last20', ER.k('Last 20 matches')],
+    ['level', ER.k('All at level {0}')], ['none', ER.k('Clear')],
+  ];
+  const quickSet = (x, q) => {
+    const main = ER.mainLevel();
+    if (q === 'last') return lastSessions(x, 1);
+    if (q === 'last3') return lastSessions(x, 3);
+    if (q === 'last20') return x.ai.slice(-20);
+    if (q === 'level') return x.ai.filter((o) => x.ord.get(o).level === main);
+    return [];
+  };
+  dash.draw('pick-quick', (el) => {
+    const x = index();
+    if (!x) return ER.wait(el, ['matches', 'sessions']);
+    const main = ER.mainLevel();
+    if (!ER.same(el, [ER.lang(), x, main])) {
+      el.replaceChildren(...QUICK.filter(([q]) => q !== 'level' || main != null).map(([q, label]) => {
+        const b = ER.el('button', 'er-tab', ER.tr(label, main));
+        b.type = 'button';
+        b.dataset.q = q;
+        b.addEventListener('click', () => set(x, new Set(quickSet(x, q)), b));
+        return b;
+      }));
+    }
+    const now = enc(picked(x));
+    el.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(enc(new Set(quickSet(x, b.dataset.q))) === now)));
+  });
+
+  // What is picked, in one line beside the list.
+  dash.draw('pick-now', (el) => {
+    const a = pick();
+    if (!a) return ER.wait(el, ['matches', 'sessions']);
+    if (!a.n) return el.replaceChildren(ER.tr('Nothing picked.'));
+    el.replaceChildren(...ER.trn(a.n === 1 ? '{0} match picked: won {1}, {2} of points.' : '{0} matches picked: won {1}, {2} of points.',
+      ER.el('b', null, ER.F.int(a.n)), ER.el('b', null, ER.F.int(a.wins)), ER.el('b', null, ER.F.pct(Math.round(1000 * a.pointsWonN / a.points) / 10))));
+  });
+
+  // Every AI session, newest first, with a chip per match. Built once (so the list keeps its scroll position); each
+  // draw then marks what is picked.
+  dash.draw('pick-list', (el) => {
+    const x = index();
+    if (!x) return ER.wait(el, ['matches', 'sessions']);
+    if (!ER.same(el, [ER.lang(), x])) {
+      el.replaceChildren(...x.ss.slice().reverse().map((s) => {
+        const os = x.bySession.get(s.key) || [];
+        const g = ER.el('div', 'er-pgroup');
+        const head = ER.el('button', 'er-pses');
+        head.type = 'button';
+        head.dataset.s = s.key;
+        head.append(ER.el('b', null, ER.tr('{0}, {1}', ER.F.date(s.date), ER.F.time(s.start))),
+          ER.el('span', null, `${ER.tr('level {0}', s.levels)} · ${ER.tr('won {0} of {1}', s.wins, s.matches)}`));
+        head.setAttribute('aria-label', ER.tr('Session {0}, {1} matches: pick or drop them all', s.n, os.length));
+        const chips = ER.el('div', 'er-chips');
+        chips.append(...os.map((o) => {
+          const r = x.ord.get(o), won = r.result === 'Won';
+          const b = ER.el('button', 'er-chip' + (won ? ' won' : ''), `${r.sessionMatch} · ${ER.tr(won ? 'Won' : 'Lost')} ${r.gamesWon}–${r.gamesLost}`);
+          b.type = 'button';
+          b.dataset.o = String(o);
+          b.title = `${ER.F.time(r.start)}: ${String(r.score).replace(/-/g, '–')}`;
+          b.setAttribute('aria-label', ER.tr(won ? 'Match {0}, won {1} to {2}' : 'Match {0}, lost {1} to {2}', r.sessionMatch, r.gamesWon, r.gamesLost));
+          return b;
+        }));
+        g.append(head, chips);
+        return g;
+      }));
+      el.onclick = (e) => {
+        const b = e.target.closest('button');
+        if (!b || !el.contains(b)) return;
+        const cur = picked(x);
+        if (b.dataset.o) {
+          const o = Number(b.dataset.o);
+          if (cur.has(o)) cur.delete(o);
+          else cur.add(o);
+        } else if (b.dataset.s) {
+          const os = x.bySession.get(b.dataset.s) || [];
+          const all = os.every((o) => cur.has(o));
+          os.forEach((o) => (all ? cur.delete(o) : cur.add(o)));
+        }
+        set(x, cur, b);
+      };
+    }
+    const cur = picked(x);
+    el.querySelectorAll('.er-pses').forEach((b) => {
+      const os = x.bySession.get(b.dataset.s) || [];
+      const n = os.filter((o) => cur.has(o)).length;
+      b.setAttribute('aria-pressed', n === 0 ? 'false' : n === os.length ? 'true' : 'mixed');
+    });
+    el.querySelectorAll('.er-chip').forEach((b) => b.setAttribute('aria-pressed', String(cur.has(Number(b.dataset.o)))));
+  });
+
+  dash.draw('pick-label', (el) => {
+    const a = pick();
+    if (!a) return ER.wait(el, ['matches', 'sessions']);
+    if (!a.n) return el.replaceChildren(ER.tr('No matches picked. Pick a session or a match.'));
+    const when = a.from === a.to ? ER.F.date(a.from) : ER.tr('{0} to {1}', ER.F.date(a.from), ER.F.date(a.to));
+    const parts = [a.n === 1 ? ER.tr('1 match') : ER.tr('{0} matches', ER.F.int(a.n)),
+      a.sessions === 1 ? ER.tr('1 session') : ER.tr('{0} sessions', a.sessions), when, ER.tr('level {0}', levelText(a.levels))];
+    el.textContent = parts.join(' · ');
+  });
+
+  dash.draw('pick-score', (el) => {
+    const a = pick();
+    const w = a && a.n ? ER.F.int(a.wins) : '—', l = a && a.n ? ER.F.int(a.n - a.wins) : '—';
+    el.replaceChildren(ER.el('b', null, w), ER.el('span', 'er-dash', '–'), ER.el('span', 'er-los', l));
+  });
+
+  // A thin bar for a share, its value and "x of y" after it (as the meter drawing, from numbers worked out here).
+  const meter = (v, num, den, tone) => {
+    const m = ER.el('div', 'er-meter');
+    if (tone) m.dataset.tone = tone;
+    if (v == null) {
+      m.textContent = '—';
+      return m;
+    }
+    const track = ER.el('span', 'er-track'), fill = ER.el('span', 'er-fill');
+    fill.style.width = Math.max(0, Math.min(100, v)) + '%';
+    track.appendChild(fill);
+    const val = ER.el('span', 'er-val', ER.F.pct(v));
+    if (num != null) val.appendChild(ER.el('span', 'er-cnt', ER.tr('{0} of {1}', ER.F.int(num), ER.F.int(den))));
+    m.append(track, val);
+    return m;
+  };
+  const r1 = (v) => (v == null ? null : Math.round(v * 10) / 10);
+  const pc = (a, b) => (b ? r1((100 * a) / b) : null);
+  dash.draw('pick-meters', (el) => {
+    const a = pick();
+    const row = (label, m) => {
+      const r = ER.el('div', 'er-row');
+      r.append(ER.el('span', null, ER.tr(label)), m);
+      return r;
+    };
+    const has = a && a.n;
+    el.replaceChildren(row(ER.k('Games won'), meter(has ? pc(a.gamesWon, a.games) : null, has ? a.gamesWon : null, has ? a.games : null)),
+      row(ER.k('Points won'), meter(has ? pc(a.pointsWonN, a.points) : null, has ? a.pointsWonN : null, has ? a.points : null)));
+  });
+
+  dash.draw('pick-base', (el) => {
+    const a = pick();
+    if (!a || !a.n) return el.replaceChildren();
+    const lv = levelText(a.levels);
+    el.textContent = a.refN ? ER.tr(a.refN === 1 ? 'The tick is your one other AI match at level {1}.' : 'The tick is your other {0} AI matches at level {1}.', ER.F.int(a.refN), lv)
+      : ER.tr('You have no other AI matches at level {0} to set these against.', lv);
+  });
+
+  // 1 when the share a/n is clearly above b/m, -1 clearly below (two-sample test on the pooled share), else 0
+  const gap = (a, n, b, m) => {
+    if (n < MIN_TRIES || m < MIN_TRIES) return 0;
+    const p = (a + b) / (n + m), se = Math.sqrt(p * (1 - p) * (1 / n + 1 / m));
+    if (!se) return 0;
+    const z = (a / n - b / m) / se;
+    return z >= MIN_Z ? 1 : z <= -MIN_Z ? -1 : 0;
+  };
+  // Rows as in the session report: a bar for the matches picked, a tick for your other matches, the value and the gap.
+  const compare = (el, list) => {
+    const a = pick();
+    if (!a) return ER.wait(el, ['matches', 'sessions']);
+    if (a.n && !a.sum) return ER.wait(el, ['match_sums']);
+    el.replaceChildren(...list.map(([label, nf, df, up, tone]) => {
+      const row = ER.el('div', 'er-row');
+      row.appendChild(ER.el('span', null, ER.tr(label)));
+      const meter = ER.el('div', 'er-meter');
+      if (tone === 'ai') meter.dataset.tone = 'ai';
+      const s = a.sum, r = a.ref;
+      const v = s ? pc(s[nf] || 0, s[df]) : null, base = r ? pc(r[nf] || 0, r[df]) : null;
+      if (v == null) {
+        meter.textContent = '—';
+        row.appendChild(meter);
+        return row;
+      }
+      const cmp = ER.el('span', 'er-cmp'), track = ER.el('span', 'er-track'), fill = ER.el('span', 'er-fill');
+      fill.style.width = Math.max(0, Math.min(100, v)) + '%';
+      track.appendChild(fill);
+      cmp.appendChild(track);
+      if (base != null) {
+        const ref = ER.el('span', 'er-ref');
+        ref.style.left = Math.max(0, Math.min(100, base)) + '%';
+        ref.title = ER.tr('Your other matches: {0}', ER.F.pct(base));
+        cmp.appendChild(ref);
+      }
+      const val = ER.el('span', 'er-val', ER.F.pct(v));
+      const g = base == null ? 0 : gap(s[nf] || 0, s[df], r[nf] || 0, r[df]) * (up ? 1 : -1);
+      const chg = ER.el('span', 'er-chg' + (g > 0 ? ' good' : g < 0 ? ' bad' : ''));
+      if (base != null) {
+        const d = r1(v - base);
+        const arrow = ER.el('span', null, d > 0 ? '▲ ' : d < 0 ? '▼ ' : '');
+        arrow.setAttribute('aria-hidden', 'true');
+        chg.append(arrow, (d > 0 ? '+' : d < 0 ? '−' : '') + ER.fmt1(Math.abs(d)));
+        chg.title = ER.tr('Your other matches: {0}', ER.F.pct(base)) + (g > 0 ? ER.tr('. Clearly better.') : g < 0 ? ER.tr('. Clearly worse.') : '');
+      }
+      val.appendChild(chg);
+      meter.append(cmp, val);
+      row.appendChild(meter);
+      return row;
+    }));
+  };
+  dash.draw('pick-compare', (el) => compare(el, RATES));
+  dash.draw('pick-ends', (el) => compare(el, ENDS));
+
+  dash.draw('pick-more', (el) => {
+    const a = pick();
+    if (!a || !a.sum) return el.replaceChildren();
+    const s = a.sum, r = a.ref;
+    const spd = (t) => (t && t.rally ? ER.F.n1(r1(t.spd / t.rally)) : '—'), len = (t) => (t && t.pts ? ER.F.n1(r1(t.hits / t.pts)) : '—');
+    el.textContent = r ? ER.tr('Rally speed {0} m/s ({1} in your other matches), {2} shots per point ({3}).', spd(s), spd(r), len(s), len(r))
+      : ER.tr('Rally speed {0} m/s, {1} shots per point.', spd(s), len(s));
+  });
+
+  // One cell of the 11hero tables: data-f is you_, ai_ or ref_ (you, over your other matches) and a metric name.
+  dash.draw('pv', (el) => {
+    const a = pick();
+    const fmt = ER.F[el.dataset.fmt] || ER.F.text;
+    const m = /^(you|ai|ref)_(.+)$/.exec(el.dataset.f || '');
+    let v = null;
+    if (a && m && ER.SUMS[m[2]]) {
+      const s = m[1] === 'ref' ? a.ref : a.sum, pre = m[1] === 'ai' ? 'ai_' : 'you_';
+      const [n, d, kind] = ER.SUMS[m[2]];
+      if (s && s[pre + d]) v = r1(((s[pre + n] || 0) / s[pre + d]) * (kind === 'pct' ? 100 : 1));
+    }
+    el.textContent = fmt(v);
   });
 })();
 </script>

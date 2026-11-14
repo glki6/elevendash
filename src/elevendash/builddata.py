@@ -10,7 +10,7 @@ from collections import Counter, defaultdict
 from .extract import extract_log
 from .i18n import Bi, T, W, join, put
 from .i18n import listing as bilist
-from .metrics import player_metrics, match_metrics
+from .metrics import player_metrics, match_metrics, metric_sums
 
 logs_dir, out_dir = sys.argv[1], sys.argv[2]
 videos_path = sys.argv[3] if len(sys.argv) > 3 else None
@@ -262,6 +262,22 @@ def rates(c):
 
 def agg(items):
     return rates(tally(items))
+
+
+# ---------------- per-match sums, for the numbers over any matches you pick ----------------
+# One flat row per match (same order as matches): the tally behind rates(), how its points ended (e0-e4, ENDS order),
+# and both players' metric sums (metrics.SUMS). The page adds up the rows of the matches picked.
+TALLY = ['pts', 'won', 'sv', 'svWon', 'rv', 'rvWon', 'serves', 'servesOk', 'rally', 'rallyOk', 'spd', 'ret', 'retOk',
+         'hits', 'p3', 'p3Won', 'lost', 'lostMiss']
+match_sums = []
+for (m, you, ai, pts), row in zip(M, matches):
+    c = tally([(you, p) for p in pts])
+    ends = Counter(ending(p, you) for p in pts)
+    r = {'key': row['key'], **{f: round(c[f], 3) if isinstance(c[f], float) else int(c[f]) for f in TALLY},
+         **{f'e{i}': ends[i] for i in ENDS}}
+    for side, pre in ((you, 'you_'), (ai, 'ai_')):
+        r.update({pre + k: v for k, v in metric_sums(pts, side).items()})
+    match_sums.append(r)
 
 
 def summary_row(key, label, ms):
@@ -1137,6 +1153,7 @@ write('insights', insights)
 write('zones', zones)
 write('won_vs_lost', wvl)
 write('matches', matches)
+write('match_sums', match_sums)
 write('shot_mix', shot_mix)
 write('serves', serves)
 write('points', points)

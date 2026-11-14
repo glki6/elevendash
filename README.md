@@ -3,7 +3,8 @@
 Match analysis for **Eleven Table Tennis** on Meta Quest, from the game's own log files. It copies the logs off your
 headset over Wi-Fi, works out every match, game, point and shot, and writes a dashboard you can open in any browser:
 win rates by session and AI level, a session report, a point-by-point replay of every match drawn from the ball
-contacts, serve and return breakdowns, and a training plan ranked by how many points each item is worth.
+contacts, serve and return breakdowns, your numbers over any matches you pick set against your other matches, and a
+training plan ranked by how many points each item is worth.
 
 No account, no server, no AI service: everything runs on your computer with plain Python, and the dashboard is a
 single HTML file that works offline. Send it to a coach or a friend, or put it on any static host.

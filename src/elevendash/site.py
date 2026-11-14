@@ -68,7 +68,7 @@ def render(build_dir, videos=True, title=TITLE, theme='dark', lang='en'):
     data = load_data(build_dir, videos)
     look = json.loads(_read('look.json'))
     level = main_level(data)
-    conf = {'params': {'level': level, 'match': '', 'session': '', 'theme': theme if theme in THEMES else 'dark',
+    conf = {'params': {'level': level, 'match': '', 'session': '', 'pick': '', 'theme': theme if theme in THEMES else 'dark',
                        'lang': lang if lang in LANGS else 'en'},
             'colors': len(look['light']['charts'])}
     d3 = _read('d3.min.js').replace('</script', '<\\/script')

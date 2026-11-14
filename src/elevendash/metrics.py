@@ -65,6 +65,69 @@ def player_metrics(points, me):
     }
 
 
+# Each metric as a ratio of two sums, so the metrics over any set of matches can be worked out by adding up each
+# match's sums (metric_sums): name -> (numerator, denominator, 'avg' or 'pct').
+SUMS = {
+    'serveSpeed': ('svSpd', 'sv', 'avg'), 'serveTop': ('svTop', 'svTopN', 'avg'), 'serveBack': ('svBack', 'svBackN', 'avg'),
+    'rallySpeed': ('raSpd', 'ra', 'avg'), 'rallyTop': ('raTop', 'raTopN', 'avg'), 'rallyBack': ('raBack', 'raBackN', 'avg'),
+    'serveScore': ('sdAce', 'sd', 'pct'), 'returnScore': ('reWin', 're', 'pct'), 'thirdBallScore': ('thWin', 'th', 'pct'),
+    'wonAsServer': ('sdWon', 'sd', 'pct'), 'wonAsReturner': ('rpWon', 'rp', 'pct'),
+    'serveSuccess': ('svOk', 'sv', 'pct'), 'returnSuccess': ('reOk', 're', 'pct'),
+    'openUpAttempt': ('ou', 'ra', 'pct'), 'openUpSuccess': ('ouOk', 'ou', 'pct'),
+    'wonByOppServiceError': ('wnErr', 'wn', 'pct'), 'wonByServe': ('wb1', 'wn', 'pct'), 'wonByReturn': ('wb2', 'wn', 'pct'),
+    'wonByThird': ('wb3', 'wn', 'pct'), 'wonByFourth': ('wb4', 'wn', 'pct'), 'wonByLater': ('wbL', 'wn', 'pct'),
+}
+
+
+def metric_sums(points, me):
+    """The sums behind player_metrics for one player (see SUMS); counts are whole numbers, speed and spin sums floats."""
+    opp = 'B' if me == 'A' else 'A'
+    s = dict.fromkeys(sorted({f for n, d, _ in SUMS.values() for f in (n, d)}), 0)
+    for p in points:
+        hits = p['hits']
+        won = p['winner'] == me
+        w = next((h for h in reversed(hits) if h['win']), None)
+        if hits and hits[0]['side'] == me:
+            s['sd'] += 1; s['sdWon'] += won; s['sdAce'] += bool(won and w and w['n'] == 1)
+        if len(hits) >= 2 and hits[1]['side'] == me:
+            s['rp'] += 1; s['rpWon'] += won
+        if won:
+            s['wn'] += 1
+            s['wnErr'] += bool(hits and hits[0]['side'] == opp and not hits[0]['ok'])
+            if w and w['side'] == me:
+                s['wb' + (str(w['n']) if w['n'] <= 4 else 'L')] += 1
+        for h in hits:
+            if h['side'] != me:
+                continue
+            if h['serve']:
+                s['sv'] += 1; s['svSpd'] += h['speed']; s['svOk'] += h['ok']
+                if h['top'] > SPIN_T:
+                    s['svTopN'] += 1; s['svTop'] += h['top']
+                elif h['top'] < -SPIN_T:
+                    s['svBackN'] += 1; s['svBack'] += h['top']
+            else:
+                s['ra'] += 1; s['raSpd'] += h['speed']
+                if h['top'] > SPIN_T:
+                    s['raTopN'] += 1; s['raTop'] += h['top']
+                elif h['top'] < -SPIN_T:
+                    s['raBackN'] += 1; s['raBack'] += h['top']
+            if h['open']:
+                s['ou'] += 1; s['ouOk'] += h['ok']
+            if h['n'] == 2:
+                s['re'] += 1; s['reOk'] += h['ok']; s['reWin'] += h['win']
+            elif h['n'] == 3:
+                s['th'] += 1; s['thWin'] += h['win']
+    return {k: (round(v, 3) if isinstance(v, float) else int(v)) for k, v in s.items()}
+
+
+def from_sums(s, name):
+    """One metric from summed sums (SUMS), as player_metrics gives it."""
+    n, d, _ = SUMS[name]
+    if not s.get(d):
+        return None
+    return s[n] / s[d] * (100.0 if SUMS[name][2] == 'pct' else 1.0)
+
+
 def match_metrics(points):
     # hits per point over all points. (11hero averages its own per-point field, which also counts a voided
     # point as -1: 2.79 vs 2.88 here for the reference match.)

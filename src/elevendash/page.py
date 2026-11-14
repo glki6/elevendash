@@ -7,6 +7,7 @@ import json
 import os
 
 from .i18n import bilingual, script_words
+from .metrics import SUMS
 
 WEB = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'web')
 THEMES = ('dark', 'light')       # the page opens dark; its switch changes to light
@@ -69,11 +70,14 @@ WVL = [('matches', 'Matches', 'int'), ('pointRate', 'Points won', 'pct'), ('serv
 
 
 def td(ds, k, f, fmt):
+    if ds == 'pick':        # worked out on the page from the matches picked (the pv drawing)
+        return f'<td data-draw="pv" data-source="match_sums" data-f="{f}" data-fmt="{fmt}"></td>'
     return f'<td data-draw="v" data-ds="{ds}" data-k="{k}" data-f="{f}" data-fmt="{fmt}"></td>'
 
 
 def metric_rows(cols):
-    """One small table per metric group; cols is [(column heading, dataset, key template, field prefix)]."""
+    """One small table per metric group; cols is [(column heading, dataset, key template, field prefix)].
+    Dataset 'pick' is the matches picked: prefix you_ or ai_ for the two players, ref_ for your other matches."""
     out = []
     for title, rows in GROUPS:
         head = ''.join(f'<th>{h}</th>' for h, _, _, _ in cols)
@@ -92,6 +96,7 @@ def fill(collect=None, strict=False):
     with open(os.path.join(WEB, 'index.template.html'), encoding='utf-8') as f:
         html = f.read()
     html = html.replace('{{I18N_SCRIPT}}', script_words())
+    html = html.replace('{{METRIC_SUMS}}', json.dumps(SUMS, separators=(',', ':')))
     wvl = '\n'.join(f'      <tr><th>{label}</th>{td("won_vs_lost", "{L}|Won", f, fmt)}{td("won_vs_lost", "{L}|Lost", f, fmt)}</tr>'
                     for f, label, fmt in WVL)
     html = html.replace('{{WVL_ROWS}}', wvl)
@@ -99,6 +104,8 @@ def fill(collect=None, strict=False):
     html = html.replace('{{METRICS_LEVEL}}', metric_rows([('You', 'levels', '{L}', 'you_'), ('AI', 'levels', '{L}', 'ai_')]))
     html = html.replace('{{METRICS_MATCH}}', metric_rows([('You', 'matches', '{M}', 'you_'), ('AI', 'matches', '{M}', 'ai_'),
                                                           ('Level avg', 'levels', '{ML}', 'you_')]))
+    html = html.replace('{{METRICS_PICK}}', metric_rows([('You', 'pick', '', 'you_'), ('AI', 'pick', '', 'ai_'),
+                                                         ('Your other matches', 'pick', '', 'ref_')]))
     assert '{{' not in html, 'unfilled placeholder in the page template'
     html, _ = bilingual(html, collect, strict)
     return html

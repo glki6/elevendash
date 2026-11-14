@@ -27,6 +27,8 @@ html.pdf .er-nav,html.pdf .er-ruler,html.pdf .er-rbar,html.pdf .er-rside>.er-mut
 html.pdf .er-card,html.pdf .er-find,html.pdf .er-pitem,html.pdf .er-keephead,html.pdf .er-board,html.pdf .er-multi,html.pdf .er-sechead,html.pdf .er-mgrid>div,html.pdf .er-t tr{break-inside:avoid}
 html.pdf .er-sechead{break-after:avoid}
 html.pdf #match{break-before:page}
+/* "Matches you pick" is a tool to use on the page; the file keeps to the report */
+html.pdf #pick{display:none}
 /* a two-column block of cards never splits across pages (Chrome overlaps the cards when it does); each fits on one */
 html.pdf .er-grid{break-inside:avoid}
 /* a list laid out as a grid loses its height when it runs over a page: print the plan as plain blocks */

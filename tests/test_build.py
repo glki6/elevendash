@@ -66,6 +66,36 @@ class Build(unittest.TestCase):
                 for row in json.load(f)['rows']:          # flat rows only: hosts may turn nested values into text
                     self.assertFalse([k for k, v in row.items() if isinstance(v, (list, dict))], name)
 
+    def test_match_sums(self):
+        """Each match's sums give back its 11hero metrics, and added up over a session they give the session's rates
+        (the page adds them up over the matches picked)."""
+        from elevendash.metrics import SUMS, from_sums
+        matches, sums = self.rows('matches'), self.rows('match_sums')
+        self.assertEqual([m['key'] for m in matches], [s['key'] for s in sums])
+        for m, s in zip(matches, sums):
+            self.assertEqual((s['pts'], s['won']), (m['points'], m['pointsWonN']))
+            self.assertEqual(sum(s[f'e{i}'] for i in range(5)), s['pts'])
+            for side in ('you_', 'ai_'):
+                one = {k[len(side):]: v for k, v in s.items() if k.startswith(side)}
+                for name in SUMS:
+                    want, got = m[side + name], from_sums(one, name)
+                    if want is None:
+                        self.assertIsNone(got, name)
+                    else:
+                        self.assertAlmostEqual(got, want, delta=0.051, msg=f'{m["key"]} {side}{name}')
+        by = {s['key']: s for s in sums}
+        for ses in self.rows('sessions'):
+            t = {}
+            for m in matches:
+                if m.get('session') == ses['key']:
+                    for k, v in by[m['key']].items():
+                        if k != 'key':
+                            t[k] = t.get(k, 0) + v
+            self.assertAlmostEqual(100 * t['won'] / t['pts'], ses['pointRate'], delta=0.051)
+            self.assertAlmostEqual(100 * t['servesOk'] / t['serves'], ses['servesLanded'], delta=0.051)
+            self.assertAlmostEqual(100 * t['lostMiss'] / t['lost'], ses['missShare'], delta=0.051)
+            self.assertAlmostEqual(t['spd'] / t['rally'], ses['rallySpeed'], delta=0.051)
+
     def test_site(self):
         path = os.path.join(self.ws, 'site', 'index.html')
         with open(path, encoding='utf-8') as f:
