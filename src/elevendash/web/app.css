@@ -1,0 +1,51 @@
+/* elevendash app: the bar above the dashboard (app.html). Colours are the dashboard's own tokens. */
+.ed-app{font:14px/1.45 var(--font-anthropic-sans,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif),"Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif;
+  color:var(--color-fg);background:var(--color-panel);border-bottom:1px solid var(--color-border-line);
+  padding-block:10px;padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px))}
+@media (max-width:520px){.ed-app{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}}
+.ed-app [data-l=zh],.ed-welcome [data-l=zh],html[lang="zh-Hant"] .ed-app [data-l=en],html[lang="zh-Hant"] .ed-welcome [data-l=en]{display:none}
+html[lang="zh-Hant"] .ed-app span[data-l=zh]{display:inline}
+html[lang="zh-Hant"] .ed-app div[data-l=zh],html[lang="zh-Hant"] .ed-welcome [data-l=zh]{display:block}
+.ed-app-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px}
+.ed-app-name{font-weight:600;margin-right:6px}
+.ed-app-btn{font:inherit;font-weight:600;min-height:34px;padding:6px 14px;border-radius:8px;border:1px solid var(--color-border-line);
+  background:var(--color-bg);color:var(--color-fg);cursor:pointer}
+.ed-app-btn:hover{border-color:var(--chart-0)}
+.ed-app-btn:focus-visible,.ed-app-link:focus-visible,.ed-app input:focus-visible,.ed-app select:focus-visible{outline:2px solid var(--chart-0);outline-offset:2px}
+.ed-app-main{background:var(--chart-0);border-color:var(--chart-0);color:var(--color-bg)}
+.ed-app-main:hover{filter:brightness(1.08)}
+.ed-app-btn:disabled{opacity:.55;cursor:default;filter:none}
+.ed-app-quiet{margin-left:auto;font-weight:500}
+.ed-app-msg{min-width:0;color:var(--color-fg-muted)}
+.ed-app-msg.ok{color:var(--color-fg)}
+.ed-app-msg.bad{color:var(--color-bad)}
+.ed-app-msg b{color:var(--color-fg);font-weight:600}
+.ed-app-panel{margin-top:10px;padding:12px 14px;border:1px solid var(--color-border-line);border-radius:8px;background:var(--color-bg)}
+.ed-app-panel p{margin:0;max-width:72ch}
+.ed-app-set{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:flex-start}
+.ed-app-field{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--color-fg-muted)}
+.ed-app-field>span{font-weight:600;color:var(--color-fg)}
+.ed-app-wide{flex:1 1 260px;max-width:420px}
+.ed-app-field input,.ed-app-field select{font:inherit;font-size:14px;color:var(--color-fg);background:var(--color-panel);
+  border:1px solid var(--color-border-line);border-radius:8px;padding:6px 9px;min-height:34px;box-sizing:border-box}
+.ed-app-field small{font-size:12px}
+.ed-app-actions{display:flex;align-items:center;gap:10px;align-self:flex-end;flex-wrap:wrap}
+.ed-app-foot{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;font-size:13px;color:var(--color-fg-muted);
+  border-top:1px solid var(--color-border-line);padding-top:10px}
+.ed-app-foot code{font-size:12px;color:var(--color-fg);overflow-wrap:anywhere}
+.ed-app-link{font:inherit;background:none;border:0;padding:2px 0;color:var(--chart-0);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.ed-app-dim{margin-left:auto;font-size:12px}
+.ed-app-log{margin:10px 0 0;padding:10px 12px;max-height:12em;overflow:auto;font:12px/1.5 ui-monospace,Consolas,monospace;
+  color:var(--color-fg-muted);background:var(--color-bg);border:1px solid var(--color-border-line);border-radius:8px;white-space:pre-wrap}
+.ed-app [hidden]{display:none!important}
+@media print{.ed-app{display:none}}
+html.pdf .ed-app{display:none}
+
+/* the welcome page, before the first import */
+.ed-welcome{max-width:720px;margin:0 auto;padding-block:36px 64px;padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px))}
+.ed-welcome h1{font-size:28px;line-height:1.2;margin:0 0 8px;text-wrap:balance}
+.ed-welcome ol{padding-left:1.3em;display:grid;gap:10px}
+.ed-welcome p,.ed-welcome li{max-width:68ch}
+.ed-welcome a{color:var(--chart-0)}
+.ed-welcome .ed-muted{color:var(--color-fg-muted);font-size:13px}
+.ed-welcome code{overflow-wrap:anywhere}

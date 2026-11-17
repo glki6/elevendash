@@ -678,6 +678,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
       <textarea id="note-text" data-draw="match-note" rows="3" disabled></textarea>
       <p class="er-muted" data-note-where="loading">Loading your notes…</p>
       <p class="er-muted" data-note-where="account" hidden>Only you can see your notes, even when this dashboard is shared.</p>
+      <p class="er-muted" data-note-where="workspace" hidden>Kept in your elevendash folder on this computer. Notes are not part of the dashboard file, so they stay behind when you send it.</p>
       <p class="er-muted" data-note-where="browser" hidden>Kept in this browser on this device. Notes are not part of the file, so they stay behind when you send it.</p>
       <p class="er-muted" data-note-where="none" hidden>Notes can't be kept in this view.</p>
     </div>
@@ -1515,6 +1516,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
     const map = new Map();                  // match key -> {text, at}
     const st = {where: 'loading', version: 0};
     let col = null;
+    let wsSave = Promise.resolve();
     const want = new Map(), running = new Map();
     const changed = () => {
       st.version++;
@@ -1553,6 +1555,20 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
       }
     };
     const start = async () => {
+      // the elevendash app (app.py) keeps notes in the workspace on this computer
+      const app = window.__elevendashApp;
+      if (app && app.notes) {
+        try {
+          const o = (await app.notes.load()) || {};
+          map.clear();
+          Object.keys(o).forEach((k) => keep(k, o[k]));
+          st.where = 'workspace';
+        } catch (e) {
+          st.where = 'none';
+        }
+        changed();
+        return;
+      }
       const c = window.claude;
       if (c && typeof c.use === 'function') {
         try {
@@ -1606,6 +1622,20 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
       save(key, text) {
         const t = String(text == null ? '' : text).slice(0, MAX);
         const v = t.trim() ? t : '';
+        if (st.where === 'workspace') {
+          const before = map.get(key);
+          if (v) map.set(key, {text: v, at: new Date().toISOString()});
+          else map.delete(key);
+          changed();
+          // writes go out in order, so the last one holds the latest text
+          wsSave = wsSave.catch(() => {}).then(() => window.__elevendashApp.notes.save(Object.fromEntries(map)));
+          return wsSave.catch((e) => {
+            if (before) map.set(key, before);
+            else map.delete(key);
+            changed();
+            throw {code: 'unavailable', message: e && e.message};
+          });
+        }
         if (st.where === 'browser') {
           const before = map.get(key);
           if (v) map.set(key, {text: v, at: new Date().toISOString()});
@@ -2210,7 +2240,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       }
       el.placeholder = ER.tr('What happened in this match, what worked, what to try next time.');
       el.maxLength = ER.notes.max;
-      el.disabled = w !== 'account' && w !== 'browser';
+      el.disabled = w !== 'account' && w !== 'browser' && w !== 'workspace';
       show('where', w);
       if (k !== key) {
         keep();

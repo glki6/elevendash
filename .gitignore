@@ -38,3 +38,9 @@ dist/
 *.mov
 *.wav
 *.pdf
+
+# The app (elevendash app): your match notes, the running app's port, logs on their way in
+notes.json
+.app.json
+.incoming/
+packaging/windows/out/

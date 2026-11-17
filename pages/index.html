@@ -96,8 +96,8 @@
           address like <code>192.168.1.20:8090</code>.</span></div>
         <div><small>2 · Your network</small><b>Two read-only calls</b><span><code>/getListing</code> and
           <code>/downloadFile</code>. Nothing is uploaded or deleted.</span></div>
-        <div><small>3 · Your computer</small><b>Your workspace</b><span>Logs stay in a folder you choose. No server, no
-          telemetry.</span></div>
+        <div><small>3 · Your computer</small><b>Your workspace</b><span>Logs stay in a folder on your computer. Nothing
+          hosted, no telemetry.</span></div>
         <div><small>4 · The dashboard</small><b>Match data only</b><span>No log lines, tokens or account details go
           into it.</span></div>
       </div>
@@ -111,21 +111,20 @@
   <section>
     <div class="wrap">
       <h2>Get started</h2>
-      <p class="intro">Python 3.10 or newer, nothing else for the dashboard. Tested on Windows and Linux.</p>
-<pre><code>git clone https://github.com/glki6/elevendash.git
-cd elevendash
-python -m venv .venv
-.venv\Scripts\activate         <span class="c"># macOS, Linux: source .venv/bin/activate</span>
-pip install -e .
-
-elevendash demo                <span class="c"># try it first: made-up matches, no Quest needed</span>
-elevendash init ~/eleven       <span class="c"># a private folder for your logs and results</span>
-cd ~/eleven
-elevendash fetch --quest 192.168.1.20
-elevendash update              <span class="c"># fetch, build, print the session report, write site/index.html</span></code></pre>
-      <p class="small">No Wi-Fi sharing? Copy the <code>ALL-*.log</code> files off the headset any other way and run
-        <code>elevendash import &lt;folder&gt;</code>. The full guide is in the
-        <a href="https://github.com/glki6/elevendash#readme">README</a>.</p>
+      <p class="intro">Eleven Dashboard is an app on your computer: it opens your dashboard in your browser, with an
+        <b>Import new logs</b> button you press after each session.</p>
+      <p><b>Windows:</b> download <code>Eleven-Dashboard-windows.zip</code> from the
+        <a href="https://github.com/glki6/elevendash/releases/latest">latest release</a>, unzip it and open
+        <b>Eleven Dashboard.exe</b>. It isn't code-signed, so Windows may ask first: <b>More info</b>, then
+        <b>Run anyway</b>.</p>
+      <p><b>macOS, Linux, or Windows with Python 3.10 or newer:</b></p>
+<pre><code>pipx install git+https://github.com/glki6/elevendash
+elevendash app                 <span class="c"># Windows: elevendash app --shortcut adds it to the Start menu</span></code></pre>
+      <p>Then, on the headset, start File Sharing in Eleven (Settings, Network Settings, File Sharing), enter the address
+        it shows in the app's <b>Settings</b>, and press <b>Import new logs</b>.</p>
+      <p class="small">No Wi-Fi sharing? Copy the <code>ALL-*.log</code> files off the headset any other way and use
+        <b>From files…</b>. Everything also works from the command line (<code>elevendash update</code>); the full guide is
+        in the <a href="https://github.com/glki6/elevendash#readme">README</a>.</p>
     </div>
   </section>
 

@@ -5,6 +5,10 @@ people you played online, your location and the headset's device id. elevendash 
 your computer: logs stay in your workspace, the dashboard file holds match data only, and the only network requests
 are two read-only calls to your own Quest.
 
+The app (`elevendash app`) runs a small web server for your browser. It listens on 127.0.0.1 only, refuses requests
+whose Host is not its own address, and answers its import, settings and notes calls only when they carry a key that
+is new each time it starts and is known only to the pages it served.
+
 ## Reporting a problem
 
 Please report privately anything that could expose someone's data, for example:
@@ -12,7 +16,8 @@ Please report privately anything that could expose someone's data, for example:
 - the dashboard file, the PDF or the build data containing something from a log beyond match data
 - `elevendash redact` leaving an account, people or location value in its output
 - elevendash sending anything anywhere other than your own Quest
-- a way to make `elevendash fetch` write outside the workspace
+- a way to make `elevendash fetch`, or an import in the app, write outside the workspace
+- a way for another computer, or a website open in your browser, to use the app's server
 
 Use GitHub's private vulnerability reporting (the **Security** tab, then **Report a vulnerability**). Don't open a
 public issue for these.

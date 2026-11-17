@@ -1,0 +1,42 @@
+name: release
+
+# A tag such as v0.2.0 builds Eleven Dashboard for Windows, checks it, and publishes it as a GitHub release.
+# Run by hand (Actions > release > Run workflow) it only builds and keeps the zip as a workflow artifact.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install
+        run: |
+          python -m venv .venv
+          .venv\Scripts\python -m pip install --upgrade pip
+          .venv\Scripts\python -m pip install . pyinstaller==6.11.1
+      - name: Tests
+        run: .venv\Scripts\python -m unittest discover -s tests
+      - name: Build and check
+        shell: pwsh
+        run: |
+          $env:Path = "$PWD\.venv\Scripts;$env:Path"
+          ./packaging/windows/build.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Eleven-Dashboard-windows
+          path: packaging/windows/out/Eleven-Dashboard-windows.zip
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create $env:GITHUB_REF_NAME packaging/windows/out/Eleven-Dashboard-windows.zip --title "elevendash $env:GITHUB_REF_NAME" --notes-file packaging/windows/RELEASE.md

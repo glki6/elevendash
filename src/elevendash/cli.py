@@ -7,6 +7,7 @@
   elevendash report                      print your last session: results, notes, win rates
   elevendash site [--out FILE]           write the dashboard as one HTML file you can open, send or host
   elevendash pdf [--out FILE]            print the dashboard to a PDF (needs Chrome, Edge or Chromium)
+  elevendash app [--shortcut]            the dashboard in your browser, with a button that imports new logs
   elevendash update [--offline]          fetch, build, report and site in one go: the usual after-session step
   elevendash config [KEY=VALUE ...]      show or change settings: hand (auto, right, left), theme (dark, light),
                                          lang (en, zh: Traditional Chinese)
@@ -212,6 +213,10 @@ def main(argv=None):
     p.add_argument('--offline', action='store_true', help='do not contact the Quest; rebuild from the logs you have')
     p.add_argument('--quest', help="the Quest's File Sharing address (remembered for next time)")
     p.add_argument('--no-videos', action='store_true', help='leave out the links to your YouTube uploads')
+    p = sub.add_parser('app', help='open the dashboard in your browser, with an Import button (runs until you close it)')
+    p.add_argument('--port', type=int, default=None, help='the local port (default 8737, or any free one)')
+    p.add_argument('--no-browser', action='store_true', help='start the app without opening a browser tab')
+    p.add_argument('--shortcut', action='store_true', help='add Eleven Dashboard to the Start menu and the desktop (Windows), then stop')
     p = sub.add_parser('demo', help='make a workspace of made-up matches and build its dashboard (no Quest needed)')
     p.add_argument('path', nargs='?', default='elevendash-demo', help='a new or empty folder (default: elevendash-demo)')
     p = sub.add_parser('redact', help='write a copy of a log without account, people or location data')
@@ -229,6 +234,13 @@ def main(argv=None):
         return 0
     if a.cmd == 'demo':
         return do_demo(a.path)
+    if a.cmd == 'app':
+        from . import app
+        try:
+            return app.run(a.dir, a.port or app.PORT, open_browser=not a.no_browser, shortcut=a.shortcut)
+        except (OSError, RuntimeError, ValueError) as e:
+            print(f'elevendash app: {e}', file=sys.stderr)
+            return 1
     if a.cmd == 'redact':
         return do_redact(a.log, a.out)
     try:

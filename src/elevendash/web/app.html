@@ -1,0 +1,59 @@
+<header class="ed-app" id="ed-app">
+  <div class="ed-app-row">
+    <span class="ed-app-name"><span data-l="en">Eleven Dashboard</span><span data-l="zh" lang="zh-Hant">Eleven 儀表板</span></span>
+    <button type="button" class="ed-app-btn ed-app-main" id="ed-import"><span data-l="en">Import new logs</span><span data-l="zh" lang="zh-Hant">匯入新記錄</span></button>
+    <button type="button" class="ed-app-btn" id="ed-files"><span data-l="en">From files…</span><span data-l="zh" lang="zh-Hant">從檔案匯入…</span></button>
+    <input type="file" id="ed-file-input" multiple accept=".log" hidden>
+    <span class="ed-app-msg" id="ed-msg" role="status" aria-live="polite"></span>
+    <button type="button" class="ed-app-btn ed-app-quiet" id="ed-set-btn" aria-expanded="false" aria-controls="ed-set"><span data-l="en">Settings</span><span data-l="zh" lang="zh-Hant">設定</span></button>
+  </div>
+  <div class="ed-app-panel" id="ed-help" hidden>
+    <div data-l="en">
+      <p><strong>The Quest did not answer.</strong> On the headset, open Eleven, then <b>Settings › Network Settings › File Sharing</b>, and start it. Keep the game open, on the same Wi-Fi as this computer, and press Import again. If the address it shows has changed, enter it in Settings.</p>
+    </div>
+    <div data-l="zh" lang="zh-Hant">
+      <p><strong>頭戴裝置沒有回應。</strong>在頭戴裝置上開啟 Eleven，前往<b>設定 › 網路設定 › 檔案分享</b>並啟動。讓遊戲保持開啟，與這部電腦連上同一個 Wi-Fi，再按一次「匯入」。如果顯示的位址變了，請在「設定」中更新。</p>
+    </div>
+  </div>
+  <form class="ed-app-panel ed-app-set" id="ed-set" hidden>
+    <label class="ed-app-field ed-app-wide">
+      <span><span data-l="en">Quest address</span><span data-l="zh" lang="zh-Hant">頭戴裝置位址</span></span>
+      <input type="text" id="ed-quest" name="quest" placeholder="192.168.1.20:8090" autocomplete="off" spellcheck="false" inputmode="url">
+      <small><span data-l="en">Eleven shows it under Settings › Network Settings › File Sharing.</span><span data-l="zh" lang="zh-Hant">Eleven 會在「設定 › 網路設定 › 檔案分享」中顯示。</span></small>
+    </label>
+    <label class="ed-app-field">
+      <span><span data-l="en">Paddle hand</span><span data-l="zh" lang="zh-Hant">持拍手</span></span>
+      <select id="ed-hand" name="hand">
+        <option value="auto">Auto · 自動</option>
+        <option value="right">Right · 右手</option>
+        <option value="left">Left · 左手</option>
+      </select>
+    </label>
+    <label class="ed-app-field">
+      <span><span data-l="en">Opens in</span><span data-l="zh" lang="zh-Hant">開啟時</span></span>
+      <select id="ed-theme" name="theme">
+        <option value="dark">Dark · 深色</option>
+        <option value="light">Light · 淺色</option>
+      </select>
+    </label>
+    <label class="ed-app-field">
+      <span><span data-l="en">Language</span><span data-l="zh" lang="zh-Hant">語言</span></span>
+      <select id="ed-lang" name="lang">
+        <option value="en">English</option>
+        <option value="zh">繁體中文</option>
+      </select>
+    </label>
+    <div class="ed-app-actions">
+      <button type="submit" class="ed-app-btn ed-app-main"><span data-l="en">Save</span><span data-l="zh" lang="zh-Hant">儲存</span></button>
+      <span class="ed-app-msg" id="ed-set-msg" role="status"></span>
+    </div>
+    <div class="ed-app-foot">
+      <span><span data-l="en">Your logs and results:</span><span data-l="zh" lang="zh-Hant">你的記錄與結果：</span> <code id="ed-home"></code></span>
+      <button type="button" class="ed-app-link" id="ed-folder"><span data-l="en">Open folder</span><span data-l="zh" lang="zh-Hant">開啟資料夾</span></button>
+      <button type="button" class="ed-app-link" id="ed-shortcut" hidden><span data-l="en">Add to Start menu and desktop</span><span data-l="zh" lang="zh-Hant">加到開始功能表和桌面</span></button>
+      <button type="button" class="ed-app-link" id="ed-rebuild"><span data-l="en">Rebuild from the logs</span><span data-l="zh" lang="zh-Hant">從記錄重新建立</span></button>
+      <span class="ed-app-dim" id="ed-version"></span>
+    </div>
+  </form>
+  <pre class="ed-app-log" id="ed-log" hidden></pre>
+</header>

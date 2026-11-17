@@ -13,9 +13,10 @@ contacts (from above, or in 3D with a slow-motion replay of the shot that decide
 picture of any match to send or post, your own notes on any match, and a training plan ranked by how many points each
 item is worth.
 
-No account, no server, no AI service: everything runs on your computer with plain Python, and the dashboard is a
-single HTML file that works offline. Send it to a coach or a friend, or put it on any static host. Notes you write on
-matches are kept in the browser you wrote them in, never in the file, so they stay behind when you send it.
+No account, no hosting, no AI service: everything runs on your computer with plain Python. The app opens your
+dashboard in your browser with an **Import new logs** button, and the dashboard is also a single HTML file that works
+offline: send it to a coach or a friend, or put it on any static host. Notes you write on matches stay on your
+computer, never in the file, so they stay behind when you send it.
 
 elevendash is built for matches against the AI. Matches against people online have a side of their own, with
 ratings: it should work, but it is close to untested on real matches
@@ -24,6 +25,39 @@ ratings: it should work, but it is close to untested on real matches
 > elevendash is inspired by [11hero](https://11hero.com). Its match metrics follow 11hero's definitions and were
 > checked against it on a real match (see `research/CALIBRATION.md`). It is an independent project, not affiliated
 > with or endorsed by For Fun Labs, Meta or 11hero.
+
+## Get started
+
+**Windows:** download `Eleven-Dashboard-windows.zip` from the
+[latest release](https://github.com/glki6/elevendash/releases/latest), unzip it anywhere and open
+**Eleven Dashboard.exe**. It isn't code-signed, so the first time Windows may show "Windows protected your PC":
+choose **More info**, then **Run anyway**. In the app, **Settings › Add to Start menu and desktop** gives you a
+shortcut for next time.
+
+**macOS, Linux, or Windows with Python 3.10 or newer:** with [pipx](https://pipx.pypa.io),
+
+```
+pipx install git+https://github.com/glki6/elevendash
+elevendash app
+```
+
+(`elevendash app --shortcut` adds Eleven Dashboard to the Start menu and the desktop on Windows.)
+
+Then:
+
+1. On the headset, open Eleven, then **Settings › Network Settings › File Sharing**, and start it. It shows an address
+   such as `192.168.1.20:8090`. The computer must be on the same Wi-Fi.
+2. In the app, open **Settings**, enter that address and press **Save**.
+3. Press **Import new logs**. It copies the logs that are new since last time, rebuilds the data and reloads the page
+   with your new session. Do this after every session: the headset keeps only its most recent logs, and elevendash
+   keeps a copy of every log it has seen.
+
+No Wi-Fi sharing? Copy the `ALL-*.log` files off the headset another way (a USB cable, a file manager) and use
+**From files…**.
+
+The app is a small web server that only this computer can reach. It answers only the pages it served itself, and
+stops on its own 20 minutes after the last dashboard tab is closed. Your logs and results are kept in
+`Documents/elevendash` (or the folder named by `--dir` or `ELEVENDASH_HOME`); **Settings** shows where and opens it.
 
 ## What it looks like
 
@@ -83,14 +117,15 @@ A switch at the top turns the whole dashboard from your matches against the AI t
 
 ## Try it without a Quest
 
+The demo is online at https://glki6.github.io/elevendash/demo/. To build it yourself:
+
 ```
-pip install -e .                  (see Install below)
 elevendash demo
 ```
 
 This writes `elevendash-demo/`: seven sessions of made-up matches, four against the AI and three online, built into a dashboard at
 `elevendash-demo/site/index.html`. The logs are generated (`src/elevendash/sample.py`) and hold no account data.
-The same demo is online at https://glki6.github.io/elevendash/demo/.
+`elevendash --dir elevendash-demo app` opens it in the app.
 
 ## Against the AI, and against people online
 
@@ -125,9 +160,10 @@ elevendash redact logs/ALL-01.05.2026.6.30.00.PM.log redacted.log
 ```
 
 The only network requests elevendash makes are two read-only calls to your own Quest on your own network
-(`/getListing` and `/downloadFile`). It never uploads to the headset or deletes anything there. See `SECURITY.md`.
+(`/getListing` and `/downloadFile`). It never uploads to the headset or deletes anything there. The app's server
+listens on this computer only (127.0.0.1). See `SECURITY.md`.
 
-## Install
+## From source
 
 Python 3.10 or newer. No other packages are needed for the dashboard.
 
@@ -139,7 +175,12 @@ python -m venv .venv
 pip install -e .
 ```
 
-## Use
+`packaging/windows/build.ps1` builds the Windows app with PyInstaller (`.github/workflows/release.yml` does it for
+each release).
+
+## Command line
+
+Everything the app does also works as commands, for scripts and for people who prefer a terminal:
 
 ```
 elevendash init ~/eleven                      a private folder for your logs and results
@@ -167,6 +208,7 @@ No Wi-Fi sharing? Copy the `ALL-*.log` files off the headset any other way (USB 
 | `elevendash site [--out FILE] [--no-videos] [--theme dark\|light] [--lang en\|zh]` | Write the dashboard (`site/index.html`) |
 | `elevendash pdf [--out FILE] [--theme dark\|light] [--lang en\|zh]` | Print the dashboard to a PDF (needs Chrome, Edge or Chromium) |
 | `elevendash update [--offline]` | fetch + build + report + site |
+| `elevendash app [--shortcut] [--no-browser] [--port N]` | The dashboard in your browser with an Import button; `--shortcut` adds it to the Start menu and desktop (Windows) |
 | `elevendash config [hand=auto\|right\|left] [theme=dark\|light] [lang=en\|zh]` | Show or change the workspace settings |
 | `elevendash demo [DIR]` | A workspace of made-up matches and its dashboard |
 | `elevendash redact LOG OUT` | A copy of a log without account, people or location data |
@@ -207,6 +249,8 @@ recording up with the log by the sound of the ball, so every point on the dashbo
 | `src/elevendash/voice.py` | The wording for matches against people: every sentence that names the AI or an AI level, reworded by rule |
 | `src/elevendash/site.py`, `pdf.py` | The single-file dashboard and its PDF |
 | `src/elevendash/fetch.py`, `cli.py`, `workspace.py` | Getting logs, the command line, where your data lives |
+| `src/elevendash/app.py`, `web/app.*`, `web/welcome.html` | The app: a local server, the Import bar above the dashboard, notes kept in the workspace |
+| `packaging/windows/` | The Windows app (PyInstaller) and its release notes |
 | `src/elevendash/sample.py`, `redact.py` | Generated logs for the demo and tests; redacted copies of real logs |
 | `tests/` | `python -m unittest discover -s tests` |
 | `youtube/` | Optional video uploads and highlight reels |
