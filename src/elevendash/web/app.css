@@ -37,6 +37,16 @@ html[lang="zh-Hant"] .ed-app div[data-l=zh],html[lang="zh-Hant"] .ed-welcome [da
 .ed-app-dim{margin-left:auto;font-size:12px}
 .ed-app-log{margin:10px 0 0;padding:10px 12px;max-height:12em;overflow:auto;font:12px/1.5 ui-monospace,Consolas,monospace;
   color:var(--color-fg-muted);background:var(--color-bg);border:1px solid var(--color-border-line);border-radius:8px;white-space:pre-wrap}
+.ed-app-phone{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-start;border-top:1px solid var(--color-border-line);padding-top:10px}
+.ed-app-phone-text{flex:1 1 280px;min-width:0;display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--color-fg-muted)}
+.ed-app-phone-text small{font-size:12px;max-width:72ch}
+.ed-app-phone-text code{font-size:12px;color:var(--color-fg);overflow-wrap:anywhere}
+.ed-app-phone-steps{margin:4px 0 0}
+.ed-app-phone-btns{display:flex;flex-wrap:wrap;gap:4px 16px}
+.ed-app-check{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--color-fg);cursor:pointer}
+.ed-app-check input{width:18px;height:18px;margin:0;accent-color:var(--chart-0)}
+.ed-app-qr{width:184px;max-width:100%;flex:0 0 auto;border-radius:8px;overflow:hidden;line-height:0}
+.ed-app-qr svg{width:100%;height:auto;display:block}
 .ed-app [hidden]{display:none!important}
 @media print{.ed-app{display:none}}
 html.pdf .ed-app{display:none}

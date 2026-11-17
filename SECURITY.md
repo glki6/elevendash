@@ -9,6 +9,13 @@ The app (`elevendash app`) runs a small web server for your browser. It listens 
 whose Host is not its own address, and answers its import, settings and notes calls only when they carry a key that
 is new each time it starts and is known only to the pages it served.
 
+The phone link (**Settings › Phone**) is off until you turn it on. Then a second server listens on this computer's
+Tailscale address only (100.64.0.0/10), so only devices signed in to your tailnet can reach it, over Tailscale's
+encrypted connection; it is never on your Wi-Fi or the internet. Every request to it must also carry the phone key,
+from the link or QR code or from the cookie the first visit leaves (HttpOnly, SameSite=Strict). **New link** makes a
+new key and the old link stops working. From the phone you can import and change settings, but not open folders, make
+shortcuts or change the phone link, and the phone is never told where your files are.
+
 ## Reporting a problem
 
 Please report privately anything that could expose someone's data, for example:

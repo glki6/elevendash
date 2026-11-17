@@ -9,7 +9,9 @@
     imp: $('ed-import'), files: $('ed-files'), input: $('ed-file-input'), msg: $('ed-msg'), setBtn: $('ed-set-btn'),
     set: $('ed-set'), help: $('ed-help'), log: $('ed-log'), quest: $('ed-quest'), hand: $('ed-hand'), theme: $('ed-theme'),
     lang: $('ed-lang'), setMsg: $('ed-set-msg'), home: $('ed-home'), folder: $('ed-folder'), shortcut: $('ed-shortcut'),
-    rebuild: $('ed-rebuild'), version: $('ed-version'),
+    rebuild: $('ed-rebuild'), version: $('ed-version'), phone: $('ed-phone'), phoneOn: $('ed-phone-on'),
+    phoneBody: $('ed-phone-body'), phoneUrl: $('ed-phone-url'), phoneCopy: $('ed-phone-copy'), phoneNew: $('ed-phone-new'),
+    phoneStartRow: $('ed-phone-startup-row'), phoneStart: $('ed-phone-startup'), phoneMsg: $('ed-phone-msg'), phoneQr: $('ed-phone-qr'),
   };
   let last = null;            // the last status
   let seq = null;             // jobs finished when this page first asked
@@ -90,8 +92,11 @@
 
   const render = (s) => {
     last = s;
-    bar.home.textContent = s.home;
-    document.querySelectorAll('.ed-home-text').forEach((el) => (el.textContent = s.home));
+    // on the phone the bar leaves out what only makes sense at the computer: its folders, shortcuts and the phone link
+    bar.home.textContent = s.home || '';
+    bar.home.parentElement.hidden = bar.folder.hidden = !s.home;
+    if (s.home) document.querySelectorAll('.ed-home-text').forEach((el) => (el.textContent = s.home));
+    bar.phone.hidden = !!s.remote;
     bar.version.textContent = 'elevendash ' + s.version;
     bar.shortcut.hidden = !s.shortcut;
     bar.rebuild.hidden = !s.logs;
@@ -178,9 +183,61 @@
     start('files');
   });
 
+  // the phone link (Settings, on the computer only): a second address on this computer's Tailscale IP
+  let phoneTimer = 0;
+  const showPhone = (v) => {
+    clearTimeout(phoneTimer);
+    bar.phoneOn.checked = v.on;
+    bar.phoneBody.hidden = bar.phoneQr.hidden = !v.listening;
+    bar.phoneUrl.textContent = v.url;
+    bar.phoneQr.innerHTML = v.qr;              // an SVG this app drew itself (qr.py)
+    bar.phoneStartRow.hidden = !v.startup_possible;
+    bar.phoneStart.checked = v.startup;
+    if (v.on && !v.listening) {
+      if (v.error) say(bar.phoneMsg, `Not ready: ${v.error}. Is Tailscale on? Trying again every half minute.`, `尚未就緒：${v.error}。Tailscale 開著嗎？每半分鐘會再試一次。`, 'bad');
+      else say(bar.phoneMsg, 'Starting…', '正在啟動…');
+      if (!bar.set.hidden) phoneTimer = setTimeout(loadPhone, 3000);
+    } else if (!bar.phoneMsg.classList.contains('ok')) {
+      bar.phoneMsg.textContent = '';
+    }
+  };
+  const loadPhone = async () => {
+    if (last && last.remote) return;
+    try {
+      showPhone(await A.api('GET', '/api/phone'));
+    } catch (e) {
+      say(bar.phoneMsg, e.message, e.message, 'bad');
+    }
+  };
+  const setPhone = async (body, en, z) => {
+    bar.phoneMsg.className = 'ed-app-msg';
+    try {
+      const v = await A.api('POST', '/api/phone', body);
+      if (en) say(bar.phoneMsg, en, z, 'ok');
+      showPhone(v);
+    } catch (e) {
+      say(bar.phoneMsg, e.message, e.message, 'bad');
+      loadPhone();
+    }
+  };
+  bar.phoneOn.addEventListener('change', () => setPhone({on: bar.phoneOn.checked}));
+  bar.phoneNew.addEventListener('click', () => setPhone({new_key: true}, 'New link made. Scan the code again on your phone.', '已建立新連結。請在手機上再掃描一次。'));
+  bar.phoneStart.addEventListener('change', () => setPhone({startup: bar.phoneStart.checked},
+    bar.phoneStart.checked ? 'It will start when you sign in to Windows.' : 'It will no longer start with Windows.',
+    bar.phoneStart.checked ? '登入 Windows 時會自動啟動。' : '不再隨 Windows 啟動。'));
+  bar.phoneCopy.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(bar.phoneUrl.textContent);
+      say(bar.phoneMsg, 'Link copied.', '已複製連結。', 'ok');
+    } catch (e) {
+      getSelection().selectAllChildren(bar.phoneUrl);
+    }
+  });
+
   const openSettings = (focusQuest) => {
     bar.set.hidden = false;
     bar.setBtn.setAttribute('aria-expanded', 'true');
+    loadPhone();
     if (focusQuest) bar.quest.focus();
   };
   bar.setBtn.addEventListener('click', () => {
@@ -189,6 +246,9 @@
     bar.set.hidden = !open;
     bar.setBtn.setAttribute('aria-expanded', String(open));
     bar.setMsg.textContent = '';
+    bar.phoneMsg.textContent = '';
+    bar.phoneMsg.className = 'ed-app-msg';
+    if (open) loadPhone();
   });
   bar.set.addEventListener('submit', async (e) => {
     e.preventDefault();

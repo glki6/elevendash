@@ -8,13 +8,18 @@ Nothing is hosted anywhere and nothing leaves this computer, except those reads 
 The server answers only this computer, only pages it served itself (a per-run key in the page; requests from other
 websites are refused), and stops on its own a while after the last dashboard tab is closed. Starting it again while it
 runs just opens the browser on the running one. Match notes are kept in the workspace (notes.json), not in the browser.
+
+With the phone link on (Settings › Phone), a second server listens on this computer's Tailscale address and asks for
+the phone key on every request; see "the phone, over Tailscale" below.
 """
 import datetime
 import http.server
+import ipaddress
 import json
 import os
 import secrets
 import shutil
+import socket
 import socketserver
 import subprocess
 import sys
@@ -24,7 +29,7 @@ import urllib.parse
 import urllib.request
 import webbrowser
 
-from . import __version__, cli, fetch, report, workspace
+from . import __version__, cli, fetch, qr, report, workspace
 from .page import LANGS, THEMES
 from .site import TITLE, tokens_css
 from .page import look as read_look
@@ -115,6 +120,13 @@ class App:
         self.seen = time.monotonic()
         self.server = None
         self.page_cache = (None, None)       # (mtime, html)
+        self.phone_server = None
+        self.phone_where = {}
+        self.phone_port = 0
+        self.phone_error = ''
+        self.phone_lock = threading.Lock()
+        self.phone_trying = False
+        self.stopping = False
 
     # ---- jobs -------------------------------------------------------------------------------------------------
     def start_job(self, kind, **kw):
@@ -202,12 +214,14 @@ class App:
         return out
 
     # ---- state ------------------------------------------------------------------------------------------------
-    def status(self):
+    def status(self, remote=False):
         c = self.ws.config()
         v = self.job.view()
         v.update({'quest': c.get('quest', ''), 'last_import': c.get('last_import', ''), 'logs': cli.log_count(self.ws),
-                  'built': self.built(), 'home': self.ws.root, 'settings': {k: c.get(k, SETTINGS[k][0]) for k in SETTINGS},
-                  'shortcut': os.name == 'nt', 'version': __version__})
+                  'built': self.built(), 'settings': {k: c.get(k, SETTINGS[k][0]) for k in SETTINGS},
+                  'version': __version__, 'remote': remote, 'phone': bool(self.phone_server)})
+        if not remote:            # where things are on the computer is the computer's business
+            v.update({'home': self.ws.root, 'shortcut': os.name == 'nt'})
         return v
 
     def save_settings(self, body):
@@ -305,11 +319,14 @@ class App:
         with open(state, 'w', encoding='utf-8') as f:
             json.dump({'port': self.port, 'pid': os.getpid()}, f)
         threading.Thread(target=self._watch_idle, daemon=True).start()
+        self.start_phone()
         if self.open_browser:
             threading.Timer(0.3, lambda: webbrowser.open(self.url())).start()
         try:
             self.server.serve_forever(poll_interval=0.5)
         finally:
+            self.stopping = True
+            self.stop_phone()
             self.server.server_close()
             try:
                 with open(state, encoding='utf-8') as f:
@@ -321,9 +338,138 @@ class App:
     def _watch_idle(self):
         while True:
             time.sleep(15)
-            if self.idle_exit and not self.job.busy and time.monotonic() - self.seen > self.idle_exit:
+            # with the phone link on, the app stays up: the phone may ask at any time
+            if self.idle_exit and not self.job.busy and not self.phone_server and time.monotonic() - self.seen > self.idle_exit:
                 threading.Thread(target=self.server.shutdown, daemon=True).start()
                 return
+
+    # ---- the phone, over Tailscale ------------------------------------------------------------------------------
+    # With the phone link on, a second server listens on this computer's Tailscale address only, so only devices
+    # signed in to the same tailnet reach it, over Tailscale's encrypted connection. Each request must also carry
+    # the phone key: in the link (?k=, which the QR code holds) or in the cookie the first visit leaves.
+    def phone_key(self):
+        c = self.ws.config()
+        if not c.get('phone_key'):
+            self.ws.set(phone_key=secrets.token_urlsafe(16))
+            c = self.ws.config()
+        return c['phone_key']
+
+    def phone_url(self):
+        if not self.phone_server:
+            return ''
+        host = self.phone_where.get('name') or self.phone_where['ip']
+        return f'http://{host}:{self.phone_port}/?k={self.phone_key()}'
+
+    def phone_hosts(self):
+        w = self.phone_where or {}
+        return {f'{h}:{self.phone_port}'.lower() for h in (w.get('ip'), w.get('name')) if h}
+
+    def start_phone(self):
+        """Listen on the Tailscale address when the phone link is on. Tailscale may come up after this app (at login,
+        say), so it keeps trying every half minute until it can."""
+        with self.phone_lock:
+            if self.phone_server or not self.ws.config().get('phone') or self.phone_trying:
+                return
+            self.phone_trying = True
+        threading.Thread(target=self._phone_loop, daemon=True, name='elevendash-phone').start()
+
+    def _phone_loop(self):
+        try:
+            while self.ws.config().get('phone') and not self.phone_server and not self.stopping:
+                where = tailscale()
+                if where:
+                    try:
+                        self._bind_phone(where)
+                        return
+                    except OSError as e:
+                        self.phone_error = f'could not listen on {where["ip"]}: {e}'
+                else:
+                    self.phone_error = 'Tailscale is not running on this computer'
+                for _ in range(30):
+                    if self.stopping or not self.ws.config().get('phone'):
+                        return
+                    time.sleep(1)
+        finally:
+            self.phone_trying = False
+
+    def _bind_phone(self, where):
+        handler = type('PhoneHandler', (Handler,), {'app': self, 'remote': True})
+        want = int(self.ws.config().get('phone_port') or PORT)
+        try:
+            srv = Server((where['ip'], want), handler)
+        except OSError:
+            srv = Server((where['ip'], 0), handler)
+        self.phone_where, self.phone_port, self.phone_error = where, srv.server_address[1], ''
+        self.phone_key()
+        if self.ws.config().get('phone_port') != self.phone_port:
+            self.ws.set(phone_port=self.phone_port)
+        self.phone_server = srv
+        threading.Thread(target=srv.serve_forever, kwargs={'poll_interval': 0.5}, daemon=True).start()
+
+    def stop_phone(self):
+        srv, self.phone_server = self.phone_server, None
+        if srv:
+            srv.shutdown()
+            srv.server_close()
+
+    def set_phone(self, body):
+        """Turn the phone link on or off, make a new key (the old link stops working), start with Windows or not."""
+        if 'on' in body:
+            self.ws.set(phone=bool(body['on']))
+            if body['on']:
+                self.start_phone()
+                for _ in range(40):                 # give it a moment, so the answer can carry the link
+                    if self.phone_server or self.phone_error:
+                        break
+                    time.sleep(0.1)
+            else:
+                self.stop_phone()
+        if body.get('new_key'):
+            self.ws.set(phone_key=secrets.token_urlsafe(16))
+        if 'startup' in body:
+            set_startup(self.ws.root, bool(body['startup']))
+        return self.phone_view()
+
+    def phone_view(self):
+        url = self.phone_url()
+        return {'on': bool(self.ws.config().get('phone')), 'url': url, 'qr': qr.svg(url) if url else '',
+                'listening': bool(self.phone_server), 'error': '' if self.phone_server else self.phone_error,
+                'startup': startup_exists(), 'startup_possible': os.name == 'nt'}
+
+
+def tailscale():
+    """This computer's Tailscale address and name ({'ip', 'name'}), or None when Tailscale is not up."""
+    exe = shutil.which('tailscale')
+    if not exe:
+        for p in (r'C:\Program Files\Tailscale\tailscale.exe', '/Applications/Tailscale.app/Contents/MacOS/Tailscale'):
+            if os.path.isfile(p):
+                exe = p
+                break
+    flags = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
+    if exe:
+        try:
+            r = subprocess.run([exe, 'status', '--json'], capture_output=True, text=True, timeout=10, creationflags=flags)
+            me = json.loads(r.stdout).get('Self') or {}
+            ips = [ip for ip in me.get('TailscaleIPs') or [] if is_tailscale_ip(ip)]
+            if ips and me.get('Online', True):
+                return {'ip': ips[0], 'name': (me.get('DNSName') or '').rstrip('.').lower()}
+        except (OSError, ValueError, subprocess.SubprocessError):
+            pass
+    try:       # no command line to ask: an address of this computer in Tailscale's range
+        for info in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET):
+            if is_tailscale_ip(info[4][0]):
+                return {'ip': info[4][0], 'name': ''}
+    except OSError:
+        pass
+    return None
+
+
+def is_tailscale_ip(ip):
+    try:
+        a = ipaddress.ip_address(ip)
+    except ValueError:
+        return False
+    return a.version == 4 and a in ipaddress.ip_network('100.64.0.0/10')
 
 
 class Server(socketserver.ThreadingMixIn, http.server.HTTPServer):
@@ -333,28 +479,51 @@ class Server(socketserver.ThreadingMixIn, http.server.HTTPServer):
 
 class Handler(http.server.BaseHTTPRequestHandler):
     app = None
+    remote = False              # True on the phone server (the Tailscale address)
     server_version = 'elevendash'
     sys_version = ''
+    COOKIE = 'ed_phone'
 
     def log_message(self, *args):
         pass
 
     # Only this computer, and only pages this server served: the Host must be ours (no other name pointed at
-    # 127.0.0.1), and every /api call must carry the page's key, which no other website can read.
+    # 127.0.0.1), and every /api call must carry the page's key, which no other website can read. On the phone
+    # server: the Host must be this computer's Tailscale address or name, and every request must carry the phone key.
+    def _hosts(self):
+        if self.remote:
+            return self.app.phone_hosts()
+        return {f'127.0.0.1:{self.app.port}', f'localhost:{self.app.port}'}
+
     def _host_ok(self):
-        host = (self.headers.get('Host') or '').lower()
-        return host in (f'127.0.0.1:{self.app.port}', f'localhost:{self.app.port}')
+        return (self.headers.get('Host') or '').lower() in self._hosts()
+
+    def _query_key(self):
+        return urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query).get('k', [''])[0]
+
+    def _cookie_key(self):
+        for part in (self.headers.get('Cookie') or '').split(';'):
+            name, _, value = part.strip().partition('=')
+            if name == self.COOKIE:
+                return value
+        return ''
+
+    def _phone_ok(self):
+        key = self.app.phone_key()
+        return any(k and secrets.compare_digest(k, key) for k in (self._query_key(), self._cookie_key()))
 
     def _api_ok(self):
         if not secrets.compare_digest(self.headers.get('X-Elevendash', ''), self.app.token):
             return False
         origin = self.headers.get('Origin')
-        return origin in (None, f'http://127.0.0.1:{self.app.port}', f'http://localhost:{self.app.port}')
+        return origin is None or origin.lower() in {'http://' + h for h in self._hosts()}
 
-    def _send(self, code, body, ctype='application/json; charset=utf-8'):
+    def _send(self, code, body, ctype='application/json; charset=utf-8', cookie=None):
         data = body if isinstance(body, bytes) else (json.dumps(body, ensure_ascii=False) if not isinstance(body, str) else body).encode('utf-8')
         self.send_response(code)
         self.send_header('Content-Type', ctype)
+        if cookie:
+            self.send_header('Set-Cookie', f'{self.COOKIE}={cookie}; Path=/; Max-Age=31536000; HttpOnly; SameSite=Strict')
         self.send_header('Content-Length', str(len(data)))
         self.send_header('Cache-Control', 'no-store')
         self.send_header('X-Content-Type-Options', 'nosniff')
@@ -376,7 +545,11 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if not self._host_ok():
             return self._send(403, {'error': 'host'})
         path = urllib.parse.urlsplit(self.path).path
-        if path == '/api/hello':                 # no key: lets a second start find this one
+        if self.remote and not self._phone_ok():
+            if path.startswith('/api/'):
+                return self._send(403, {'error': 'phone key'})
+            return self._send(403, OLD_LINK, 'text/html; charset=utf-8')
+        if path == '/api/hello' and not self.remote:      # no key: lets a second start find this one
             return self._send(200, {'app': 'elevendash', 'root': self.app.ws.root})
         if path.startswith('/api/'):
             if not self._api_ok():
@@ -385,7 +558,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return self._api(path)
         if self.command in ('GET', 'HEAD') and path in ('/', '/index.html'):
             self.app.seen = time.monotonic()
-            return self._send(200, self.app.page(), 'text/html; charset=utf-8')
+            cookie = self.app.phone_key() if self.remote and self._query_key() else None
+            return self._send(200, self.app.page(), 'text/html; charset=utf-8', cookie=cookie)
         if path == '/favicon.ico':
             return self._send(204, b'')
         return self._send(404, {'error': 'not found'})
@@ -394,30 +568,36 @@ class Handler(http.server.BaseHTTPRequestHandler):
         app, m = self.app, self.command
         try:
             if path == '/api/status' and m == 'GET':
-                return self._send(200, app.status())
+                return self._send(200, app.status(self.remote))
             if path == '/api/import' and m == 'POST':
                 kind = self._body(4096).get('source', 'quest')
                 if kind not in ('quest', 'files', 'rebuild'):
                     raise ValueError('source must be quest, files or rebuild')
                 started = app.start_job(kind)
-                return self._send(202 if started else 409, app.status())
+                return self._send(202 if started else 409, app.status(self.remote))
             if path == '/api/upload' and m == 'POST':
                 name = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query).get('name', [''])[0]
                 app.receive_log(name, self.rfile, int(self.headers.get('Content-Length') or 0))
                 return self._send(200, {'ok': True})
             if path == '/api/settings' and m == 'POST':
                 job = app.save_settings(self._body(4096))
-                return self._send(200, dict(app.status(), started=job))
+                return self._send(200, dict(app.status(self.remote), started=job))
             if path == '/api/notes' and m == 'GET':
                 return self._send(200, app.read_notes())
             if path == '/api/notes' and m == 'PUT':
                 app.write_notes(self._body(MAX_NOTES))
                 return self._send(200, {'ok': True})
+            if path in ('/api/shortcut', '/api/folder', '/api/phone') and self.remote:
+                return self._send(403, {'error': 'only on the computer itself'})
             if path == '/api/shortcut' and m == 'POST':
                 return self._send(200, {'made': make_shortcuts(app.ws.root)})
             if path == '/api/folder' and m == 'POST':
                 open_folder(app.ws.root)
                 return self._send(200, {'ok': True})
+            if path == '/api/phone' and m == 'GET':
+                return self._send(200, app.phone_view())
+            if path == '/api/phone' and m == 'POST':
+                return self._send(200, app.set_phone(self._body(4096)))
             return self._send(404, {'error': 'not found'})
         except (ValueError, OSError, RuntimeError) as e:
             return self._send(400, {'error': str(e)})
@@ -433,6 +613,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
     def do_PUT(self):
         self._route()
+
+
+OLD_LINK = ('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,'
+            'initial-scale=1"><title>Eleven Dashboard</title></head><body style="font:16px/1.5 system-ui,sans-serif;'
+            'background:#0b1018;color:#eef1f5;padding:24px;max-width:36em">'
+            '<h1 style="font-size:22px">This link needs a new key</h1><p>Open Eleven Dashboard on your computer, then '
+            '<b>Settings › Phone</b>, and scan the code there again.</p>'
+            '<p lang="zh-Hant">請在電腦上開啟 Eleven 儀表板，前往<b>設定 › 手機</b>，再掃描一次那裡的條碼。</p></body></html>')
 
 
 # ---- the bar above the dashboard ------------------------------------------------------------------------------
@@ -473,22 +661,45 @@ def welcome_page(token):
 
 
 # ---- the desktop -------------------------------------------------------------------------------------------------
-def launch_command(root):
+def launch_command(root, extra=()):
     """What a shortcut runs: the packaged app itself, or this Python without a console window."""
     if getattr(sys, 'frozen', False):
-        return sys.executable, ['--dir', root, 'app']
+        return sys.executable, ['--dir', root, 'app', *extra]
     exe = sys.executable
     if os.name == 'nt':
         w = os.path.join(os.path.dirname(exe), 'pythonw.exe')
         exe = w if os.path.isfile(w) else exe
-    return exe, ['-m', 'elevendash', '--dir', root, 'app']
+    return exe, ['-m', 'elevendash', '--dir', root, 'app', *extra]
 
 
-def make_shortcuts(root, places=('Programs', 'Desktop')):
+def _startup_link():
+    if os.name != 'nt':
+        return None
+    base = os.path.join(os.environ.get('APPDATA', ''), 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup')
+    return os.path.join(base, APP_NAME + '.lnk')
+
+
+def startup_exists():
+    p = _startup_link()
+    return bool(p and os.path.isfile(p))
+
+
+def set_startup(root, on):
+    """Start the app (without a browser tab) when you sign in to Windows, so the phone link works all day."""
+    p = _startup_link()
+    if not p:
+        raise RuntimeError('starting with the computer is set up on Windows only')
+    if on:
+        make_shortcuts(root, places=('Startup',), extra=('--no-browser',))
+    elif os.path.isfile(p):
+        os.remove(p)
+
+
+def make_shortcuts(root, places=('Programs', 'Desktop'), extra=()):
     """A Start menu and a desktop shortcut named Eleven Dashboard (Windows). Returns the paths made."""
     if os.name != 'nt':
         raise RuntimeError('shortcuts are made on Windows only; elsewhere run "elevendash app"')
-    exe, args = launch_command(root)
+    exe, args = launch_command(root, extra)
     env = dict(os.environ, ED_TARGET=exe, ED_ARGS=subprocess.list2cmdline(args), ED_DIR=root, ED_NAME=APP_NAME,
                ED_PLACES=','.join(places))
     script = ("$sh=New-Object -ComObject WScript.Shell;"

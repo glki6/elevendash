@@ -59,6 +59,15 @@ The app is a small web server that only this computer can reach. It answers only
 stops on its own 20 minutes after the last dashboard tab is closed. Your logs and results are kept in
 `Documents/elevendash` (or the folder named by `--dir` or `ELEVENDASH_HOME`); **Settings** shows where and opens it.
 
+### On your phone
+
+With [Tailscale](https://tailscale.com) on the computer and the phone (signed in to the same account), open
+**Settings**, tick **Open on my phone** and scan the code with the phone's camera. If Windows asks whether to allow the
+app on private networks, allow it. The phone gets the same dashboard and the same Import button, from anywhere your
+phone has a connection, as long as the computer is on with the app running: tick **Start with Windows** to keep it
+running from sign-in (it doesn't open a browser tab then, and while the phone link is on it doesn't stop by itself).
+**New link** ends the old one, for a lost phone. See `SECURITY.md`.
+
 ## What it looks like
 
 ### Session report

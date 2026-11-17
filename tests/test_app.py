@@ -137,11 +137,115 @@ class AppServer(unittest.TestCase):
         self.assertEqual(app.running_port(self.ws), self.port)
 
 
-class Launch(unittest.TestCase):
+class Phone(unittest.TestCase):
+    """The phone server, bound here to 127.0.0.1 in place of a Tailscale address: it needs the phone key."""
+    NAME = 'pc.example.ts.net'
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = tempfile.TemporaryDirectory()
+        cls.ws = workspace.init(os.path.join(cls.tmp.name, 'ws'))
+        cls.app = app.App(cls.ws, port=0, idle_exit=0, open_browser=False).bind()
+        cls.thread = threading.Thread(target=cls.app.serve, daemon=True)
+        cls.thread.start()
+        cls.app._bind_phone({'ip': '127.0.0.1', 'name': cls.NAME})
+        cls.pport = cls.app.phone_port
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.app.server.shutdown()
+        cls.thread.join(10)
+        cls.tmp.cleanup()
+
+    def call(self, method, path, port=None, host=None, token=True, cookie=None):
+        port = port or self.pport
+        c = http.client.HTTPConnection('127.0.0.1', port, timeout=30)
+        h = {'Host': host or (f'{self.NAME}:{port}' if port == self.pport else f'127.0.0.1:{port}')}
+        if token:
+            h['X-Elevendash'] = self.app.token
+        if cookie:
+            h['Cookie'] = f'other=1; ed_phone={cookie}'
+        body = None
+        if isinstance(path, tuple):
+            path, data = path
+            body = json.dumps(data).encode('utf-8')
+        c.request(method, path, body=body, headers=h)
+        r = c.getresponse()
+        data = r.read().decode('utf-8')
+        c.close()
+        return r.status, r.getheader('Set-Cookie') or '', data
+
+    def test_1_key_needed(self):
+        code, _, html = self.call('GET', '/')
+        self.assertEqual(code, 403)
+        self.assertIn('new key', html)
+        self.assertNotIn(self.app.token, html)
+        self.assertEqual(self.call('GET', '/api/status')[0], 403)
+        self.assertEqual(self.call('GET', '/api/status', cookie='wrong')[0], 403)
+        self.assertEqual(self.call('GET', '/?k=' + self.app.phone_key(), host='evil.example:%d' % self.pport)[0], 403)
+
+    def test_2_link_sets_cookie(self):
+        key = self.app.phone_key()
+        code, cookie, html = self.call('GET', '/?k=' + key)
+        self.assertEqual(code, 200)
+        self.assertIn('ed_phone=' + key, cookie)
+        self.assertIn('HttpOnly', cookie)
+        self.assertIn('SameSite=Strict', cookie)
+        code, _, body = self.call('GET', '/api/status', cookie=key)
+        self.assertEqual(code, 200)
+        s = json.loads(body)
+        self.assertTrue(s['remote'])
+        self.assertNotIn('home', s)                         # where the data lives stays on the computer
+        for path in ('/api/phone', '/api/folder', '/api/shortcut'):
+            self.assertEqual(self.call('POST', path, cookie=key)[0], 403, path)
+        self.assertEqual(self.call('GET', '/api/phone', cookie=key)[0], 403)
+
+    def test_3_computer_side(self):
+        code, _, body = self.call('GET', '/api/phone', port=self.app.port)
+        self.assertEqual(code, 200)
+        v = json.loads(body)
+        self.assertTrue(v['listening'])
+        self.assertTrue(v['url'].startswith(f'http://{self.NAME}:{self.pport}/?k='))
+        self.assertTrue(v['qr'].startswith('<svg'))
+        s = json.loads(self.call('GET', '/api/status', port=self.app.port)[2])
+        self.assertFalse(s['remote'])
+        self.assertIn('home', s)
+
+    def test_4_new_key_ends_old_link(self):
+        old = self.app.phone_key()
+        code, _, body = self.call('POST', ('/api/phone', {'new_key': True}), port=self.app.port)
+        self.assertEqual(code, 200)
+        self.assertNotIn(old, json.loads(body)['url'])
+        self.assertEqual(self.call('GET', '/api/status', cookie=old)[0], 403)
+        self.assertEqual(self.call('GET', '/api/status', cookie=self.app.phone_key())[0], 200)
+
+
+class Bits(unittest.TestCase):
     def test_command(self):
         exe, args = app.launch_command('C:/somewhere')
         self.assertTrue(os.path.isabs(exe))
         self.assertEqual(args[-3:], ['--dir', 'C:/somewhere', 'app'])
+        self.assertEqual(app.launch_command('C:/somewhere', ('--no-browser',))[1][-4:], ['--dir', 'C:/somewhere', 'app', '--no-browser'])
+
+    def test_tailscale_range(self):
+        self.assertTrue(app.is_tailscale_ip('100.98.1.2'))
+        self.assertTrue(app.is_tailscale_ip('100.64.0.1'))
+        self.assertFalse(app.is_tailscale_ip('100.128.0.1'))
+        self.assertFalse(app.is_tailscale_ip('192.168.1.20'))
+        self.assertFalse(app.is_tailscale_ip('fd7a:115c:a1e0::1'))
+        self.assertFalse(app.is_tailscale_ip('nonsense'))
+
+    def test_qr(self):
+        # checked against the qrcode library (byte mode, level M, the same mask): 288 codes, none differing
+        import hashlib
+        from elevendash import qr
+        m = qr.matrix('http://pc.example.ts.net:8737/?k=abcdefghijklmnopqrstuv', mask=3)
+        self.assertEqual(len(m), 33)
+        bits = ''.join('1' if c else '0' for row in m for c in row)
+        self.assertEqual(hashlib.sha256(bits.encode()).hexdigest(), 'f2ffe8113b7bcc5ae889916474d14fd4bf0167d25386fccd70c83129a8b95e2d')
+        self.assertTrue(qr.svg('x').startswith('<svg'))
+        with self.assertRaises(ValueError):
+            qr.matrix('x' * 300)
 
 
 if __name__ == '__main__':

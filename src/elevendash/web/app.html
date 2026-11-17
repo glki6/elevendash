@@ -54,6 +54,23 @@
       <button type="button" class="ed-app-link" id="ed-rebuild"><span data-l="en">Rebuild from the logs</span><span data-l="zh" lang="zh-Hant">從記錄重新建立</span></button>
       <span class="ed-app-dim" id="ed-version"></span>
     </div>
+    <div class="ed-app-phone" id="ed-phone" hidden>
+      <div class="ed-app-phone-text">
+        <label class="ed-app-check"><input type="checkbox" id="ed-phone-on"> <span><span data-l="en">Open on my phone</span><span data-l="zh" lang="zh-Hant">在手機上開啟</span></span></label>
+        <small><span data-l="en">Through Tailscale: only your own devices, signed in to your tailnet, can reach it. Windows may ask whether to allow the app on private networks; allow it.</span><span data-l="zh" lang="zh-Hant">透過 Tailscale：只有登入你 tailnet 的自己裝置能連上。Windows 可能會詢問是否允許此程式使用私人網路，請允許。</span></small>
+        <div id="ed-phone-body" hidden>
+          <p class="ed-app-phone-steps"><span data-l="en">Scan the code with your phone's camera (Tailscale on), or open this link on it:</span><span data-l="zh" lang="zh-Hant">用手機相機掃描條碼（開著 Tailscale），或在手機上開啟這個連結：</span></p>
+          <code id="ed-phone-url"></code>
+          <div class="ed-app-phone-btns">
+            <button type="button" class="ed-app-link" id="ed-phone-copy"><span data-l="en">Copy link</span><span data-l="zh" lang="zh-Hant">複製連結</span></button>
+            <button type="button" class="ed-app-link" id="ed-phone-new"><span data-l="en">New link (the old one stops working)</span><span data-l="zh" lang="zh-Hant">新連結（舊的會失效）</span></button>
+          </div>
+          <label class="ed-app-check" id="ed-phone-startup-row" hidden><input type="checkbox" id="ed-phone-startup"> <span><span data-l="en">Start with Windows, so the phone link works whenever this computer is on</span><span data-l="zh" lang="zh-Hant">隨 Windows 啟動，電腦開著時手機連結就能用</span></span></label>
+        </div>
+        <span class="ed-app-msg" id="ed-phone-msg" role="status"></span>
+      </div>
+      <div class="ed-app-qr" id="ed-phone-qr" hidden></div>
+    </div>
   </form>
   <pre class="ed-app-log" id="ed-log" hidden></pre>
 </header>
