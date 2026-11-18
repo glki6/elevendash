@@ -196,7 +196,7 @@ class Phone(unittest.TestCase):
         s = json.loads(body)
         self.assertTrue(s['remote'])
         self.assertNotIn('home', s)                         # where the data lives stays on the computer
-        for path in ('/api/phone', '/api/folder', '/api/shortcut'):
+        for path in ('/api/phone', '/api/folder', '/api/shortcut', '/api/quit'):
             self.assertEqual(self.call('POST', path, cookie=key)[0], 403, path)
         self.assertEqual(self.call('GET', '/api/phone', cookie=key)[0], 403)
 
@@ -205,7 +205,7 @@ class Phone(unittest.TestCase):
         self.assertEqual(code, 200)
         v = json.loads(body)
         self.assertTrue(v['listening'])
-        self.assertTrue(v['url'].startswith(f'http://{self.NAME}:{self.pport}/?k='))
+        self.assertTrue(v['url'].startswith(f'http://127.0.0.1:{self.pport}/?k='))     # the address: browsers force https on ts.net
         self.assertTrue(v['qr'].startswith('<svg'))
         s = json.loads(self.call('GET', '/api/status', port=self.app.port)[2])
         self.assertFalse(s['remote'])
@@ -218,6 +218,13 @@ class Phone(unittest.TestCase):
         self.assertNotIn(old, json.loads(body)['url'])
         self.assertEqual(self.call('GET', '/api/status', cookie=old)[0], 403)
         self.assertEqual(self.call('GET', '/api/status', cookie=self.app.phone_key())[0], 200)
+
+    def test_5_quit(self):
+        self.assertEqual(self.call('POST', '/api/quit', port=self.app.port)[0], 200)
+        self.thread.join(10)
+        self.assertFalse(self.thread.is_alive())
+        self.assertIsNone(self.app.phone_server)            # the phone server stops with it
+        self.assertFalse(os.path.exists(os.path.join(self.ws.root, app.STATE)))
 
 
 class Bits(unittest.TestCase):

@@ -9,7 +9,7 @@
     imp: $('ed-import'), files: $('ed-files'), input: $('ed-file-input'), msg: $('ed-msg'), setBtn: $('ed-set-btn'),
     set: $('ed-set'), help: $('ed-help'), log: $('ed-log'), quest: $('ed-quest'), hand: $('ed-hand'), theme: $('ed-theme'),
     lang: $('ed-lang'), setMsg: $('ed-set-msg'), home: $('ed-home'), folder: $('ed-folder'), shortcut: $('ed-shortcut'),
-    rebuild: $('ed-rebuild'), version: $('ed-version'), phone: $('ed-phone'), phoneOn: $('ed-phone-on'),
+    rebuild: $('ed-rebuild'), version: $('ed-version'), quit: $('ed-quit'), phone: $('ed-phone'), phoneOn: $('ed-phone-on'),
     phoneBody: $('ed-phone-body'), phoneUrl: $('ed-phone-url'), phoneCopy: $('ed-phone-copy'), phoneNew: $('ed-phone-new'),
     phoneStartRow: $('ed-phone-startup-row'), phoneStart: $('ed-phone-startup'), phoneMsg: $('ed-phone-msg'), phoneQr: $('ed-phone-qr'),
   };
@@ -96,7 +96,7 @@
     bar.home.textContent = s.home || '';
     bar.home.parentElement.hidden = bar.folder.hidden = !s.home;
     if (s.home) document.querySelectorAll('.ed-home-text').forEach((el) => (el.textContent = s.home));
-    bar.phone.hidden = !!s.remote;
+    bar.phone.hidden = bar.quit.hidden = !!s.remote;
     bar.version.textContent = 'elevendash ' + s.version;
     bar.shortcut.hidden = !s.shortcut;
     bar.rebuild.hidden = !s.logs;
@@ -267,6 +267,18 @@
     }
   });
   bar.folder.addEventListener('click', () => A.api('POST', '/api/folder').catch(() => {}));
+  bar.quit.addEventListener('click', async () => {
+    try {
+      await A.api('POST', '/api/quit');
+      clearTimeout(timer);
+      stopped = true;
+      [bar.imp, bar.files, bar.rebuild].forEach((b) => (b.disabled = true));
+      say(bar.setMsg, 'Stopped. Open Eleven Dashboard again to use it.', '已結束。要使用時請重新開啟 Eleven 儀表板。', 'ok');
+      say(bar.msg, 'The app has stopped.', '程式已停止。', 'bad');
+    } catch (err) {
+      say(bar.setMsg, err.message, err.message, 'bad');
+    }
+  });
   bar.shortcut.addEventListener('click', async () => {
     try {
       await A.api('POST', '/api/shortcut');

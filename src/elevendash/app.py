@@ -330,8 +330,9 @@ class App:
             self.server.server_close()
             try:
                 with open(state, encoding='utf-8') as f:
-                    if json.load(f).get('pid') == os.getpid():
-                        os.remove(state)
+                    mine = json.load(f).get('pid') == os.getpid()
+                if mine:                    # closed first: Windows cannot delete an open file
+                    os.remove(state)
             except (OSError, ValueError):
                 pass
 
@@ -357,8 +358,9 @@ class App:
     def phone_url(self):
         if not self.phone_server:
             return ''
-        host = self.phone_where.get('name') or self.phone_where['ip']
-        return f'http://{host}:{self.phone_port}/?k={self.phone_key()}'
+        # The address, not the MagicDNS name: ts.net is on browsers' HSTS preload list, so they turn http://….ts.net
+        # into https://, which this plain server does not speak. Tailscale already encrypts the connection.
+        return f'http://{self.phone_where["ip"]}:{self.phone_port}/?k={self.phone_key()}'
 
     def phone_hosts(self):
         w = self.phone_where or {}
@@ -587,8 +589,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
             if path == '/api/notes' and m == 'PUT':
                 app.write_notes(self._body(MAX_NOTES))
                 return self._send(200, {'ok': True})
-            if path in ('/api/shortcut', '/api/folder', '/api/phone') and self.remote:
+            if path in ('/api/shortcut', '/api/folder', '/api/phone', '/api/quit') and self.remote:
                 return self._send(403, {'error': 'only on the computer itself'})
+            if path == '/api/quit' and m == 'POST':
+                if app.job.busy:
+                    raise ValueError('an import is running; stop when it is done')
+                self._send(200, {'ok': True})
+                threading.Thread(target=app.server.shutdown, daemon=True).start()
+                return None
             if path == '/api/shortcut' and m == 'POST':
                 return self._send(200, {'made': make_shortcuts(app.ws.root)})
             if path == '/api/folder' and m == 'POST':
