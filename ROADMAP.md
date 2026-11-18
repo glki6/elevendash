@@ -126,6 +126,16 @@ line win more points than drives across the table is tactics.
 - **Unchanged:** local first, the single-file dashboard and PDF, AI and online kept apart, English and Traditional
   Chinese.
 
+### How it will be done
+
+1. Audit the current page: every section and control, both themes and languages, AI and online, phone width and the
+   PDF.
+2. Write a design spec (`DESIGN.md`) from interface guidelines and from how training and analysis apps lay out dense
+   data, keeping only what suits a data-heavy coaching page.
+3. Draw three clearly different visual concepts, review them, and build one.
+4. No new runtime dependencies and no framework change: the page stays plain HTML and JavaScript with the bundled D3.
+   Every number stays as it is worked out today.
+
 ## Already there
 
 - **Which stroke to play against a kind of ball:** "Your strokes against these balls" in Find shots.
