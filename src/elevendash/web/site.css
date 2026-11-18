@@ -31,7 +31,7 @@ html.pdf .er-sechead{break-after:avoid}
 html.pdf #match{break-before:page}
 /* "Matches you pick" and the match card are tools to use on the page, and your notes are yours alone: the file keeps
    to the report */
-html.pdf #pick,html.pdf #match-card,html.pdf #match-note,html.pdf .er-unotes{display:none}
+html.pdf #pick,html.pdf #match-card,html.pdf #session-card,html.pdf #match-note,html.pdf .er-unotes{display:none}
 /* a two-column block of cards never splits across pages (Chrome overlaps the cards when it does); each fits on one */
 html.pdf .er-grid{break-inside:avoid}
 /* a list laid out as a grid loses its height when it runs over a page: print the plan as plain blocks */

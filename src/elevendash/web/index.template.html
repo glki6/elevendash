@@ -646,6 +646,21 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
       <p class="er-muted">Rally speed <span data-draw="v" data-ds="sessions" data-k="{S}" data-f="rallySpeed" data-fmt="n1">—</span> m/s (<span data-draw="v" data-ds="sessions" data-k="{S}" data-f="base_rallySpeed" data-fmt="n1">—</span> before), <span data-draw="v" data-ds="sessions" data-k="{S}" data-f="rallyLength" data-fmt="n1">—</span> shots per point (<span data-draw="v" data-ds="sessions" data-k="{S}" data-f="base_rallyLength" data-fmt="n1">—</span> before).</p>
     </div>
   </div>
+  <details class="er-card er-mcard" id="session-card">
+    <summary>Session card <span class="er-muted">A picture of this session to send or post.</span></summary>
+    <div class="er-mcbody">
+      <div class="er-mcprev" data-draw="session-card" data-nomorph data-source="sessions"></div>
+      <div class="er-mcside">
+        <p class="er-muted">The card shows the session picked above, in this page's look and language: matches, games and points won, every match, and the session against your average before it. It has no names, links or videos in it.</p>
+        <div><button class="er-btn" type="button" id="scard-save" aria-describedby="scard-note"><svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true"><path d="M6.5 1v7.2M3.4 5.6l3.1 3.1 3.1-3.1M1.5 11.5h10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Save picture</button></div>
+        <p class="er-muted" id="scard-note">A PNG picture, 1080 by 1350 pixels.</p>
+        <p class="er-muted" id="scard-busy" role="status" hidden>Making the picture…</p>
+        <p class="er-muted" id="scard-done" role="status" hidden>Saved.</p>
+        <p class="er-muted" id="scard-none" role="status" hidden>Saving a file is not available in this view.</p>
+        <p class="er-muted" id="scard-fail" role="status" hidden>The picture could not be made. Try again.</p>
+      </div>
+    </div>
+  </details>
 </section>
 
 <section class="er-section" id="match">
@@ -3585,7 +3600,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     };
     const c = {bg: col('var(--color-bg)'), panel: col('var(--color-panel)'), fg: col('var(--color-fg)'), muted: col('var(--color-fg-muted)'),
       line: col('var(--er-line)'), track: col('var(--er-track)'), you: col('var(--er-you)'), ai: col('var(--er-ai)'),
-      youTint: col('var(--er-you-tint)'), aiTint: col('var(--er-ai-tint)')};
+      youTint: col('var(--er-you-tint)'), aiTint: col('var(--er-ai-tint)'), ok: col('var(--color-ok)'), bad: col('var(--color-bad)')};
     probe.style.fontFamily = 'var(--er-display)';
     c.display = getComputedStyle(probe).fontFamily;
     c.text = getComputedStyle(page).fontFamily;
@@ -3752,67 +3767,173 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       + ` font-family="${esc(c.text)}">${o.join('')}</svg>`;
   };
 
-  const box = document.getElementById('match-card');
-  let drawnKey = null;          // the match the card was last drawn for: a new match clears the last save's status
-  const draw = (el) => {
-    if (box && !box.open) return el.replaceChildren();
-    const m = ER.matchRow(), pts = m ? pointsOf(m.key) : null;
-    if (!m || !pts) return ER.wait(el, ['matches', 'points']);
-    if (m.key !== drawnKey) {
-      drawnKey = m.key;
-      ['note', 'busy', 'done', 'none', 'fail'].forEach((n) => {
-        const e = document.getElementById('card-' + n);
-        if (e) e.hidden = n !== 'note';
-      });
-    }
-    el.innerHTML = build(m, pts, look());
-  };
-  dash.draw('match-card', draw);
-  if (box) box.addEventListener('toggle', () => box.querySelectorAll('[data-draw="match-card"]').forEach(draw));
+  // Session card: the session picked in the session report, the same size and look as the match card: matches, games
+  // and points won, every match of the session, and the session against your average before it.
+  const CMP = [
+    ['pointRate', 'Points won'], ['servePointRate', 'Points won on your serve'], ['returnPointRate', "Points won on the AI's serve"],
+    ['servesLanded', 'Serves that landed'], ['returnsLanded', 'Returns that landed'], ['rallyLanded', 'Rally shots that landed'],
+    ['reach3Rate', 'Points won once a point reaches a third shot'], ['missShare', 'Lost points that ended on your own miss'],
+  ];
+  const buildSession = (s, ms, c) => {
+    const o = [], D = {font: c.display, weight: 600}, ai = ER.vs() === 'AI';
+    const title = ai ? ER.tr('Session {0} against the AI, level {1}', s.n, s.levels) : ER.tr('Online session {0}', s.n);
+    face = c.text;
+    o.push(rect(0, 0, W, H, 0, c.bg));
 
-  // Save picture: the SVG drawn on a canvas, as a PNG
-  const btn = document.getElementById('card-save');
-  if (!btn) return;
-  const show = (k) => ['note', 'busy', 'done', 'none', 'fail'].forEach((n) => {
-    const e = document.getElementById('card-' + n);
-    if (e) e.hidden = n !== k;
-  });
-  const png = (svg) => new Promise((res, rej) => {
-    const img = new Image();
-    img.onload = () => {
-      const cv = document.createElement('canvas');
-      cv.width = W;
-      cv.height = H;
-      cv.getContext('2d').drawImage(img, 0, 0, W, H);
-      cv.toBlob((b) => (b ? res(b) : rej(new Error('no picture'))), 'image/png');
-    };
-    img.onerror = () => rej(new Error('the picture could not be drawn'));
-    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
-  });
-  let busy = false;
-  btn.addEventListener('click', async () => {
-    if (busy) return;
-    const m = ER.matchRow(), pts = m ? pointsOf(m.key) : null;
-    if (!m || !pts) return show('fail');
-    busy = true;
-    btn.setAttribute('aria-busy', 'true');
-    show('busy');
-    try {
-      const blob = await png(build(m, pts, look()));
-      const filename = `Eleven-match-${m.date}-${ER.F.time(m.start).replace(':', '')}.png`;
-      let saver = typeof dash.save === 'function' ? dash : null;
-      if (!saver && window.claude && window.claude.use) saver = await window.claude.use('downloads');
-      if (!saver) show('none');
-      else {
-        await saver.save({filename, data: blob});
-        show('done');
-      }
-    } catch (e) {
-      show(e && e.code === 'declined' ? 'note' : 'fail');
+    // the top: which session, and when
+    o.push(`<circle cx="${P + 9}" cy="84" r="9" fill="${c.ai}"/>`);
+    o.push(text(P + 30, 92, ER.tr('Eleven Table Tennis').toUpperCase(), {size: 22, fill: c.muted, ls: 3}));
+    o.push(text(R, 92, `${longDate(s.date)} · ${ER.F.time(s.start)}–${ER.F.time(s.end)}`, {size: 22, fill: c.muted, anchor: 'end'}));
+    o.push(text(P, 150, title, {size: 40, fill: c.fg, ...D}));
+
+    // matches won, large; games and points won (and the rating online) beside it
+    o.push(rect(P, 186, R - P, 224, 28, c.panel));
+    o.push(text(P + 40, 252, ER.tr('Matches won'), {size: 24, fill: c.muted}));
+    o.push(`<text x="${P + 34}" y="382" style="${style({size: 132, fill: c.fg, ...D})}">${s.wins}`
+      + `<tspan fill="${c.muted}" font-weight="300" dx="8">–</tspan><tspan fill="${c.muted}" dx="8">${s.losses}</tspan></text>`);
+    const of = (a, b) => ER.tr('{0} of {1}', a, b);
+    const side = [[ER.tr('Games won'), ER.F.pct(s.gameRate), of(s.gamesWon, s.games)],
+      [ER.tr('Points won'), ER.F.pct(s.pointRate), of(s.pointsWonN, s.points)]];
+    if (!ai && s.rankedMatches) side.push([ER.tr('Rating'), (s.ratingChange > 0 ? '+' : s.ratingChange < 0 ? '−' : '') + Math.abs(s.ratingChange),
+      `${ER.F.rating(s.ratingStart)} → ${ER.F.rating(s.ratingEnd)}`]);
+    else side.push([ER.tr('Rally speed'), ER.F.n1(s.rallySpeed), 'm/s']);
+    side.forEach(([label, v, sub], i) => {
+      const y = 246 + i * 62;
+      o.push(text(560, y + 8, label, {size: 24, fill: c.muted}));
+      o.push(text(R - 40, y + 11, v, {size: 34, fill: c.fg, anchor: 'end', ...D}));
+      o.push(text(R - 40 - c.width(v, 34, c.display, 600) - 12, y + 10, sub, {size: 20, fill: c.muted, anchor: 'end'}));
+    });
+
+    // every match: a tile each, blue for a win and orange for a loss, with the games
+    o.push(rect(P, 430, R - P, 300, 28, c.panel));
+    o.push(text(P + 40, 478, ER.tr('Match by match'), {size: 24, fill: c.fg, weight: 600}));
+    const n = ms.length, rows = n <= 6 ? 1 : n <= 12 ? 2 : n <= 20 ? 3 : 4, cols = Math.max(1, Math.ceil(n / rows));
+    const GX = 12, X0 = P + 40, TW = (R - 40 - X0 - GX * (cols - 1)) / cols, TH = (204 - GX * (rows - 1)) / rows;
+    ms.forEach((m, i) => {
+      const won = m.result === 'Won', x = X0 + (i % cols) * (TW + GX), y = 502 + Math.floor(i / cols) * (TH + GX);
+      o.push(rect(x, y, TW, TH, 14, won ? c.youTint : c.aiTint));
+      o.push(rect(x, y + 12, 5, TH - 24, 2.5, won ? c.you : c.ai));
+      // tall tiles: "Match n" above, the games below, the result between; short ones: the result alone
+      const roomy = TH >= 90, big = roomy ? Math.min(44, TH * 0.36, TW * 0.3) : Math.min(52, TH * 0.45, TW * 0.3);
+      const by = roomy ? y + TH * 0.63 : y + TH / 2 + big * 0.36;
+      if (roomy) o.push(text(x + 20, y + 30, ER.tr('Match {0}', m.sessionMatch), {size: 18, fill: c.muted}));
+      o.push(text(x + TW / 2 + 2, by, `${m.gamesWon}–${m.gamesLost}`, {size: big, fill: c.fg, anchor: 'middle', ...D}));
+      const games = String(m.score || '').replace(/-/g, '–').split(/,\s*/).join('  ');
+      if (roomy && c.width(games, 16) <= TW - 24) o.push(text(x + TW / 2 + 2, y + TH - 12, games, {size: 16, fill: c.muted, anchor: 'middle'}));
+    });
+
+    // the session against your average before it at its level: a bar for the session, a tick for before, the change
+    o.push(text(P, 790, ER.tr('This session against your average before it'), {size: 24, fill: c.fg, weight: 600}));
+    const lw = ER.tr('Your average before'), lwW = c.width(lw, 18);
+    if (s.basePoints != null) {
+      o.push(text(R, 788, lw, {size: 18, fill: c.muted, anchor: 'end'}));
+      o.push(rect(R - lwW - 16, 772, 3, 22, 1.5, c.fg));
+    } else {
+      o.push(text(P, 822, ER.tr('Your first session at level {0} in the logs, so there is no earlier average to set it against.', s.level), {size: 18, fill: c.muted}));
     }
-    busy = false;
-    btn.setAttribute('aria-busy', 'false');
+    const LBL = 440, BX = P + LBL + 16, BW = R - 210 - BX, top = s.basePoints != null ? 846 : 870;
+    CMP.forEach(([f, label], i) => {
+      const y = top + i * ((1230 - top) / (CMP.length - 1)), v = s[f], base = s['base_' + f], d = s['d_' + f], mk = s['m_' + f];
+      const words = ER.tr(label), lsz = Math.min(20, (20 * LBL) / Math.max(1, c.width(words, 20)));
+      o.push(text(P, y + 7, words, {size: Math.round(lsz * 10) / 10, fill: c.muted}));
+      o.push(rect(BX, y - 6, BW, 12, 6, c.track));
+      if (v != null) o.push(rect(BX, y - 6, (BW * Math.max(0, Math.min(100, v))) / 100, 12, 6, c.you));
+      if (base != null) o.push(rect(BX + (BW * Math.max(0, Math.min(100, base))) / 100 - 1.5, y - 13, 3, 26, 1.5, c.fg));
+      o.push(text(R - 96, y + 10, v == null ? '—' : ER.F.pct(v), {size: 26, fill: c.fg, anchor: 'end', ...D}));
+      if (d != null) {
+        const chg = `${d > 0 ? '▲ +' : d < 0 ? '▼ −' : ''}${ER.fmt1(Math.abs(d))}`;
+        o.push(text(R, y + 8, chg, {size: 20, fill: mk > 0 ? c.ok : mk < 0 ? c.bad : c.muted, anchor: 'end', weight: mk ? 600 : 400}));
+      }
+    });
+
+    o.push(rect(P, 1274, R - P, 1, 0, c.line));
+    o.push(text(P, 1306, ER.tr("Made with elevendash from the game's own logs"), {size: 18, fill: c.muted}));
+    const label = `${title}, ${longDate(s.date)}: ${ER.tr('Matches won')} ${s.wins}–${s.losses}`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)}"`
+      + ` font-family="${esc(c.text)}">${o.join('')}</svg>`;
+  };
+  const sessionMatches = (s) => {
+    const rows = ER.rows('matches');
+    return rows ? rows.filter((r) => r.session === s.key) : null;
+  };
+
+  // Each card: its box, what it is drawn from, its file name and its status lines (prefix-note, -busy, -done, ...)
+  const CARDS = [
+    {id: 'match-card', ids: 'card', need: ['matches', 'points'], name: 'match',
+      get: () => {
+        const m = ER.matchRow(), pts = m ? pointsOf(m.key) : null;
+        return m && pts ? {key: m.key, date: m.date, start: m.start, svg: (c) => build(m, pts, c)} : null;
+      }},
+    {id: 'session-card', ids: 'scard', need: ['sessions', 'matches'], name: 'session',
+      get: () => {
+        const s = ER.sessionRow(), ms = s ? sessionMatches(s) : null;
+        return s && ms ? {key: s.key, date: s.date, start: s.start, svg: (c) => buildSession(s, ms, c)} : null;
+      }},
+  ];
+  const STATES = ['note', 'busy', 'done', 'none', 'fail'];
+  CARDS.forEach((card) => {
+    const box = document.getElementById(card.id);
+    const show = (k) => STATES.forEach((n) => {
+      const e = document.getElementById(card.ids + '-' + n);
+      if (e) e.hidden = n !== k;
+    });
+    let drawnKey = null;          // what the card was last drawn for: a new match or session clears the last save's status
+    const draw = (el) => {
+      if (box && !box.open) return el.replaceChildren();
+      const it = card.get();
+      if (!it) return ER.wait(el, card.need);
+      if (it.key !== drawnKey) {
+        drawnKey = it.key;
+        show('note');
+      }
+      el.innerHTML = it.svg(look());
+    };
+    dash.draw(card.id, draw);
+    if (box) box.addEventListener('toggle', () => box.querySelectorAll(`[data-draw="${card.id}"]`).forEach(draw));
+
+    // Save picture: the SVG drawn on a canvas, as a PNG
+    const btn = document.getElementById(card.ids + '-save');
+    if (!btn) return;
+    let busy = false;
+    btn.addEventListener('click', async () => {
+      if (busy) return;
+      const it = card.get();
+      if (!it) return show('fail');
+      busy = true;
+      btn.setAttribute('aria-busy', 'true');
+      show('busy');
+      try {
+        const blob = await png(it.svg(look()));
+        const filename = `Eleven-${card.name}-${it.date}-${ER.F.time(it.start).replace(':', '')}.png`;
+        let saver = typeof dash.save === 'function' ? dash : null;
+        if (!saver && window.claude && window.claude.use) saver = await window.claude.use('downloads');
+        if (!saver) show('none');
+        else {
+          await saver.save({filename, data: blob});
+          show('done');
+        }
+      } catch (e) {
+        show(e && e.code === 'declined' ? 'note' : 'fail');
+      }
+      busy = false;
+      btn.setAttribute('aria-busy', 'false');
+    });
   });
+
+  function png(svg) {
+    return new Promise((res, rej) => {
+      const img = new Image();
+      img.onload = () => {
+        const cv = document.createElement('canvas');
+        cv.width = W;
+        cv.height = H;
+        cv.getContext('2d').drawImage(img, 0, 0, W, H);
+        cv.toBlob((b) => (b ? res(b) : rej(new Error('no picture'))), 'image/png');
+      };
+      img.onerror = () => rej(new Error('the picture could not be drawn'));
+      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    });
+  }
 })();
 </script>
 

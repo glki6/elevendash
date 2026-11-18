@@ -163,6 +163,7 @@ KEEP = {
     'Every item is at the level of the matches you won. Time to move the targets.',
     'At or close to the level of the matches you won. Nothing to drill here; keep doing it.',
     'Match against the AI, level {0}',
+    'Session {0} against the AI, level {1}',
     'AI matches',
     '{name} (level {lv})',
     '{1}, level {2}',

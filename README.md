@@ -94,6 +94,13 @@ The same point in 3D, with the spin of the ball shown in the corner. "Deciding s
 
 A picture of any match to send or post. It has no names, links or videos in it.
 
+### Session card
+
+![A card for one session: matches won 5 to 3, games and points won, a tile for every match, and eight bars setting the session against your average before it.](pages/img/session-card.png)
+
+The same for a whole session, under the session report: matches, games and points won, every match, and the session
+against your average before it.
+
 ### Training plan
 
 ![Training plan items, each with a drill, what it is worth in points a match, and a chart of the number against its target.](pages/img/plan.png)
@@ -140,7 +147,7 @@ This writes `elevendash-demo/`: seven sessions of made-up matches, four against 
 
 elevendash is built for matches against the AI, and nearly all of its testing is on them. Against the AI, the game
 logs every ball contact by both players, so everything on the dashboard works: the replay, rally and serve analysis,
-the 11hero metrics for both sides, the match card and the training plan.
+the 11hero metrics for both sides, the match and session cards and the training plan.
 
 Matches against people online are the dashboard's second side. A switch at the top of the page turns all of it from
 your AI matches to your online ones: the same session report, training plan, shot explorer and breakdowns, added up
