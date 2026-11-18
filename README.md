@@ -289,7 +289,8 @@ Early, and so far tested on one player's logs (Quest 3S, AI levels 75 to 100, a 
 logs. The dashboard opens on your main level (the AI level with the most points in your last five sessions), and its
 findings are written from your numbers by fixed rules in `builddata.py`. Online play: see "Against the AI, and against
 people online" above. Left-handed play is handled but has only been tested by forcing `hand=left` on right-handed logs. Logs
-from other headsets, game versions and online matches are welcome (redacted): see `CONTRIBUTING.md`.
+from other headsets, game versions and online matches are welcome (redacted): see `CONTRIBUTING.md`. What comes next
+is in [`ROADMAP.md`](ROADMAP.md).
 
 ## Backstory
 
