@@ -264,6 +264,38 @@
       check('then and now: earlier matches at the same levels, a row for each measure', !bad, seen + ' matches then' + (bad ? '; wrong:' + bad : ''));
     }
 
+    // 4e. training journal: an entry is kept, marked on the charts, opens its before and since, and goes again
+    {
+      const kept = ['account', 'browser', 'workspace'].includes(ER.notes.where());
+      if (!kept) {
+        check('journal: an entry is kept, marked and compared', q('#journal-add').disabled, 'notes cannot be kept here: the form is off');
+      } else {
+        const days = ER.rows('days'), day = days[Math.floor(days.length / 2)].date, before = ER.journal.list().length;
+        q('#journal-date').value = day;
+        q('#journal-kind').value = 'equipment';
+        q('#journal-text').value = 'Page test entry';
+        q('#journal-form').dispatchEvent(new Event('submit', {cancelable: true, bubbles: true}));
+        await wait(200);
+        const list = ER.journal.list(), e = list.find((x) => x.text === 'Page test entry');
+        const li = () => qa('[data-draw="journal-list"] > li');
+        const added = list.length === before + 1 && !!e && e.kind === 'equipment' && e.date === day && li().length === list.length
+          && qa('#chart-progress .er-jmark').length >= 1 && q('#journal-text').value === '';
+        li().find((x) => x.textContent.includes('Page test entry')).querySelector('[data-act="effect"]').click();
+        await wait(150);
+        const t = ER.journalEffect();
+        const fair = !!t && t.since.every((r) => r.date >= day) && t.before.every((r) => r.date < day) && !q('#journal-effect').hidden
+          && (t.rows ? t.rows.length === 12 && qa('[data-draw="journal-effect-rows"] tr').length === 12 : q('#journal-effect-table').hidden);
+        const del = () => li().find((x) => x.textContent.includes('Page test entry')).querySelector('[data-act="remove"]');
+        del().click();
+        await wait(60);
+        del().click();
+        await wait(200);
+        const gone = ER.journal.list().length === before && q('#journal-effect').hidden && qa('#chart-progress .er-jmark').length === before;
+        check('journal: an entry is kept, marked and compared', added && fair && gone,
+          (t ? t.before.length + ' matches before, ' + t.since.length + ' since' : 'no comparison') + (added ? '' : '; not added') + (fair ? '' : '; wrong table') + (gone ? '' : '; not removed'));
+      }
+    }
+
     // 5. open a shot of another match from the list (of another month, when there is one): the match changes, its
     //    replays are unpacked, and the point asked for is the one on the table
     const list = ER.shots.chosen().list;

@@ -118,10 +118,12 @@ class AppServer(unittest.TestCase):
     def test_6_notes(self):
         self.assertEqual(self.call('GET', '/api/notes')[1], {})
         notes = {'2026-01-29 15:00:00': {'text': 'Long backhand returns', 'at': '2026-01-29T16:00:00'},
-                 'empty': {'text': '   '}, 'junk': 5}
+                 'empty': {'text': '   '}, 'junk': 5,
+                 'journal|2026-01-29|equipment|k1': {'text': 'New rubber', 'at': '2026-01-29T16:05:00'}}      # a journal entry
         self.assertEqual(self.call('PUT', '/api/notes', notes)[0], 200)
         got = self.call('GET', '/api/notes')[1]
-        self.assertEqual(list(got), ['2026-01-29 15:00:00'])
+        self.assertEqual(list(got), ['2026-01-29 15:00:00', 'journal|2026-01-29|equipment|k1'])
+        self.assertEqual(got['journal|2026-01-29|equipment|k1']['text'], 'New rubber')
         self.assertEqual(got['2026-01-29 15:00:00']['text'], 'Long backhand returns')
         self.assertTrue(os.path.isfile(os.path.join(self.ws.root, app.NOTES)))
 

@@ -347,6 +347,27 @@
 .er-wkpair{display:flex;flex-wrap:wrap;gap:2px 8px;align-items:baseline}
 .er-wkpair>i{font-style:normal;color:var(--color-fg-muted)}
 @media (max-width:560px){.er-wk>li{grid-template-columns:minmax(0,1fr) auto}.er-wk>li>button{grid-column:1 / -1;justify-self:start}}
+.er-jform{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:end}
+.er-jform>div{display:grid;gap:4px;min-width:0}
+.er-jform>.er-jtext{flex:1 1 240px}
+.er-jform input{box-sizing:border-box;width:100%;min-width:0;font:inherit;font-size:var(--cds-font-size-body);padding:5px 9px;border:1px solid var(--color-border-line);border-radius:8px;background-color:var(--color-panel);color:var(--color-fg)}
+.er-jform input:focus-visible{outline:2px solid var(--er-you);outline-offset:1px}
+.er-jform :disabled{opacity:.55;cursor:not-allowed}
+.er-jwhere{margin:0;font-size:var(--cds-font-size-caption)}
+.er-jwhere b{color:var(--color-fg);font-weight:var(--cds-font-weight-medium)}
+.er-jlist{list-style:none;margin:0;padding:0;display:grid}
+.er-jlist>li{display:grid;grid-template-columns:5.5em minmax(0,1fr) auto;gap:6px 14px;align-items:center;padding:10px 0;border-top:1px solid var(--er-line)}
+.er-jlist>li.er-muted{display:block}
+.er-jlist>li.on{box-shadow:inset 3px 0 0 var(--er-you);padding-left:10px}
+.er-jlist>li>div{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;min-width:0}
+.er-jlist>li>div:last-child{gap:8px;justify-content:flex-end}
+.er-jwhen{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--color-fg-muted);font-size:var(--cds-font-size-caption)}
+.er-jkind{font-size:var(--cds-font-size-caption);padding:1px 8px;border-radius:999px;background:var(--er-track);white-space:nowrap}
+.er-jeffect{display:grid;gap:10px;padding-top:14px;border-top:1px solid var(--er-line)}
+.er-jbar{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;justify-content:space-between}
+.er-jbar h4{margin:0}
+.er-jline{display:block}
+@media (max-width:560px){.er-jlist>li{grid-template-columns:minmax(0,1fr)}.er-jlist>li>div:last-child{justify-content:flex-start}}
 .er-patctl{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center}
 #patterns-card{grid-template-columns:minmax(0,1fr)}
 .er-pat tbody tr.on th{color:inherit}
@@ -571,7 +592,10 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
         <li><a href="#shots-find">Find shots</a></li>
       </ol></li>
     <li><a href="#pick">Matches you pick</a></li>
-    <li><a href="#progress">Progress by day</a></li>
+    <li><a href="#progress">Progress by day</a>
+      <ol>
+        <li><a href="#journal">Training journal</a></li>
+      </ol></li>
     <li><a href="#form">Form and stamina</a>
       <ol>
         <li><a href="#form-rolling">Rolling results</a></li>
@@ -1015,6 +1039,28 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
     <div id="mini-rally"><h3>Your rally shots that landed</h3><div class="er-mini" data-draw="mini" data-f="rallyLanded" data-fmt="pct" data-source="days"></div></div>
     <div id="mini-speed"><h3>Your average rally speed (m/s)</h3><div class="er-mini" data-draw="mini" data-f="rallySpeed" data-fmt="n1" data-source="days"></div></div>
     <div id="mini-length"><h3>Shots per point</h3><div class="er-mini" data-draw="mini" data-f="rallyLength" data-fmt="n1" data-source="days"></div></div>
+  </div>
+  <div class="er-card" id="journal">
+    <h3>Training journal</h3>
+    <p class="er-muted">What the logs cannot know: a drill, a game setting, new equipment, a change of technique. Each entry is marked with a diamond on the chart above and on Rolling results.</p>
+    <form class="er-jform" id="journal-form" data-draw="journal-form">
+      <div><label class="er-label" for="journal-date">Day</label><input type="date" id="journal-date" required></div>
+      <div><label class="er-label" for="journal-kind">Kind</label><select class="dash-select" id="journal-kind"></select></div>
+      <div class="er-jtext"><label class="er-label" for="journal-text">What changed</label><input type="text" id="journal-text" required autocomplete="off"></div>
+      <button class="er-btn" type="submit" id="journal-add">Add entry</button>
+    </form>
+    <p class="er-muted er-jwhere" data-draw="journal-where" role="status"></p>
+    <ol class="er-jlist" data-draw="journal-list"></ol>
+    <div class="er-jeffect" id="journal-effect" hidden>
+      <div class="er-jbar">
+        <h4>Before and since</h4>
+        <div class="er-controls" data-v="ai"><span class="er-ctl" id="journal-level-label">AI level</span><div class="er-tabs" id="journal-level" role="group" aria-labelledby="journal-level-label" data-draw="level-tabs"></div></div>
+        <button class="er-btn" type="button" id="journal-effect-close">Close</button>
+      </div>
+      <p class="er-pstat" data-draw="journal-effect-head" data-source="match_sums" role="status"></p>
+      <div class="er-tablewrap" id="journal-effect-table"><table class="er-t er-then"><thead><tr><th>Measure</th><th>Before</th><th>Since</th><th>Change</th><th>Against the same balls</th></tr></thead><tbody data-draw="journal-effect-rows" data-source="match_sums"></tbody></table></div>
+    </div>
+    <details class="er-how"><summary>How to read this</summary><p class="er-muted">Write down the day something changed that the game cannot see. Before and since sets your matches from that day on against the four weeks before it, measure by measure and the surest moves first, as Then and now does in Matches you pick. A change is coloured when it is bigger than chance gives about one time in ten. It shows what moved after the change, not that the change caused it: other things change too, and you improve with play anyway. Give a new entry a few sessions before reading much into it.</p></details>
   </div>
 </section>
 
@@ -1670,7 +1716,8 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
   // where(): 'loading', 'account' (the dashboard's database), 'browser' (this browser's storage) or 'none'.
   ER.notes = (() => {
     const LS = 'elevendash.notes', MAX = 2000;
-    const DRAWS = ['match-note', 'match-select', 'session-matches', 'session-your-notes', 'pick-quick', 'pick-list'];
+    const DRAWS = ['match-note', 'match-select', 'session-matches', 'session-your-notes', 'pick-quick', 'pick-list',
+      'journal-form', 'journal-where', 'journal-list', 'journal-effect-head', 'journal-effect-rows', 'progress', 'form-chart'];
     const map = new Map();                  // match key -> {text, at}
     const st = {where: 'loading', version: 0};
     let col = null;
@@ -1776,6 +1823,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
       version: () => st.version,
       get: (k) => (map.has(k) ? map.get(k).text : ''),
       has: (k) => map.has(k),
+      entries: () => [...map],
       // Keep the note on match `key` (empty text removes it). Resolves once kept; rejects with {code} when not.
       save(key, text) {
         const t = String(text == null ? '' : text).slice(0, MAX);
@@ -1826,6 +1874,37 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
     };
     start();
     return api;
+  })();
+  // The training journal: dated entries the logs cannot know. They are kept with the match notes, under keys of their
+  // own (journal|<day>|<kind>|<id>), so they live wherever the notes do and never in a shared file.
+  ER.journal = (() => {
+    const KINDS = [['drill', ER.k('Drill')], ['setting', ER.k('Game setting')], ['equipment', ER.k('Equipment')], ['technique', ER.k('Technique')],
+      ['other', ER.k('Something else')]];
+    let memo = null;
+    const list = () => {       // oldest first
+      const v = ER.notes.version();
+      if (memo && memo.v === v) return memo.rows;
+      const rows = ER.notes.entries().filter(([k]) => k.startsWith('journal|')).map(([k, n]) => {
+        const part = k.split('|');
+        return {key: k, date: part[1] || '', kind: KINDS.some((x) => x[0] === part[2]) ? part[2] : 'other', text: n.text};
+      }).filter((e) => /^\d{4}-\d\d-\d\d$/.test(e.date)).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.key < b.key ? -1 : 1));
+      memo = {v, rows};
+      return rows;
+    };
+    const kindName = (k) => ER.tr((KINDS.find((x) => x[0] === k) || KINDS[KINDS.length - 1])[1]);
+    return {
+      kinds: KINDS, max: 200, list, kindName,
+      add: (date, kind, text) => ER.notes.save(`journal|${date}|${kind}|${Date.now().toString(36)}`, String(text).slice(0, 200)),
+      remove: (key) => ER.notes.save(key, ''),
+      line: (e) => `${ER.F.date(e.date)} · ${kindName(e.kind)}: ${e.text}`,
+      // on a chart: a dotted line with a diamond on top at each x
+      mark(svg, xs, y1, y2) {
+        xs.forEach((x) => {
+          svg.append('line').attr('x1', x).attr('x2', x).attr('y1', y1).attr('y2', y2).style('stroke', 'var(--color-fg)').style('stroke-opacity', 0.55).style('stroke-dasharray', '2 4');
+          svg.append('path').attr('class', 'er-jmark').attr('d', `M${x},${y1 - 5}l4.5,5l-4.5,5l-4.5,-5z`).style('fill', 'var(--color-fg)').style('stroke', 'var(--color-panel)').style('stroke-width', 1);
+        });
+      },
+    };
   })();
   // a small pencil, beside a match that has your note
   ER.noteMark = () => {
@@ -2961,6 +3040,17 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     return se ? (a / n - b / m) / se : 0;
   };
   const SAME = {retOk: 'R', rallyOk: ''};       // the measures that are about one shot: the role of the shots they count
+  // every measure with its value in two stretches of matches (totals s now and t then), the surest moves first
+  const moveRows = (s, t, nowRows, thenRows, balls) => RATES.concat(ENDS).map(([label, nf, df, up]) => {
+    const now = pc(s[nf] || 0, s[df]), then = pc(t[nf] || 0, t[df]);
+    const row = {label, nf, up, now, then, d: now == null || then == null ? null : r1(now - then), z: 0, g: 0, same: null};
+    if (row.d != null) {
+      row.z = zOf(s[nf] || 0, s[df], t[nf] || 0, t[df]);
+      row.g = gap(s[nf] || 0, s[df], t[nf] || 0, t[df]);
+    }
+    if (balls && nf in SAME) row.same = sameBalls(ballsOf(balls, nowRows, SAME[nf]), ballsOf(balls, thenRows, SAME[nf]));
+    return row;
+  }).sort((p, q) => Math.abs(q.z) - Math.abs(p.z));
   let thenMemo = null;
   const thenNow = () => {
     const a = pick();
@@ -2977,16 +3067,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       if (out.then.length) {
         const byKey = new Map(a.sums.map((r) => [r.key, r]));
         const s = a.sum, t = (out.sum = out.then.reduce((acc, r) => add(acc, byKey.get(r.key)), {}));
-        out.rows = RATES.concat(ENDS).map(([label, nf, df, up]) => {
-          const now = pc(s[nf] || 0, s[df]), then = pc(t[nf] || 0, t[df]);
-          const row = {label, nf, up, now, then, d: now == null || then == null ? null : r1(now - then), z: 0, g: 0, same: null};
-          if (row.d != null) {
-            row.z = zOf(s[nf] || 0, s[df], t[nf] || 0, t[df]);
-            row.g = gap(s[nf] || 0, s[df], t[nf] || 0, t[df]);
-          }
-          if (balls && nf in SAME) row.same = sameBalls(ballsOf(balls, a.rows, SAME[nf]), ballsOf(balls, out.then, SAME[nf]));
-          return row;
-        }).sort((p, q) => Math.abs(q.z) - Math.abs(p.z));
+        out.rows = moveRows(s, t, a.rows, out.then, balls);
         // the kind of rally ball whose share moved most (spin, side and speed; depth left aside)
         if (balls) {
           const share = (rows) => {
@@ -3042,32 +3123,33 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       b(ER.F.int(good + bad)), ER.F.int(t.rows.length), b(ER.F.int(good)), b(ER.F.int(bad))) : [ER.tr('None of the {0} measures moved clearly.', ER.F.int(t.rows.length))]));
     el.replaceChildren(...out);
   };
+  // a change in percentage points as a table cell, coloured when it is clear, and a measure as a table row
+  const moveCell = (d, g, up) => {
+    const td = ER.el('td');
+    if (d == null) {
+      td.textContent = '—';
+      return td;
+    }
+    const tone = g * (up ? 1 : -1);
+    const chg = ER.el('span', 'er-chg' + (tone > 0 ? ' good' : tone < 0 ? ' bad' : ''));
+    const arrow = ER.el('span', null, d > 0 ? '▲ ' : d < 0 ? '▼ ' : '');
+    arrow.setAttribute('aria-hidden', 'true');
+    chg.append(arrow, (d > 0 ? '+' : d < 0 ? '−' : '') + ER.fmt1(Math.abs(d)));
+    if (tone) chg.title = ER.tr(tone > 0 ? 'Clearly better.' : 'Clearly worse.');
+    td.appendChild(chg);
+    return td;
+  };
+  const moveTr = (r) => {
+    const tr = ER.el('tr'), th = ER.el('th', null, ER.tr(r.label));
+    th.scope = 'row';
+    const same = r.same ? moveCell(r.same.d, r.same.g, r.up) : ER.el('td', 'er-muted', r.nf in SAME ? ER.tr('too few balls in common') : '');
+    if (r.same) same.title = ER.tr('{0} of the balls you face now are of a kind you also faced then.', ER.F.pct(Math.round(1000 * r.same.cover) / 10));
+    tr.append(th, ER.el('td', null, ER.F.pct(r.then)), ER.el('td', 'er-strongcell', ER.F.pct(r.now)), moveCell(r.d, r.g, r.up), same);
+    return tr;
+  };
   thenDraws['then-rows'] = (tb) => {
     const t = thenNow();
-    if (!t || !t.rows) return tb.replaceChildren();
-    const move = (d, g, up) => {
-      const td = ER.el('td');
-      if (d == null) {
-        td.textContent = '—';
-        return td;
-      }
-      const tone = g * (up ? 1 : -1);
-      const chg = ER.el('span', 'er-chg' + (tone > 0 ? ' good' : tone < 0 ? ' bad' : ''));
-      const arrow = ER.el('span', null, d > 0 ? '▲ ' : d < 0 ? '▼ ' : '');
-      arrow.setAttribute('aria-hidden', 'true');
-      chg.append(arrow, (d > 0 ? '+' : d < 0 ? '−' : '') + ER.fmt1(Math.abs(d)));
-      if (tone) chg.title = ER.tr(tone > 0 ? 'Clearly better.' : 'Clearly worse.');
-      td.appendChild(chg);
-      return td;
-    };
-    tb.replaceChildren(...t.rows.map((r) => {
-      const tr = ER.el('tr'), th = ER.el('th', null, ER.tr(r.label));
-      th.scope = 'row';
-      const same = r.same ? move(r.same.d, r.same.g, r.up) : ER.el('td', 'er-muted', r.nf in SAME ? ER.tr('too few balls in common') : '');
-      if (r.same) same.title = ER.tr('{0} of the balls you face now are of a kind you also faced then.', ER.F.pct(Math.round(1000 * r.same.cover) / 10));
-      tr.append(th, ER.el('td', null, ER.F.pct(r.then)), ER.el('td', 'er-strongcell', ER.F.pct(r.now)), move(r.d, r.g, r.up), same);
-      return tr;
-    }));
+    tb.replaceChildren(...(t && t.rows ? t.rows.map(moveTr) : []));
   };
   thenDraws['then-mix'] = (el) => {
     const t = thenNow(), s = t && t.rows ? t.shift : null;
@@ -3076,6 +3158,143 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       ER.shots.ballName(s.key[0], s.key[1], s.key[2]), ER.F.pct(Math.round(s.then * 10) / 10), ER.F.pct(Math.round(s.now * 10) / 10)));
   };
   Object.keys(thenDraws).forEach((n) => dash.draw(n, thenDraws[n]));
+
+  // Training journal (the card under Progress by day): what the logs cannot know, as dated entries kept with your
+  // match notes. An entry opens a before-and-since table built like Then and now: the matches from its day on against
+  // the four weeks before it, at the level the tabs pick.
+  const J_DAYS = 28, J_KEPT = ['account', 'browser', 'workspace'];
+  const jst = {open: '', sure: '', said: ''};
+  let jMemo = null;
+  const journalEffect = () => {
+    const e = ER.journal.list().find((q) => q.key === jst.open) || null, x = index();
+    if (!e || !x) return null;
+    const sums = ER.rows('match_sums'), balls = ballsByMatch(), L = ER.level();
+    if (jMemo && jMemo.e === e && jMemo.x === x && jMemo.sums === sums && jMemo.balls === balls && jMemo.L === L) return jMemo;
+    const d0 = dayNum(e.date), everyone = ER.people();
+    const rows = x.ai.map((o) => x.ord.get(o)).filter((r) => everyone || r.level === L);
+    const out = {e, x, sums, balls, L, since: rows.filter((r) => r.date >= e.date), before: rows.filter((r) => r.date < e.date && d0 - dayNum(r.date) <= J_DAYS), rows: null};
+    if (sums && out.since.length && out.before.length) {
+      const byKey = new Map(sums.map((r) => [r.key, r]));
+      const total = (rs) => rs.reduce((acc, r) => add(acc, byKey.get(r.key)), {});
+      out.rows = moveRows(total(out.since), total(out.before), out.since, out.before, balls);
+    }
+    jMemo = out;
+    return out;
+  };
+  ER.journalEffect = journalEffect;
+  const jDraws = {};
+  const jRedraw = (names) => (names || Object.keys(jDraws)).forEach((n) => document.querySelectorAll(`[data-draw="${n}"]`).forEach((el) => jDraws[n](el)));
+  const today = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+  jDraws['journal-form'] = (form) => {
+    const kept = J_KEPT.includes(ER.notes.where());
+    const date = form.querySelector('#journal-date'), kind = form.querySelector('#journal-kind'), text = form.querySelector('#journal-text');
+    if (!ER.same(kind, [ER.lang()])) {
+      const was = kind.value;
+      kind.replaceChildren(...ER.journal.kinds.map(([v, label]) => new Option(ER.tr(label), v)));
+      if (was) kind.value = was;
+    }
+    date.max = today();
+    if (!date.value) date.value = today();
+    text.maxLength = ER.journal.max;
+    text.placeholder = ER.tr('A new drill, a game setting, new rubber, a change of grip…');
+    form.querySelectorAll('input, select, button').forEach((c) => (c.disabled = !kept));
+    if (!form.dataset.on) {
+      form.dataset.on = '1';
+      form.addEventListener('submit', (ev) => {
+        ev.preventDefault();
+        const t = text.value.trim();
+        if (!t || !/^\d{4}-\d\d-\d\d$/.test(date.value) || !J_KEPT.includes(ER.notes.where())) return;
+        jst.said = '';
+        ER.journal.add(date.value, kind.value, t).then(() => {
+          text.value = '';
+          jst.said = 'saved';
+          jRedraw(['journal-where']);
+        }, (e) => {
+          jst.said = e && e.code === 'quota_exceeded' ? 'full' : 'failed';
+          jRedraw(['journal-where']);
+        });
+      });
+    }
+  };
+  jDraws['journal-where'] = (el) => {
+    const w = ER.notes.where();
+    const where = w === 'workspace' ? ER.k('Kept in your elevendash folder on this computer, with your match notes. The journal is not part of the dashboard file, so it stays behind when you send it.')
+      : w === 'browser' ? ER.k('Kept in this browser on this device, with your match notes. The journal is not part of the file, so it stays behind when you send it.')
+        : w === 'account' ? ER.k('Only you can see your journal, even when this dashboard is shared.')
+          : w === 'loading' ? ER.k('Loading your journal…') : ER.k("A journal can't be kept in this view.");
+    const said = jst.said === 'saved' ? ER.k('Entry added.') : jst.said === 'full' ? ER.k('Not saved: there is no room left for notes.') : jst.said === 'failed' ? ER.k('Not saved. Try again.') : '';
+    el.replaceChildren(...(said ? [ER.el('b', null, ER.tr(said)), ' '] : []), ER.tr(where));
+  };
+  jDraws['journal-list'] = (el) => {
+    const list = ER.journal.list().slice().reverse();
+    if (jst.open && !list.some((e) => e.key === jst.open)) jst.open = '';
+    if (!list.length) {
+      return el.replaceChildren(ER.el('li', 'er-muted', ER.tr('No entries yet. Add the day you changed something, and the charts will mark it.')));
+    }
+    el.replaceChildren(...list.map((e) => {
+      const li = ER.el('li', e.key === jst.open ? 'on' : ''), when = ER.el('span', 'er-jwhen', ER.F.date(e.date)), body = ER.el('div'), btns = ER.el('div');
+      body.append(ER.el('span', 'er-jkind', ER.journal.kindName(e.kind)), ER.el('span', null, e.text));
+      const see = ER.el('button', 'er-btn', ER.tr('Before and since')), del = ER.el('button', 'er-btn', ER.tr(jst.sure === e.key ? 'Remove for good?' : 'Remove'));
+      see.type = del.type = 'button';
+      see.dataset.act = 'effect';
+      del.dataset.act = 'remove';
+      see.setAttribute('aria-expanded', String(e.key === jst.open));
+      see.addEventListener('click', () => {
+        jst.open = jst.open === e.key ? '' : e.key;
+        jst.sure = '';
+        jRedraw();
+      });
+      del.addEventListener('click', () => {
+        if (jst.sure !== e.key) {
+          jst.sure = e.key;
+          return jRedraw(['journal-list']);
+        }
+        jst.sure = '';
+        jst.said = '';
+        ER.journal.remove(e.key).catch(() => {
+          jst.said = 'failed';
+          jRedraw(['journal-where']);
+        });
+      });
+      btns.append(see, del);
+      li.append(when, body, btns);
+      return li;
+    }));
+  };
+  jDraws['journal-effect-head'] = (el) => {
+    const t = journalEffect(), wrap = document.getElementById('journal-effect'), table = document.getElementById('journal-effect-table');
+    if (wrap) wrap.hidden = !t;
+    if (table) table.hidden = !t || !t.rows;
+    if (!t) return el.replaceChildren();
+    const b = (v) => ER.el('b', null, v);
+    const out = [ER.el('b', 'er-jline', ER.journal.line(t.e))];
+    if (!t.sums) return ER.wait(el, ['match_sums']);
+    if (!t.since.length) out.push(ER.tr('No matches here from that day on yet.'));
+    else if (!t.before.length) out.push(ER.tr('No matches here in the four weeks before that day, so there is nothing to set it against.'));
+    else {
+      out.push(...ER.trn('Since: {0} matches ({1} to {2}). The four weeks before: {3} matches.', b(ER.F.int(t.since.length)), ER.F.date(t.since[0].date),
+        ER.F.date(t.since[t.since.length - 1].date), b(ER.F.int(t.before.length))));
+      const good = t.rows.filter((r) => r.g * (r.up ? 1 : -1) > 0).length, bad = t.rows.filter((r) => r.g * (r.up ? 1 : -1) < 0).length;
+      out.push(' ', ...(good || bad ? ER.trn('{0} of the {1} measures moved clearly: {2} for the better and {3} for the worse.',
+        b(ER.F.int(good + bad)), ER.F.int(t.rows.length), b(ER.F.int(good)), b(ER.F.int(bad))) : [ER.tr('None of the {0} measures moved clearly.', ER.F.int(t.rows.length))]));
+    }
+    el.replaceChildren(...out);
+  };
+  jDraws['journal-effect-rows'] = (tb) => {
+    const t = journalEffect();
+    tb.replaceChildren(...(t && t.rows ? t.rows.map(moveTr) : []));
+  };
+  Object.keys(jDraws).forEach((n) => dash.draw(n, jDraws[n]));
+  const jClose = document.getElementById('journal-effect-close');
+  if (jClose) {
+    jClose.addEventListener('click', () => {
+      jst.open = '';
+      jRedraw();
+    });
+  }
 
   dash.draw('pick-more', (el) => {
     const a = pick();
@@ -3468,7 +3687,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     const rows = ER.rows('days');
     if (!rows || !rows.length) return ER.wait(el, ['days']);
     const W = Math.max(280, el.clientWidth || 600), H = 320;      // before emptying: see ER.tableFrame
-    if (ER.same(el, [ER.lang(), W, rows])) return;
+    if (ER.same(el, [ER.lang(), W, rows, ER.notes.version()])) return;
     el.replaceChildren();
     const svg = ER.svg(el, W, H, ER.tr('Line chart of the share of points and games you won each day against the AI, with the AI level in a strip above'));
     const series = [
@@ -3532,6 +3751,9 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       ER.markSvg(svg.append('text').attr('x', x(ER.day(e.lp.date)) + 9).attr('y', e.y).attr('dominant-baseline', 'middle')
         .attr('class', 'er-strong er-num').text(ER.F.pct(e.lp[e.s.f])), 'days', e.s.f, e.lp.key);
     });
+    // your training journal: a mark at each entry's day
+    const journal = ER.journal.list().filter((e) => e.date >= rows[0].date && e.date <= last.date);
+    ER.journal.mark(svg, [...new Set(journal.map((e) => x(ER.day(e.date))))], m.t, H - m.b);
     const tip = ER.tip(el);
     const rule = svg.append('line').attr('y1', m.t).attr('y2', H - m.b).style('stroke', 'var(--cds-chart-reference)').style('display', 'none');
     svg.append('rect').attr('x', m.l).attr('y', m.t).attr('width', Math.max(0, W - m.l - m.r)).attr('height', H - m.t - m.b)
@@ -3540,12 +3762,14 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
         const [px] = d3.pointer(evt);
         const d = x.invert(px);
         const r = d3.least(rows, (q) => Math.abs(ER.day(q.date) - d));
+        const i = rows.indexOf(r), from = i ? rows[i - 1].date : '';
         rule.attr('x1', x(ER.day(r.date))).attr('x2', x(ER.day(r.date))).style('display', null);
         tip.show(evt, [
           `${ER.F.date(r.date)} · ${ER.tr('level {0}', r.levels)}`,
           ER.tr('Matches won: {0} of {1}', r.wins, r.matches),
           ER.tr('Games won: {0} of {1} ({2})', r.gamesWon, r.games, ER.F.pct(r.gameRate)),
           ER.tr('Points won: {0} of {1}', ER.F.pct(r.pointRate), ER.F.int(r.points)),
+          ...journal.filter((e) => e.date > from && e.date <= r.date).map((e) => ER.tr('Journal, {0}', ER.journal.line(e))),
         ]);
       })
       .on('pointerleave', () => {
@@ -6828,6 +7052,13 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       .style('fill', ER.YOU).style('stroke', 'var(--color-panel)').style('stroke-width', 2), 'form', k, last.key);
     ER.markSvg(svg.append('text').attr('x', px(last) + 9).attr('y', y(last[k])).attr('dominant-baseline', 'middle')
       .attr('class', 'er-strong er-num').text(ER.F.pct(last[k])), 'form', k, last.key);
+    // your training journal: a mark at the first match on or after each entry's day
+    const journal = new Map();
+    ER.journal.list().forEach((e) => {
+      const r = e.date >= rows[0].date ? rows.find((q) => q.date >= e.date) : null;
+      if (r) journal.set(r, (journal.get(r) || []).concat(e));
+    });
+    ER.journal.mark(svg, [...journal.keys()].map(px), m.t, H - m.b);
     const tip = ER.tip(el);
     const rule = svg.append('line').attr('y1', m.t).attr('y2', H - m.b).style('stroke', 'var(--cds-chart-reference)').style('display', 'none');
     const dot = svg.append('circle').attr('r', 4).style('fill', ER.YOU).style('stroke', 'var(--color-panel)').style('stroke-width', 2).style('display', 'none');
@@ -6842,6 +7073,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
           `${ER.F.date(r.date)} · ${ER.tr('matches {0} to {1} at level {2}', r.i - st.w + 1, r.i, s.L)}`,
           ER.tr(isM ? 'Matches won: {0}' : 'Points won: {0}', ER.F.pct(r[k])),
           ER.tr('Likely range: {0} to {1}', ER.F.pct(r[k + 'lo']), ER.F.pct(r[k + 'hi'])),
+          ...(journal.get(r) || []).map((e) => ER.tr('Journal, {0}', ER.journal.line(e))),
         ]);
       })
       .on('pointerleave', () => {
