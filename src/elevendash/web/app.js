@@ -55,7 +55,7 @@
     [bar.imp, bar.files, bar.rebuild].forEach((b) => (b.disabled = true));
     const step = (s.lines || []).filter((l) => l.trim()).slice(-1)[0] || '';
     const what = s.kind === 'site' ? ['Redrawing the dashboard…', '正在重繪儀表板…'] : s.kind === 'rebuild'
-      ? ['Rebuilding from the logs…', '正在從記錄重新建立…'] : ['Importing…', '正在匯入…'];
+      ? ['Rebuilding from the logs…', '正在從記錄重新建立…'] : s.kind === 'restore' ? ['Restoring the backup…', '正在還原備份…'] : ['Importing…', '正在匯入…'];
     say(bar.msg, what[0] + (step ? ' ' + step.trim() : ''), what[1] + (step ? ' ' + step.trim() : ''));
     showLog(s.lines, mine);
   };
@@ -83,6 +83,8 @@
       openSettings(true);
     } else if (r.code === 'unreachable') {
       say(bar.msg, 'The Quest did not answer.', '頭戴裝置沒有回應。', 'bad');
+    } else if (!r.ok && s.kind === 'restore') {
+      say(bar.msg, 'Not restored: ' + (r.message || 'the file could not be read'), '未能還原：' + (r.message || '無法讀取檔案'), 'bad');
     } else if (!r.ok) {
       say(bar.msg, 'Something went wrong. The details are below.', '發生錯誤，詳情如下。', 'bad');
       showLog(s.lines, true);
@@ -189,8 +191,64 @@
     });
   }
 
+  // Your data (Settings, on the computer only): a backup of the workspace, and the match data as tables
+  const data = {box: $('ed-data'), backup: $('ed-backup'), csv: $('ed-export-csv'), json: $('ed-export-json'), msg: $('ed-data-msg'),
+    restore: $('ed-restore'), restoreInput: $('ed-restore-input')};
+  const mb = (n) => (n / 1048576).toFixed(n < 10485760 ? 1 : 0);
+  const openSub = (sub) => A.api('POST', '/api/folder', {sub}).catch(() => {});
+  data.backup.addEventListener('click', async () => {
+    data.backup.disabled = true;
+    say(data.msg, 'Writing the backup…', '正在寫入備份…');
+    try {
+      const r = await A.api('POST', '/api/backup');
+      say(data.msg, `Backup written: ${r.file} (${plural(r.logs, 'log', 'logs')}, ${mb(r.bytes)} MB). It holds your account tokens: keep it on your own drives.`,
+        `已寫入備份：${r.file}（${r.logs} 個記錄，${mb(r.bytes)} MB）。裡面有你的帳號權杖：請只放在自己的磁碟上。`, 'ok');
+      openSub('backups');
+    } catch (err) {
+      say(data.msg, err.message, err.message, 'bad');
+    }
+    data.backup.disabled = false;
+  });
+  const exportAs = (format) => async () => {
+    say(data.msg, 'Writing the export…', '正在寫入匯出檔…');
+    try {
+      const r = await A.api('POST', '/api/export', {format});
+      const n = r.rows;
+      say(data.msg, `Export written: ${r.dir} (${n.matches} matches, ${n.points} points, ${n.shots} shots; columns.txt says what the columns hold).`,
+        `已寫入匯出檔：${r.dir}（${n.matches} 場比賽、${n.points} 分、${n.shots} 板；columns.txt 說明各欄的內容）。`, 'ok');
+      openSub('export');
+    } catch (err) {
+      say(data.msg, err.message, err.message, 'bad');
+    }
+  };
+  data.csv.addEventListener('click', exportAs('csv'));
+  data.json.addEventListener('click', exportAs('json'));
+  if (data.restore) {
+    data.restore.addEventListener('click', () => data.restoreInput.click());
+    data.restoreInput.addEventListener('change', async () => {
+      const file = data.restoreInput.files[0];
+      data.restoreInput.value = '';
+      if (!file) return;
+      bar.msg.className = 'ed-app-msg';
+      say(bar.msg, 'Copying the backup…', '正在複製備份…');
+      mine = true;
+      try {
+        const s = await A.api('POST', '/api/restore', undefined, file);
+        if (s.httpStatus === 409) mine = false;
+        render(s);
+      } catch (err) {
+        mine = false;
+        say(bar.msg, 'Not restored: ' + err.message, '未能還原：' + err.message, 'bad');
+      }
+      poll();
+    });
+  }
+
   const render = (s) => {
     last = s;
+    data.box.hidden = !!s.remote || !s.logs;
+    if (data.restore) data.restore.parentNode.hidden = !!s.remote || !!s.logs;
+    data.csv.hidden = data.json.hidden = !s.built;
     showReport(s.report);
     if (guide.quest && s.quest && !guide.quest.value && document.activeElement !== guide.quest) guide.quest.value = s.quest;
     // on the phone the bar leaves out what only makes sense at the computer: its folders, shortcuts and the phone link

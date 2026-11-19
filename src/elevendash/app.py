@@ -29,7 +29,7 @@ import urllib.parse
 import urllib.request
 import webbrowser
 
-from . import __version__, cli, fetch, health, qr, report, workspace
+from . import __version__, backup, cli, export, fetch, health, qr, report, workspace
 from .page import LANGS, THEMES
 from .site import TITLE, tokens_css
 from .page import look as read_look
@@ -40,6 +40,9 @@ MAX_LOG = 200 << 20            # the largest log file an upload may carry
 MAX_NOTES = 4 << 20
 STATE = '.app.json'            # in the workspace: the port of the running app, so a second start finds it
 NOTES = 'notes.json'
+RESTORE = '.restore.zip'       # an uploaded backup waits here until the restore job unpacks it
+MAX_BACKUP = 16 << 30
+FOLDERS = ('backups', 'export', 'share')      # what Open folder may open besides the workspace itself
 REPORT = '.import.json'        # in the workspace: the logs the last build could not read as usual, and why
 INCOMING = '.incoming'         # uploaded logs wait here until the import job copies them in
 APP_NAME = 'Eleven Dashboard'
@@ -151,12 +154,14 @@ class App:
             elif kind == 'rebuild':
                 self._rebuild(say)
                 result['changed'] = True
+            elif kind == 'restore':
+                result.update(self._restore(say))
             elif kind == 'site':
                 cli.do_site(self.ws, say=say)
                 result['changed'] = True
         except fetch.QuestUnreachable as e:
             result.update(ok=False, code='unreachable', message=str(e))
-        except SystemExit as e:                         # the CLI's own "nothing to build" and the like
+        except (SystemExit, ValueError) as e:           # the CLI's own "nothing to build" and the like; a file that is not a backup
             result.update(ok=False, code='error', message=str(e))
         except Exception as e:
             result.update(ok=False, code='error', message=f'{type(e).__name__}: {e}')
@@ -209,6 +214,55 @@ class App:
         finally:
             shutil.rmtree(inbox, ignore_errors=True)
         return self._after_copy(got, say)
+
+    # ---- your data: backup, restore, export -------------------------------------------------------------------
+    def make_backup(self):
+        if self.job.busy:
+            raise ValueError('an import is running; back up when it is done')
+        path, n = backup.make(self.ws)
+        return dict(n, file=path)
+
+    def make_export(self, fmt):
+        if not self.built():
+            raise ValueError('there is no match data to export yet')
+        return export.write(self.ws.build, os.path.join(self.ws.root, 'export'), fmt)
+
+    def receive_backup(self, stream, length):
+        """A backup picked on the welcome screen: kept until the restore job unpacks it. Only into an empty workspace."""
+        why = ('this folder already holds game logs; a backup is restored into an empty one' if cli.log_count(self.ws)
+               else 'empty or too large' if length <= 0 or length > MAX_BACKUP else 'an import is running' if self.job.busy else '')
+        if why:
+            left = min(max(length, 0), 256 << 20)       # read what was sent, so the browser gets the answer and not a dropped line
+            while left:
+                chunk = stream.read(min(left, 1 << 20))
+                if not chunk:
+                    break
+                left -= len(chunk)
+            raise ValueError(why)
+        dest = os.path.join(self.ws.root, RESTORE)
+        left = length
+        with open(dest + '.part', 'wb') as out:
+            while left:
+                chunk = stream.read(min(left, 1 << 20))
+                if not chunk:
+                    break
+                out.write(chunk)
+                left -= len(chunk)
+        if left:
+            os.remove(dest + '.part')
+            raise ValueError('upload cut short')
+        os.replace(dest + '.part', dest)
+
+    def _restore(self, say):
+        src = os.path.join(self.ws.root, RESTORE)
+        try:
+            got = backup.restore(src, self.ws.root, say)
+        finally:
+            if os.path.exists(src):
+                os.remove(src)
+        self.ws.set(last_import=datetime.datetime.now().isoformat(timespec='seconds'))
+        self._rebuild(say)
+        return {'changed': True, 'new': got['logs']}
 
     def built(self):
         return os.path.isfile(self.site_file())
@@ -608,7 +662,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             if path == '/api/notes' and m == 'PUT':
                 app.write_notes(self._body(MAX_NOTES))
                 return self._send(200, {'ok': True})
-            if path in ('/api/shortcut', '/api/folder', '/api/phone', '/api/quit') and self.remote:
+            if path in ('/api/shortcut', '/api/folder', '/api/phone', '/api/quit', '/api/backup', '/api/restore', '/api/export',
+                        '/api/share') and self.remote:
                 return self._send(403, {'error': 'only on the computer itself'})
             if path == '/api/quit' and m == 'POST':
                 if app.job.busy:
@@ -619,8 +674,18 @@ class Handler(http.server.BaseHTTPRequestHandler):
             if path == '/api/shortcut' and m == 'POST':
                 return self._send(200, {'made': make_shortcuts(app.ws.root)})
             if path == '/api/folder' and m == 'POST':
-                open_folder(app.ws.root)
+                sub = self._body(4096).get('sub', '')
+                where = os.path.join(app.ws.root, sub) if sub in FOLDERS else app.ws.root
+                open_folder(where if os.path.isdir(where) else app.ws.root)
                 return self._send(200, {'ok': True})
+            if path == '/api/backup' and m == 'POST':
+                return self._send(200, app.make_backup())
+            if path == '/api/export' and m == 'POST':
+                return self._send(200, app.make_export(self._body(4096).get('format', 'csv')))
+            if path == '/api/restore' and m == 'POST':
+                app.receive_backup(self.rfile, int(self.headers.get('Content-Length') or 0))
+                started = app.start_job('restore')
+                return self._send(202 if started else 409, app.status(self.remote))
             if path == '/api/phone' and m == 'GET':
                 return self._send(200, app.phone_view())
             if path == '/api/phone' and m == 'POST':

@@ -57,6 +57,13 @@ Then:
 If a log does not read as expected after an import (a game update can change the log format), the app lists it above
 the dashboard and says why, as `elevendash build` does on the command line.
 
+**Settings** also has **Your data**. *Back up everything…* writes one file with your game logs, notes and settings
+into `backups` in your folder, to move to another computer: there, the welcome screen's *Restore from a backup…* takes
+it and builds the dashboard again. The logs in a backup hold your account tokens, so keep it on your own drives and
+never send or post it. *Export as CSV* or *JSON* writes your matches, points and shots as tables for other tools into
+`export`, with a `columns.txt` that says what each column holds: match data only, with no log lines, tokens or account
+details.
+
 No Wi-Fi sharing? Copy the `ALL-*.log` files off the headset another way (a USB cable, a file manager) and use
 **From files…**.
 
@@ -189,8 +196,8 @@ Eleven's log files contain your **Eleven and Meta account tokens**, your platfor
 you played online, and sometimes your location. elevendash keeps the logs in your workspace and never sends them
 anywhere. The dashboard file holds match data only, never logs or tokens.
 
-**Never share your `logs` folder or a raw log.** If you need to show one (for a bug report), make a redacted copy and
-read it before you share it:
+**Never share your `logs` folder, a raw log or a backup** (a backup is your logs in one file). If you need to show a
+log (for a bug report), make a redacted copy and read it before you share it:
 
 ```
 elevendash redact logs/ALL-01.05.2026.6.30.00.PM.log redacted.log
@@ -247,6 +254,9 @@ No Wi-Fi sharing? Copy the `ALL-*.log` files off the headset any other way (USB 
 | `elevendash update [--offline]` | fetch + build + report + site |
 | `elevendash app [--shortcut] [--no-browser] [--port N]` | The dashboard in your browser with an Import button; `--shortcut` adds it to the Start menu and desktop (Windows) |
 | `elevendash config [hand=auto\|right\|left] [theme=dark\|light] [lang=en\|zh]` | Show or change the workspace settings |
+| `elevendash backup [--out FILE]` | One file with your logs, notes and settings, to move to another computer. It holds your account tokens: keep it on your own drives |
+| `elevendash restore FILE [DIR]` | Unpack a backup into a new or empty folder and build its dashboard |
+| `elevendash export [--format csv\|json] [--out DIR]` | Matches, points and shots as tables for other tools (`export/`, with `columns.txt`). Match data only |
 | `elevendash demo [DIR]` | A workspace of made-up matches and its dashboard |
 | `elevendash redact LOG OUT` | A copy of a log without account, people or location data |
 

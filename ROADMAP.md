@@ -61,9 +61,10 @@ the order they are planned. Nothing here is a promise of a date.
 - **Import report.** After an import, the app lists any log that looks misread and why. Today only the command line
   prints these. *Done in v0.17.0.*
 - **Backup and restore.** One file holding the whole workspace, to move to a new computer. The logs inside it hold
-  your account tokens, so the app says so and the file stays on your own drives.
+  your account tokens, so the app says so and the file stays on your own drives. *Done in v0.18.0: Settings, and
+  `elevendash backup` and `restore`.*
 - **Export.** Matches, points and shots as CSV or JSON for other tools. Match data only: no log lines, tokens or
-  account details.
+  account details. *Done in v0.18.0: Settings, and `elevendash export`.*
 - **Share some matches.** A dashboard file built from only the matches you pick, for a coach, instead of your whole
   history.
 - **First-run guide.** A step-by-step check of the headset connection in the welcome screen: File Sharing on, address

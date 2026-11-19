@@ -201,6 +201,72 @@ class AppServer(unittest.TestCase):
         self.assertIn('擊球後', found[self.names[0]][0]['zh'])
         self.assertEqual(app.App(self.ws, port=0, open_browser=False).report, s['report'])
 
+    def test_9c_backup_and_export(self):
+        code, r = self.call('POST', '/api/backup')
+        self.assertEqual((code, r['logs']), (200, len(self.names)))
+        self.assertEqual(os.path.dirname(r['file']), os.path.join(self.ws.root, 'backups'))
+        self.assertEqual(os.path.getsize(r['file']), r['bytes'])
+        self.assertEqual(self.call('POST', '/api/export', {'format': 'xml'})[0], 400)
+        code, r = self.call('POST', '/api/export', {'format': 'csv'})
+        self.assertEqual((code, r['dir']), (200, os.path.join(self.ws.root, 'export')))
+        self.assertEqual(sorted(r['files']), ['columns.txt', 'matches.csv', 'points.csv', 'shots.csv'])
+        self.assertTrue(all(os.path.isfile(os.path.join(r['dir'], n)) for n in r['files']))
+        # a backup goes into an empty workspace only
+        with open(self.call('POST', '/api/backup')[1]['file'], 'rb') as f:
+            self.assertEqual(self.call('POST', '/api/restore', raw=f.read())[0], 400)
+
+
+class Restore(unittest.TestCase):
+    """A new computer: the welcome screen takes a backup, and the dashboard is there."""
+
+    def test_restore(self):
+        from elevendash import backup
+        with tempfile.TemporaryDirectory() as tmp:
+            old = workspace.init(os.path.join(tmp, 'old'), '192.168.1.20:8090')
+            names = sample.write_logs(old.logs)
+            old.set(phone=True, phone_key='not for another computer', hand='left')
+            with open(os.path.join(old.root, app.NOTES), 'w', encoding='utf-8') as f:
+                json.dump({'2026-01-29 15:00:00': {'text': 'Long backhand returns', 'at': ''}}, f)
+            path, n = backup.make(old)
+            new = workspace.init(os.path.join(tmp, 'new'))
+            a = app.App(new, port=0, idle_exit=0, open_browser=False).bind()
+            t = threading.Thread(target=a.serve, daemon=True)
+            t.start()
+            try:
+                def call(method, url, raw=None):
+                    c = http.client.HTTPConnection('127.0.0.1', a.port, timeout=120)
+                    c.request(method, url, body=raw, headers={'Host': f'127.0.0.1:{a.port}', 'X-Elevendash': a.token})
+                    r = c.getresponse()
+                    out = r.status, json.loads(r.read().decode('utf-8'))
+                    c.close()
+                    return out
+                self.assertEqual(call('POST', '/api/restore', b'not a zip')[0], 202)        # taken, then refused by the job
+                for _ in range(100):
+                    s = call('GET', '/api/status')[1]
+                    if not s['busy']:
+                        break
+                    time.sleep(0.2)
+                self.assertFalse(s['result']['ok'])
+                self.assertIn('not an elevendash backup', s['result']['message'])
+                self.assertFalse(os.path.exists(os.path.join(new.root, app.RESTORE)))
+                with open(path, 'rb') as f:
+                    self.assertEqual(call('POST', '/api/restore', f.read())[0], 202)
+                for _ in range(600):
+                    s = call('GET', '/api/status')[1]
+                    if not s['busy']:
+                        break
+                    time.sleep(0.5)
+                self.assertTrue(s['result']['ok'], s['lines'])
+                self.assertEqual((s['result']['new'], s['logs'], s['built'], s['quest']), (len(names), len(names), True, '192.168.1.20:8090'))
+                c = new.config()
+                self.assertEqual(c.get('hand'), 'left')
+                self.assertNotIn('phone_key', c)
+                self.assertNotIn('phone', c)
+                self.assertIn('2026-01-29 15:00:00', a.read_notes())
+            finally:
+                a.server.shutdown()
+                t.join(10)
+
 
 class Phone(unittest.TestCase):
     """The phone server, bound here to 127.0.0.1 in place of a Tailscale address: it needs the phone key."""
@@ -261,7 +327,7 @@ class Phone(unittest.TestCase):
         s = json.loads(body)
         self.assertTrue(s['remote'])
         self.assertNotIn('home', s)                         # where the data lives stays on the computer
-        for path in ('/api/phone', '/api/folder', '/api/shortcut', '/api/quit'):
+        for path in ('/api/phone', '/api/folder', '/api/shortcut', '/api/quit', '/api/backup', '/api/restore', '/api/export', '/api/share'):
             self.assertEqual(self.call('POST', path, cookie=key)[0], 403, path)
         self.assertEqual(self.call('GET', '/api/phone', cookie=key)[0], 403)
 

@@ -43,4 +43,11 @@ dist/
 notes.json
 .app.json
 .incoming/
+.import.json
+# a backup holds the game logs (account tokens); exports and shared dashboards hold your match data
+backups/
+elevendash-backup-*.zip
+.restore.zip*
+export/
+share/
 packaging/windows/out/

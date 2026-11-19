@@ -11,6 +11,9 @@
   elevendash update [--offline]          fetch, build, report and site in one go: the usual after-session step
   elevendash config [KEY=VALUE ...]      show or change settings: hand (auto, right, left), theme (dark, light),
                                          lang (en, zh: Traditional Chinese)
+  elevendash backup [--out FILE]         one file with your logs, notes and settings, to move to another computer
+  elevendash restore FILE [DIR]          unpack a backup into a new workspace and build it
+  elevendash export [--format csv|json]  matches, points and shots as tables for other tools (match data only)
   elevendash demo [DIR]                  try it without a Quest: a workspace of made-up matches and its dashboard
   elevendash redact LOG OUT              a copy of a log without account, people or location data, to show someone
 
@@ -210,6 +213,14 @@ def main(argv=None):
         p.add_argument('--lang', choices=LANGS, help='en, or zh for Traditional Chinese (default: the lang setting, else en)')
     p = sub.add_parser('config', help='show or change settings')
     p.add_argument('pairs', nargs='*', metavar='KEY=VALUE', help='hand=auto|right|left, theme=dark|light, lang=en|zh')
+    p = sub.add_parser('backup', help='write one file holding your logs, notes and settings')
+    p.add_argument('--out', help='where to write it (default: backups/ in the workspace)')
+    p = sub.add_parser('restore', help='unpack a backup into a new workspace and build it')
+    p.add_argument('file', help='the backup (elevendash-backup-*.zip)')
+    p.add_argument('path', nargs='?', help='the folder to restore into (default: --dir, ELEVENDASH_HOME, else the current folder)')
+    p = sub.add_parser('export', help='write matches, points and shots as CSV or JSON')
+    p.add_argument('--format', choices=('csv', 'json'), default='csv')
+    p.add_argument('--out', help='the folder to write into (default: export/ in the workspace)')
     p = sub.add_parser('update', help='fetch, build, report and site in one go')
     p.add_argument('--offline', action='store_true', help='do not contact the Quest; rebuild from the logs you have')
     p.add_argument('--quest', help="the Quest's File Sharing address (remembered for next time)")
@@ -244,6 +255,17 @@ def main(argv=None):
             return 1
     if a.cmd == 'redact':
         return do_redact(a.log, a.out)
+    if a.cmd == 'restore':
+        from . import backup
+        try:
+            backup.restore(a.file, a.path or a.dir or os.environ.get('ELEVENDASH_HOME') or os.getcwd())
+            ws = workspace.find(a.path or a.dir)
+            do_build(ws)
+            do_site(ws)
+        except (OSError, ValueError) as e:
+            print(f'elevendash restore: {e}', file=sys.stderr)
+            return 1
+        return 0
     try:
         ws = workspace.find(a.dir)
     except workspace.NotAWorkspace as e:
@@ -267,6 +289,19 @@ def main(argv=None):
             return 0
         if a.cmd == 'config':
             return do_config(ws, a.pairs)
+        if a.cmd == 'backup':
+            from . import backup
+            path, n = backup.make(ws, a.out)
+            print(f'Backup: {path} ({n["logs"]} log file(s), {n["bytes"] // 1024:,} KB)')
+            print('It holds your game logs, and they hold your Eleven and Meta account tokens: keep it on your own drives,')
+            print('and never send or post it. On the other computer: elevendash restore <this file> <a new folder>.')
+            return 0
+        if a.cmd == 'export':
+            from . import export
+            got = export.write(ws.build, a.out or os.path.join(ws.root, 'export'), a.format)
+            print(f'Export: {got["dir"]} ({", ".join(got["files"])})')
+            print('  ' + ', '.join(f'{n:,} {k}' for k, n in got['rows'].items()) + '. Match data only: no log lines, tokens or account details.')
+            return 0
         if a.cmd == 'pdf':
             from .pdf import make_pdf
             out = a.out or os.path.join(ws.site, 'report.pdf')

@@ -61,6 +61,16 @@
       <button type="button" class="ed-app-link" id="ed-quit" hidden><span data-l="en">Stop the app</span><span data-l="zh" lang="zh-Hant">結束程式</span></button>
       <span class="ed-app-dim" id="ed-version"></span>
     </div>
+    <div class="ed-app-data" id="ed-data" hidden>
+      <div class="ed-app-data-btns">
+        <b><span data-l="en">Your data</span><span data-l="zh" lang="zh-Hant">你的資料</span></b>
+        <button type="button" class="ed-app-link" id="ed-backup"><span data-l="en">Back up everything…</span><span data-l="zh" lang="zh-Hant">備份全部資料…</span></button>
+        <button type="button" class="ed-app-link" id="ed-export-csv"><span data-l="en">Export as CSV</span><span data-l="zh" lang="zh-Hant">匯出為 CSV</span></button>
+        <button type="button" class="ed-app-link" id="ed-export-json"><span data-l="en">Export as JSON</span><span data-l="zh" lang="zh-Hant">匯出為 JSON</span></button>
+      </div>
+      <small><span data-l="en">A backup is one file with your game logs, notes and settings, to move to another computer: on the new one, the welcome screen restores it. The logs hold your Eleven and Meta account tokens, so keep the file on your own drives and never send or post it. An export is matches, points and shots as tables for other tools: match data only, with no log lines, tokens or account details.</span><span data-l="zh" lang="zh-Hant">備份是一個檔案，裡面有你的遊戲記錄、筆記和設定，用來搬到另一部電腦：在新電腦上，歡迎畫面可以把它還原。記錄含有你的 Eleven 與 Meta 帳號權杖，所以這個檔案只能放在自己的磁碟上，切勿傳送或張貼。匯出是把比賽、每一分和每一板寫成表格，給其他工具使用：只有比賽資料，沒有記錄原文、權杖或帳號資料。</span></small>
+      <span class="ed-app-msg" id="ed-data-msg" role="status"></span>
+    </div>
     <div class="ed-app-phone" id="ed-phone" hidden>
       <div class="ed-app-phone-text">
         <label class="ed-app-check"><input type="checkbox" id="ed-phone-on"> <span><span data-l="en">Open on my phone</span><span data-l="zh" lang="zh-Hant">在手機上開啟</span></span></label>
