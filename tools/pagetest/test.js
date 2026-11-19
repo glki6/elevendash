@@ -106,6 +106,31 @@
       }
     }
 
+    // 4b2. where your shots land: the parts add up, and a row lists exactly its shots
+    {
+      const s0 = ER.shots.chosen(), c = ER.shots.landSum(s0);
+      const sum = (g, vs) => vs.reduce((a, v) => a + c.get(g + ':' + v).n, 0);
+      const cells = ['L', 'M', 'R'].flatMap((x) => ['s', 'h', 'l'].map((d) => x + d));
+      const adds = c.n === s0.lands.length && sum('cell', cells) === c.n && sum('dep', ['s', 'h', 'l']) === c.n && sum('col', ['L', 'M', 'R']) === c.n
+        && sum('dir', ['x', 'd', 'm', 'c']) === c.n && s0.lands.every((r) => r.ok && r.role !== 'S' && r.lz > 0);
+      check('where your shots land: the parts add up', adds, c.n + ' shots');
+      const picks = qa('[data-draw="sx-land-rows"] .er-sxpick');
+      if (c.n >= 5) {
+        const i = picks.findIndex((b) => !b.disabled);
+        picks[i].click();
+        await wait(80);
+        const only = ER.shots.state.only, [, g, v] = only.split(':');
+        const l = ER.shots.chosen().list;
+        const listed = picks.length === 10 && l.length === c.get(g + ':' + v).n && l.length > 0 && !q('#sx-only-wrap').hidden;
+        q('#sx-only-clear').click();
+        await wait(80);
+        const back = ER.shots.chosen().list.length === s0.base.length && q('#sx-only-wrap').hidden;
+        check('where your shots land: a row lists its shots, and back', listed && back, only + ' ' + l.length);
+      } else {
+        check('where your shots land: a row lists its shots, and back', q('#sx-land-wrap').hidden, 'too few shots: hidden');
+      }
+    }
+
     // 4c. patterns that win points: every pattern holds its points, a row lists them, and the way back leads to the card
     {
       let bad = '', rowsSeen = 0, opened = false;
