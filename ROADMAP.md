@@ -52,8 +52,9 @@ the order they are planned. Nothing here is a promise of a date.
 ## Smaller additions
 
 - **Personal records.** Longest rally won, fastest shot that landed, longest run of matches won, best session.
+  *Done in v0.16.0, under Progress by day.*
 - **Your floor, not just your average.** In Form: your weaker matches (the lower quarter of your match results) over
-  time, to show whether your bad days are getting better.
+  time, to show whether your bad days are getting better. *Done in v0.16.0, in Form and stamina.*
 
 ## The app
 

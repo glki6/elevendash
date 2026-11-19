@@ -387,6 +387,38 @@
       }
     }
 
+    // 4g. personal records: each is the best of its kind at the level shown, counted again here
+    {
+      const r = await until(() => ER.records()), d = ER.shots.data(), L = ER.level();
+      const cells = qa('[data-draw="records"] > div');
+      const ms = d.ms.filter((m) => m.level === L), at = new Set(ms.map((m) => m.key));
+      const rally = Math.max(0, ...d.ps.filter((p) => p.won === 1 && at.has(p.match)).map((p) => p.hits));
+      const fast = Math.max(0, ...d.recs.filter((x) => x.ok && x.shot !== 'X' && x.m.level === L && x.speed != null).map((x) => x.speed));
+      let run = 0, best = 0;
+      ms.forEach((m) => {
+        run = m.result === 'Won' ? run + 1 : 0;
+        best = Math.max(best, run);
+      });
+      const ok = r && cells.length === 4 && (r.rally ? r.rally.p.hits : 0) === rally && (r.shot ? r.shot.speed : 0) === fast && (r.run ? r.run.length : 0) === best
+        && (!r.run || r.run.every((m) => m.result === 'Won' && m.level === L))
+        && (!r.session || (r.session.level === L && d.ss.every((x) => x.level !== L || x.matches < 3 || x.pointRate <= r.session.pointRate)));
+      check('personal records: the best of each kind', ok, r ? `rally ${rally}, shot ${fast}, run ${best}, ${cells.length} cells` : 'no records');
+    }
+
+    // 4h. your floor: one match in four of the window sits at or under it, and the chart is drawn
+    {
+      const f = await until(() => ER.floor());
+      if (!f || !f.rows.length) {
+        check('your floor: the lower quarter of the last matches', f && q('[data-draw="floor-now"]').textContent.trim().length > 10 && !q('#chart-floor svg'), 'too few matches for a run');
+      } else {
+        const last = f.rows[f.rows.length - 1], win = f.at.slice(-f.W), under = win.filter((x) => x.v <= last.lo).length;
+        const ok = last.lo <= last.mid && under >= Math.floor(f.W / 4) && under <= Math.ceil(f.W / 2) && f.rows.length === f.at.length - f.W + 1
+          && qa('#chart-floor svg path').length === 2 && qa('#chart-floor svg circle').length >= f.at.length
+          && (!f.move || (f.move.a + f.move.b >= f.W / 2 - 1 && [-1, 0, 1].includes(f.move.clear)));
+        check('your floor: the lower quarter of the last matches', ok, `${f.at.length} matches, ${under} of ${f.W} at or under the floor`);
+      }
+    }
+
     // 5. open a shot of another match from the list (of another month, when there is one): the match changes, its
     //    replays are unpacked, and the point asked for is the one on the table
     const list = ER.shots.chosen().list;

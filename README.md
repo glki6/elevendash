@@ -125,11 +125,15 @@ Before you play, pick up to three targets in the session report: a share of retu
 
 Under Progress by day you can write down what the logs cannot know: a drill, a game setting, new equipment, a change of technique. Each entry is marked on the progress and form charts, and opens a before-and-since table: your matches from that day on against the four weeks before, measure by measure. Entries are kept with your match notes on your own computer, never in the dashboard file.
 
+### Personal records
+
+Under Progress by day, at the level you pick: the longest rally you won, your fastest shot that landed, your longest run of matches won and your best session, each one click from its replay, match or session.
+
 ### Form and stamina
 
 ![A line of matches won over the last 10 matches, with a band for the range chance allows.](pages/img/form.png)
 
-Rolling win rates with the range chance allows, so a lucky week does not look like progress, and how you play from the first match of a session to the last.
+Rolling win rates with the range chance allows, so a lucky week does not look like progress, and how you play from the first match of a session to the last. Your floor follows your weaker matches (where the lower quarter of your results ends), to show whether your bad days are getting better.
 
 ### Serves and returns
 

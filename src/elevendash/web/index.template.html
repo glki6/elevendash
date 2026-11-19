@@ -217,6 +217,12 @@
 .er-plan.keep{grid-template-columns:repeat(2,minmax(0,1fr));gap:0 44px}
 .er-plan.keep .er-pitem{grid-template-columns:minmax(0,1fr)}
 .er-keephead{display:grid;gap:4px;padding-top:6px}
+.er-multi.er-records{grid-template-columns:repeat(2,minmax(0,1fr))}
+.er-records>div{align-content:start;justify-items:start}
+.er-records>div>p{margin:0}
+.er-records .er-pnum small{font-family:var(--cds-font-family,inherit);font-stretch:normal;font-weight:var(--cds-font-weight-medium);font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+@media (min-width:1180px){.er-multi.er-records{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media (max-width:520px){.er-multi.er-records{grid-template-columns:minmax(0,1fr)}}
 .er-keephead .er-legend{padding-top:6px}
 .er-sw.ok{background:color-mix(in oklab,var(--color-ok) 45%,var(--color-panel))}
 .er-sw.none{background:var(--er-track)}
@@ -623,11 +629,13 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
     <li><a href="#pick">Matches you pick</a></li>
     <li><a href="#progress">Progress by day</a>
       <ol>
+        <li><a href="#records">Personal records</a></li>
         <li><a href="#journal">Training journal</a></li>
       </ol></li>
     <li><a href="#form">Form and stamina</a>
       <ol>
         <li><a href="#form-rolling">Rolling results</a></li>
+        <li><a href="#form-floor">Your floor</a></li>
         <li><a href="#form-session">Through a session</a></li>
       </ol></li>
     <li><a href="#findings">What decides points</a></li>
@@ -1096,6 +1104,12 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
     <div id="mini-speed"><h3>Your average rally speed (m/s)</h3><div class="er-mini" data-draw="mini" data-f="rallySpeed" data-fmt="n1" data-source="days"></div></div>
     <div id="mini-length"><h3>Shots per point</h3><div class="er-mini" data-draw="mini" data-f="rallyLength" data-fmt="n1" data-source="days"></div></div>
   </div>
+  <div class="er-card" id="records">
+    <h3>Personal records</h3>
+    <div class="er-controls" data-v="ai"><span class="er-ctl" id="records-level-label">AI level</span><div class="er-tabs" id="records-level" role="group" aria-labelledby="records-level-label" data-draw="level-tabs"></div></div>
+    <div class="er-multi er-records" data-draw="records" data-source="matches"></div>
+    <details class="er-how"><summary>How to read this</summary><p class="er-muted">Your bests so far, counted again at every update. A rally is counted in shots by both players, and only points you won count. The fastest shot is one that landed on the table. A run is matches won one after another, in one session or across several. The best session is the one with the highest share of points won, among sessions of three matches or more. A record set in your latest session is marked.</p></details>
+  </div>
   <div class="er-card" id="journal">
     <h3>Training journal</h3>
     <p class="er-muted">What the logs cannot know: a drill, a game setting, new equipment, a change of technique. Each entry is marked with a diamond on the chart above and on Rolling results.</p>
@@ -1132,6 +1146,16 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
     <p class="er-pstat" data-draw="form-now" data-source="form" role="status"></p>
     <div class="er-legend"><span><i class="er-sw line"></i>Share over the last matches</span><span><i class="er-sw band"></i>Likely range</span><span><i class="er-sw dash"></i>All your matches at this level</span></div>
     <div class="er-chart" id="chart-form" data-draw="form-chart" data-source="form"></div>
+  </div>
+  <div class="er-card" id="form-floor">
+    <h3>Your floor</h3>
+    <p class="er-muted">Your weaker matches over time: whether your bad days are getting better.</p>
+    <details class="er-how"><summary>How to read this</summary><p class="er-muted">A match's result here is the share of points you won in it. Line up your last 20 matches from the worst to the best: the floor is where the lower quarter ends, so one match in four ended at or under it, and the middle match is the one halfway up. An average can rise because your best days got better; the floor rises only when your bad days did. The floor is called clearly up or down by counting how many of the latest matches, and how many of the same number before them, sit in the lower quarter of the two runs together, and asking whether chance would give that gap more than about one time in ten. A quarter of 20 matches is 5 matches, so a small move means little.</p></details>
+    <div class="er-controls" data-v="ai"><span class="er-ctl" id="floor-level-label">AI level</span><div class="er-tabs" id="floor-level" role="group" aria-labelledby="floor-level-label" data-draw="level-tabs"></div></div>
+    <div class="er-controls"><span class="er-ctl" id="floor-w-label">Over the last</span><div class="er-tabs" id="floor-w" role="group" aria-labelledby="floor-w-label"><button class="er-tab" type="button" data-fw="20" aria-pressed="true">20 matches</button><button class="er-tab" type="button" data-fw="50" aria-pressed="false">50 matches</button></div></div>
+    <p class="er-pstat" data-draw="floor-now" data-source="matches" role="status"></p>
+    <div class="er-legend"><span><i class="er-sw line"></i>Your floor: where the lower quarter ends</span><span><i class="er-sw dash"></i>The middle match</span><span><i class="er-sw mute"></i>One match</span></div>
+    <div class="er-chart" id="chart-floor" data-draw="floor-chart" data-source="matches"></div>
   </div>
   <div class="er-card" id="form-session">
     <h3>From the first match of a session to the last</h3>
@@ -7525,7 +7549,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
 // session. The window and what is counted are this card's own state; the level is the dashboard's.
 (() => {
   const ER = window.ER;
-  const st = {w: 20, f: 'm'};
+  const st = {w: 20, f: 'm', fw: 20};
   const $ = (id) => document.getElementById(id);
   const picked = () => {
     const rows = ER.rows('form');
@@ -7689,9 +7713,113 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       return li;
     }));
   };
+
+  // Your floor: where the lower quarter of your match results ends (a result is the share of points won in the match),
+  // over your last matches at the level, beside the middle match. The window (st.fw) is this card's own.
+  const floor = () => {
+    const ms = ER.rows('matches');
+    if (!ms) return null;
+    const L = ER.level(), W = st.fw;
+    const at = ms.filter((r) => r.level === L && r.points > 0).map((r, i) => ({r, i: i + 1, v: 100 * r.pointsWonN / r.points}));
+    const cut = (list) => {
+      const v = list.map((d) => d.v).sort(d3.ascending);
+      return {lo: d3.quantile(v, 0.25), mid: d3.quantile(v, 0.5)};
+    };
+    const rows = [];
+    for (let i = W; i <= at.length; i += 1) rows.push(Object.assign({i, d: at[i - 1]}, cut(at.slice(i - W, i))));
+    // the latest matches against the same number before them: how many of each sit in the lower quarter of the two
+    // runs together. Clear when chance gives a gap that large about one time in ten, as everywhere on the page.
+    let move = null;
+    if (at.length >= 2 * W) {
+      const now = at.slice(-W), was = at.slice(-2 * W, -W), c = cut(was.concat(now)).lo;
+      const a = now.filter((d) => d.v <= c).length, b = was.filter((d) => d.v <= c).length, p = (a + b) / (2 * W);
+      const se = Math.sqrt(p * (1 - p) * 2 / W), z = se ? (b - a) / W / se : 0;
+      move = {was: cut(was), a, b, z, clear: z >= 1.64 ? 1 : z <= -1.64 ? -1 : 0};
+    }
+    return {L, W, at, rows, move};
+  };
+  ER.floor = floor;
+  draws['floor-now'] = (el) => {
+    const s = floor();
+    if (!s) return ER.wait(el, ['matches']);
+    if (!s.rows.length) return el.replaceChildren(ER.tr('{0} matches so far: not enough for a run of {1}.', s.at.length, s.W));
+    const last = s.rows[s.rows.length - 1], b = (t) => ER.el('b', null, t);
+    const out = ER.trn('Of your last {0} matches, one in four ended at {1} of points won or under. The middle match: {2}.',
+      String(s.W), b(ER.F.pct(last.lo)), b(ER.F.pct(last.mid)));
+    if (s.move) {
+      out.push(' ', ...ER.trn('The {0} before: {1} and {2}.', String(s.W), ER.F.pct(s.move.was.lo), ER.F.pct(s.move.was.mid)));
+      const chg = ER.el('span', 'er-chg' + (s.move.clear > 0 ? ' good' : s.move.clear < 0 ? ' bad' : ''));
+      if (s.move.clear) {
+        const arrow = ER.el('span', null, s.move.clear > 0 ? '▲ ' : '▼ ');
+        arrow.setAttribute('aria-hidden', 'true');
+        chg.append(arrow, ER.tr(s.move.clear > 0 ? 'Floor clearly up' : 'Floor clearly down'));
+      } else chg.textContent = ER.tr('No clear change');
+      out.push(' ', chg);
+    }
+    el.replaceChildren(...out);
+  };
+  draws['floor-chart'] = (el) => {
+    const s = floor();
+    if (!s) return ER.wait(el, ['matches']);
+    const W = Math.max(280, el.clientWidth || 600), H = 260;      // before emptying: see ER.tableFrame
+    el.replaceChildren();
+    if (!s.rows.length) return;
+    const rows = s.rows, last = rows[rows.length - 1], at = s.at;
+    const svg = ER.svg(el, W, H, ER.tr('Chart of the share of points you won in each match, with a line where the lower quarter of your last {0} matches ends and a line for the middle match', s.W));
+    const y = d3.scaleLinear().domain([Math.min(30, d3.min(at, (d) => d.v)), Math.max(60, d3.max(at, (d) => d.v))]).nice();
+    const ticks = y.ticks(5);
+    const names = [ER.tr('Floor {0}', ER.F.pct(last.lo)), ER.tr('Middle {0}', ER.F.pct(last.mid))];
+    const ml = Math.ceil(d3.max(ticks, (t) => ER.textW(svg, t + '%'))) + 10;
+    const mr = Math.ceil(d3.max(names, (t) => ER.textW(svg, t, 'er-strong'))) + 14;
+    const m = {t: 12, r: mr, b: 26, l: ml};
+    y.range([H - m.b, m.t]);
+    const x = d3.scaleLinear().domain([1, Math.max(2, at.length)]).range([m.l, W - m.r]);
+    ticks.forEach((t) => {
+      svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(t)).attr('y2', y(t)).style('stroke', 'var(--cds-chart-grid)');
+      svg.append('text').attr('x', m.l - 8).attr('y', y(t)).attr('text-anchor', 'end').attr('dominant-baseline', 'middle').attr('class', 'er-num').text(t + '%');
+    });
+    svg.append('text').attr('x', m.l).attr('y', H - 6).attr('text-anchor', 'start').text(`${ER.tr('match {0}', 1)} · ${ER.F.date(at[0].r.date)}`);
+    svg.append('text').attr('x', W - m.r).attr('y', H - 6).attr('text-anchor', 'end').text(`${ER.tr('match {0}', at.length)} · ${ER.F.date(at[at.length - 1].r.date)}`);
+    svg.append('g').selectAll('circle').data(at).join('circle').attr('cx', (d) => x(d.i)).attr('cy', (d) => y(d.v)).attr('r', at.length > 150 ? 1.6 : 2.2)
+      .style('fill', 'var(--color-fg-muted)').style('fill-opacity', 0.45);
+    const px = (r) => x(r.i);
+    svg.append('path').datum(rows).attr('d', d3.line().x(px).y((r) => y(r.mid)))
+      .style('fill', 'none').style('stroke', 'var(--color-fg)').style('stroke-width', 1.5).style('stroke-dasharray', '5 4').style('stroke-opacity', 0.7);
+    svg.append('path').datum(rows).attr('d', d3.line().x(px).y((r) => y(r.lo)))
+      .style('fill', 'none').style('stroke', ER.YOU).style('stroke-width', 2).style('stroke-linejoin', 'round').style('stroke-linecap', 'round');
+    svg.append('circle').attr('cx', px(last)).attr('cy', y(last.lo)).attr('r', 4.5).style('fill', ER.YOU).style('stroke', 'var(--color-panel)').style('stroke-width', 2);
+    // the two labels at the end of their lines, pushed apart when the lines run close
+    let yl = y(last.lo), ym = y(last.mid);
+    if (yl - ym < 15) {
+      const c = (yl + ym) / 2;
+      yl = c + 7.5;
+      ym = c - 7.5;
+    }
+    svg.append('text').attr('x', px(last) + 9).attr('y', yl).attr('dominant-baseline', 'middle').attr('class', 'er-strong er-num').text(names[0]);
+    svg.append('text').attr('x', px(last) + 9).attr('y', ym).attr('dominant-baseline', 'middle').attr('class', 'er-num').text(names[1]);
+    const tip = ER.tip(el), byI = new Map(rows.map((r) => [r.i, r]));
+    const rule = svg.append('line').attr('y1', m.t).attr('y2', H - m.b).style('stroke', 'var(--cds-chart-reference)').style('display', 'none');
+    const dot = svg.append('circle').attr('r', 4).style('fill', 'var(--color-fg)').style('stroke', 'var(--color-panel)').style('stroke-width', 2).style('display', 'none');
+    svg.append('rect').attr('x', m.l).attr('y', m.t).attr('width', Math.max(0, W - m.l - m.r)).attr('height', H - m.t - m.b)
+      .style('fill', 'transparent').style('cursor', 'crosshair')
+      .on('pointermove pointerdown', (evt) => {
+        const [mx] = d3.pointer(evt);
+        const d = d3.least(at, (q) => Math.abs(x(q.i) - mx)), r = byI.get(d.i);
+        rule.attr('x1', x(d.i)).attr('x2', x(d.i)).style('display', null);
+        dot.attr('cx', x(d.i)).attr('cy', y(d.v)).style('display', null);
+        const lines = [`${ER.F.date(d.r.date)} · ${ER.tr('match {0}', d.i)}`, ER.tr('Points won in this match: {0}', ER.F.pct(d.v))];
+        if (r) lines.push(ER.tr('Floor of the {0} matches up to it: {1}', s.W, ER.F.pct(r.lo)), ER.tr('Middle match of them: {0}', ER.F.pct(r.mid)));
+        tip.show(evt, lines);
+      })
+      .on('pointerleave', () => {
+        tip.hide();
+        rule.style('display', 'none');
+        dot.style('display', 'none');
+      });
+  };
   Object.keys(draws).forEach((n) => dash.draw(n, draws[n]));
 
-  const redraw = () => ['form-now', 'form-chart'].forEach((n) => document.querySelectorAll(`[data-draw="${n}"]`).forEach((el) => draws[n](el)));
+  const redraw = () => ['form-now', 'form-chart', 'floor-now', 'floor-chart'].forEach((n) => document.querySelectorAll(`[data-draw="${n}"]`).forEach((el) => draws[n](el)));
   const tabs = (id, attr, set) => {
     const box = $(id);
     if (!box) return;
@@ -7705,7 +7833,88 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   };
   tabs('form-w', 'w', (v) => { st.w = +v; });
   tabs('form-f', 'f', (v) => { st.f = v; });
+  tabs('floor-w', 'fw', (v) => { st.fw = +v; });
   ER.form = st;
+})();
+</script>
+
+<script>
+// Personal records, at the level picked: the longest rally you won, your fastest shot that landed, your longest run of
+// matches won and your best session. Counted on the page from the points, the shots, the matches and the sessions.
+(() => {
+  const ER = window.ER;
+  const SESSION_MIN = 3;        // matches for a session to count as your best
+  const SHOT = {S: ER.k('Serve'), D: ER.k('Drive'), L: ER.k('Slow loop'), F: ER.k('Fast loop'), P: ER.k('Push'), C: ER.k('Chop')};
+  const records = () => {
+    const d = ER.shots ? ER.shots.data() : null;
+    if (!d) return null;
+    const L = ER.level(), ms = d.ms.filter((m) => m.level === L), mBy = new Map(ms.map((m) => [m.key, m]));
+    const out = {level: L, matches: ms.length, latest: d.last, rally: null, shot: null, run: null, going: false, session: null};
+    d.ps.forEach((p) => {       // oldest first: the first point to reach a length holds the record
+      if (p.won === 1 && mBy.has(p.match) && (!out.rally || p.hits > out.rally.p.hits)) out.rally = {p, m: mBy.get(p.match)};
+    });
+    d.recs.forEach((r) => {      // newest first: of two equal shots the earlier holds it
+      if (r.ok && r.shot !== 'X' && r.speed != null && r.m.level === L && (!out.shot || r.speed >= out.shot.speed)) out.shot = r;
+    });
+    let run = [];
+    ms.forEach((m) => {
+      run = m.result === 'Won' ? run.concat(m) : [];
+      if (run.length && (!out.run || run.length > out.run.length)) out.run = run;
+    });
+    out.going = !!out.run && out.run === run;
+    d.ss.filter((s) => s.level === L && s.matches >= SESSION_MIN && s.points > 0).forEach((s) => {
+      if (!out.session || s.pointRate > out.session.pointRate) out.session = s;
+    });
+    return out;
+  };
+  ER.records = records;
+
+  const scroll = (id) => () => {
+    const t = document.getElementById(id);
+    if (t && t.scrollIntoView) t.scrollIntoView({behavior: 'smooth', block: 'start'});
+  };
+  const replay = (m, key, n) => () => {
+    const go = () => ER.replay && ER.replay.show(key, n, 'records');
+    if (ER.matchKey() === m.key) return go();
+    ER.set({match: m.key}, null, {after: go});
+  };
+  const cell = (label, big, unit, note, tag, btn, act) => {
+    const d = ER.el('div'), num = ER.el('div', 'er-pnum');
+    num.append(big == null ? '—' : big);
+    if (big != null && unit) num.append(ER.el('small', null, unit));
+    d.append(ER.el('div', 'er-label', label), num, ER.el('p', 'er-muted', note));
+    if (tag) d.appendChild(ER.el('span', 'er-ptag', tag));
+    if (btn) {
+      const b = ER.el('button', 'er-btn', btn);
+      b.type = 'button';
+      b.addEventListener('click', act);
+      d.appendChild(b);
+    }
+    return d;
+  };
+  dash.draw('records', (el) => {
+    const r = records();
+    if (!r) return ER.wait(el, ['shots', 'matches', 'points', 'sessions', 'plan']);
+    const none = ER.tr('Nothing yet.'), fresh = ER.tr('Set in your latest session');
+    const new1 = (m) => (m && m.session === r.latest ? fresh : null);
+    const {rally, shot, run, session} = r;
+    el.replaceChildren(
+      cell(ER.tr('Longest rally you won'), rally ? ER.span(String(rally.p.hits), 'points', 'hits', rally.p.key) : null, ER.tr('shots'),
+        rally ? ER.tr('{0} · game {1}, point {2}', ER.F.date(rally.m.date), rally.p.game, rally.p.point) : none,
+        rally && new1(rally.m), rally && ER.tr('Replay'), rally && replay(rally.m, rally.p.key, null)),
+      cell(ER.tr('Fastest shot that landed'), shot ? ER.fmt1(shot.speed) : null, 'm/s',
+        shot ? `${ER.F.date(shot.m.date)} · ${ER.tr(SHOT[shot.shot] || shot.shot)}` : none,
+        shot && new1(shot.m), shot && ER.tr('Replay'), shot && replay(shot.m, shot.pt.key, shot.n)),
+      cell(ER.tr('Longest run of matches won'), run ? String(run.length) : null, run && run.length === 1 ? ER.tr('match') : ER.tr('matches'),
+        !run ? none : run[0].date === run[run.length - 1].date ? ER.F.date(run[0].date) : ER.tr('{0} to {1}', ER.F.date(run[0].date), ER.F.date(run[run.length - 1].date)),
+        run && (r.going ? ER.tr('Still going') : new1(run[run.length - 1])), run && ER.tr('Open its first match'),
+        run && (() => ER.set({match: run[0].key}, null, {after: scroll('match')}))),
+      cell(ER.tr('Best session'), session ? ER.span(ER.F.pct(session.pointRate), 'sessions', 'pointRate', session.key) : null, ER.tr('of points won'),
+        session ? ER.tr('{0} · session {1} · won {2} of {3} matches', ER.F.date(session.date), session.n, session.wins, session.matches)
+          : ER.tr('No session of {0} matches or more yet.', SESSION_MIN),
+        session && (session.key === r.latest ? fresh : null), session && ER.tr('Open the session'),
+        session && (() => ER.set({session: session.key}, null, {after: scroll('session')}))));
+  });
 })();
 </script>
 
