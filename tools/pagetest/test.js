@@ -296,6 +296,46 @@
       }
     }
 
+    // 4f. session goals: a goal is kept, judged on the session shown from its own counts, and goes again
+    {
+      const kept = ['account', 'browser', 'workspace'].includes(ER.notes.where());
+      if (!kept) {
+        check('goals: kept, judged on the session, removed', q('#goal-add').disabled, 'notes cannot be kept here: the form is off');
+      } else {
+        const before = ER.goals.list().length, li = () => qa('[data-draw="session-goals"] > li');
+        ER.shots.apply1('role', 'A');
+        ER.shots.apply1('spin', 't');
+        await wait(80);
+        const add = async (m, t) => {
+          q('#goal-measure').value = m;
+          q('#goal-target').value = String(t);
+          q('#goal-form').dispatchEvent(new Event('submit', {cancelable: true, bubbles: true}));
+          await wait(200);
+        };
+        const ballOn = !q('#goal-measure option[value="ball"]').disabled;
+        await add('retOk', 1);
+        await add('ball', 100);
+        q('#sx-clear').click();
+        await wait(80);
+        const s = ER.sessionRow(), rows = ER.goals.forSession(s), a = rows.find((r) => r.g.m === 'retOk'), b = rows.find((r) => r.g.m === 'ball');
+        const today = a && a.g.from, counts = a && a.on === (a.g.from <= s.date);
+        const sums = ER.rows('match_sums'), keys = new Set(ER.rows('matches').filter((m) => m.session === s.key && (m.vs === 'AI') === !ER.people()).map((m) => m.key));
+        const ret = sums.filter((r) => keys.has(r.key)).reduce((x, r) => [x[0] + r.retOk, x[1] + r.ret], [0, 0]);
+        const fair = ballOn && rows.length === before + 2 && !!a && !!b && counts && b.g.q.role === 'A' && b.g.q.spin === 't' && Object.keys(b.g.q).length === 2
+          && (!a.on || (a.k === ret[0] && a.n === ret[1] && (a.n < 10 ? a.met === null : a.met === true)))
+          && (!b.on || (b.k <= b.n && (b.n < 10 ? b.met === null : b.met === (b.k === b.n)))) && li().length === rows.length;
+        for (const text of [a && a.name, b && b.name]) {
+          const del = () => li().find((x) => x.textContent.includes(text)).querySelector('[data-act="remove"]');
+          del().click();
+          await wait(60);
+          del().click();
+          await wait(200);
+        }
+        check('goals: kept, judged on the session, removed', fair && ER.goals.list().length === before,
+          (a ? a.k + ' of ' + a.n + ' returns; ' : '') + (b ? b.k + ' of ' + b.n + ' balls' : '') + (fair ? '' : '; wrong') + ' (set ' + today + ', session ' + s.date + ')');
+      }
+    }
+
     // 5. open a shot of another match from the list (of another month, when there is one): the match changes, its
     //    replays are unpacked, and the point asked for is the one on the table
     const list = ER.shots.chosen().list;

@@ -368,6 +368,15 @@
 .er-jbar h4{margin:0}
 .er-jline{display:block}
 @media (max-width:560px){.er-jlist>li{grid-template-columns:minmax(0,1fr)}.er-jlist>li>div:last-child{justify-content:flex-start}}
+.er-goals{list-style:none;margin:0;padding:0;display:grid}
+.er-goals>li{display:grid;grid-template-columns:20px minmax(0,1fr) auto auto;gap:6px 14px;align-items:center;padding:10px 0;border-top:1px solid var(--er-line)}
+.er-goals>li.er-muted{display:block}
+.er-goals>li>div:nth-child(2){display:grid;gap:3px;min-width:0}
+.er-goals>li>.er-sxnum{display:grid;justify-items:end;gap:1px;font-size:var(--cds-font-size-caption);font-variant-numeric:tabular-nums;white-space:nowrap}
+.er-goals p{margin:0}
+.er-goals .er-strong{font-weight:var(--cds-font-weight-medium)}
+.er-jform input[type=number]{width:6.5em}
+@media (max-width:560px){.er-goals>li{grid-template-columns:20px minmax(0,1fr) auto}.er-goals>li>button{grid-column:2 / -1;justify-self:start}}
 .er-patctl{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center}
 #patterns-card{grid-template-columns:minmax(0,1fr)}
 .er-pat tbody tr.on th{color:inherit}
@@ -710,6 +719,18 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
       <details class="er-how"><summary>How to read this</summary><p class="er-muted">The last column is the change in percentage points. It is coloured when the gap is bigger than a session of this size shows by chance about one time in ten.</p></details>
       <p class="er-muted">Rally speed <span data-draw="v" data-ds="sessions" data-k="{S}" data-f="rallySpeed" data-fmt="n1">—</span> m/s (<span data-draw="v" data-ds="sessions" data-k="{S}" data-f="base_rallySpeed" data-fmt="n1">—</span> before), <span data-draw="v" data-ds="sessions" data-k="{S}" data-f="rallyLength" data-fmt="n1">—</span> shots per point (<span data-draw="v" data-ds="sessions" data-k="{S}" data-f="base_rallyLength" data-fmt="n1">—</span> before).</p>
     </div>
+  </div>
+  <div class="er-card" id="session-goals">
+    <h3>Session goals</h3>
+    <p class="er-muted">Up to three targets to play for. Set them before you play: after the next import, this card and the session card say how each went.</p>
+    <ol class="er-goals" data-draw="session-goals" data-source="match_sums"></ol>
+    <form class="er-jform" id="goal-form" data-draw="goal-form" data-source="shots">
+      <div class="er-jtext"><label class="er-label" for="goal-measure">Measure</label><select class="dash-select" id="goal-measure"></select></div>
+      <div><label class="er-label" for="goal-target">Target, %</label><input type="number" id="goal-target" min="1" max="100" step="1" inputmode="numeric" required></div>
+      <button class="er-btn" type="submit" id="goal-add">Add goal</button>
+    </form>
+    <p class="er-muted er-jwhere" data-draw="goal-hint" data-source="shots" role="status"></p>
+    <details class="er-how"><summary>How to read this</summary><p class="er-muted">A goal is a share to reach in one session: a measure of the session report, or the share you land against one kind of ball. For a kind of ball, set the filters in Find shots (kind of shot, your stroke, spin, side, depth, speed) and pick it here. The line under the form shows what you did over your last five sessions, so the target can be a step up and not a guess. A goal counts for the sessions from the day you set it. A session with fewer than 10 tries is not judged, and one session is a small sample: a goal missed by a point or two is mostly chance.</p></details>
   </div>
   <details class="er-card er-mcard" id="session-card">
     <summary>Session card <span class="er-muted">A picture of this session to send or post.</span></summary>
@@ -1717,7 +1738,8 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
   ER.notes = (() => {
     const LS = 'elevendash.notes', MAX = 2000;
     const DRAWS = ['match-note', 'match-select', 'session-matches', 'session-your-notes', 'pick-quick', 'pick-list',
-      'journal-form', 'journal-where', 'journal-list', 'journal-effect-head', 'journal-effect-rows', 'progress', 'form-chart'];
+      'journal-form', 'journal-where', 'journal-list', 'journal-effect-head', 'journal-effect-rows', 'progress', 'form-chart',
+      'session-goals', 'goal-form', 'goal-hint', 'session-card'];
     const map = new Map();                  // match key -> {text, at}
     const st = {where: 'loading', version: 0};
     let col = null;
@@ -4384,9 +4406,12 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     } else {
       o.push(text(P, 822, ER.tr('Your first session at level {0} in the logs, so there is no earlier average to set it against.', s.level), {size: 18, fill: c.muted}));
     }
+    // your goals that counted in this session take the place of the last comparisons
+    const goals = (ER.goals ? ER.goals.forSession(s) : []).filter((g) => g.on && g.n > 0).slice(0, 3);
+    const cmp = CMP.slice(0, CMP.length - goals.length), bottom = goals.length ? 1162 - 40 * goals.length : 1230;
     const LBL = 440, BX = P + LBL + 16, BW = R - 210 - BX, top = s.basePoints != null ? 846 : 870;
-    CMP.forEach(([f, label], i) => {
-      const y = top + i * ((1230 - top) / (CMP.length - 1)), v = s[f], base = s['base_' + f], d = s['d_' + f], mk = s['m_' + f];
+    cmp.forEach(([f, label], i) => {
+      const y = top + i * ((bottom - top) / (cmp.length - 1)), v = s[f], base = s['base_' + f], d = s['d_' + f], mk = s['m_' + f];
       const words = ER.tr(label), lsz = Math.min(20, (20 * LBL) / Math.max(1, c.width(words, 20)));
       o.push(text(P, y + 7, words, {size: Math.round(lsz * 10) / 10, fill: c.muted}));
       o.push(rect(BX, y - 6, BW, 12, 6, c.track));
@@ -4399,6 +4424,19 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       }
     });
 
+    if (goals.length) {
+      const gy = bottom + 62;
+      o.push(text(P, gy, ER.tr('Your goals'), {size: 24, fill: c.fg, weight: 600}));
+      goals.forEach((g, i) => {
+        const y = gy + 40 + i * 40, col = g.met ? c.ok : g.met === false ? c.bad : c.muted;
+        const words = `${ER.tr(g.met ? 'Met' : g.met === false ? 'Missed' : 'Not judged')} · ${g.name}`;
+        const got = ER.tr('{0}, target {1}', ER.F.pct(Math.round(10 * g.value) / 10), ER.F.pct(g.g.t));
+        const room = R - P - 34 - c.width(got, 22, c.display, 600) - 24, wsz = Math.min(20, (20 * room) / Math.max(1, c.width(words, 20)));
+        o.push(`<circle cx="${P + 9}" cy="${y - 7}" r="8" fill="${col}"/>`);
+        o.push(text(P + 34, y, words, {size: Math.round(wsz * 10) / 10, fill: c.muted}));
+        o.push(text(R, y + 1, got, {size: 22, fill: c.fg, anchor: 'end', ...D}));
+      });
+    }
     o.push(rect(P, 1274, R - P, 1, 0, c.line));
     o.push(text(P, 1306, ER.tr("Made with elevendash from the game's own logs"), {size: 18, fill: c.muted}));
     const label = `${title}, ${longDate(s.date)}: ${ER.tr('Matches won')} ${s.wins}–${s.losses}`;
@@ -5523,7 +5561,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   const draws = {};
   const redraw = (names) => names.forEach((n) => document.querySelectorAll(`[data-draw="${n}"]`).forEach((el) => draws[n](el)));
   const OUT = ['sx-summary', 'sx-bars', 'sx-strokes-note', 'sx-strokes', 'sx-attack-note', 'sx-attack-head', 'sx-attack', 'sx-attack-next',
-    'sx-land-note', 'sx-land-head', 'sx-land-rows', 'sx-land-map', 'sx-hit-note', 'sx-hit-head', 'sx-hit-rows', 'sx-hit-map', 'sx-time-note', 'sx-time-head', 'sx-time', 'sx-versus-note', 'sx-versus', 'sx-only', 'sx-map', 'sx-list', 'sx-count'];
+    'sx-land-note', 'sx-land-head', 'sx-land-rows', 'sx-land-map', 'sx-hit-note', 'sx-hit-head', 'sx-hit-rows', 'sx-hit-map', 'sx-time-note', 'sx-time-head', 'sx-time', 'goal-form', 'goal-hint', 'sx-versus-note', 'sx-versus', 'sx-only', 'sx-map', 'sx-list', 'sx-count'];
   // what a change of st.only (the list narrowed to one line of a card) redraws
   const ONLY_OUT = ['sx-attack', 'sx-attack-next', 'sx-land-rows', 'sx-land-map', 'sx-hit-rows', 'sx-hit-map', 'sx-time', 'sx-only', 'sx-map', 'sx-list', 'sx-count'];
 
@@ -6773,6 +6811,168 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     el.replaceChildren(...out);
   };
 
+  // Session goals: up to three targets to play for, each a share to reach in a session. A goal is one of the session
+  // report's measures, or the share landed against the kind of ball the filters here pick. Goals are kept with the
+  // match notes (goal|<id>, the goal as JSON), so they stay on this computer. A goal counts for the sessions from the
+  // day it was set, and a session with fewer than G_FEW tries is not judged.
+  const G_MAX = 3, G_FEW = 10, G_KEPT = ['account', 'browser', 'workspace'];
+  const G_MEASURES = [['won', 'pts', ER.k('Points won')], ['svWon', 'sv', ER.k('Points won on your serve')], ['rvWon', 'rv', ER.k("Points won on the AI's serve")],
+    ['servesOk', 'serves', ER.k('Serves that landed')], ['retOk', 'ret', ER.k('Returns that landed')], ['rallyOk', 'rally', ER.k('Rally shots that landed')]];
+  const G_BALL = ['role', 'shot', 'spin', 'side', 'depth', 'pace'];
+  const gst = {said: '', sure: ''};
+  let goalMemo = null;
+  const goalList = () => {       // oldest first
+    const v = ER.notes.version();
+    if (goalMemo && goalMemo.v === v) return goalMemo.rows;
+    const rows = [];
+    ER.notes.entries().forEach(([key, n]) => {
+      if (!key.startsWith('goal|')) return;
+      try {
+        const g = JSON.parse(n.text), ball = g.m === 'ball';
+        const q = ball && g.q && typeof g.q === 'object' ? Object.fromEntries(G_BALL.filter((k) => typeof g.q[k] === 'string' && g.q[k]).map((k) => [k, g.q[k]])) : null;
+        if (!(g.t >= 1 && g.t <= 100) || !/^\d{4}-\d\d-\d\d$/.test(g.from) || (ball ? !Object.keys(q).length : !G_MEASURES.some((x) => x[0] === g.m))) return;
+        rows.push({key, m: g.m, t: Math.round(g.t), from: g.from, q});
+      } catch (e) {
+        // not a goal this page can read: leave it
+      }
+    });
+    rows.sort((a, b) => (a.from < b.from ? -1 : a.from > b.from ? 1 : a.key < b.key ? -1 : 1));
+    goalMemo = {v, rows};
+    return rows;
+  };
+  const ballText = (q) => G_BALL.filter((k) => q[k]).map((k) => {
+    const o = OPTS[k].find((x) => x[0] === q[k]);
+    return o ? ER.tr(o[1]) : q[k];
+  }).join(', ');
+  const goalName = (g) => (g.m === 'ball' ? ER.tr('Landed: {0}', ballText(g.q)) : ER.tr(G_MEASURES.find((x) => x[0] === g.m)[2]));
+  // [reached, tries] for a goal over some sessions of the side shown, or null while the data is on its way
+  const goalCount = (g, sessions) => {
+    const d = data(), ai = !ER.people();
+    if (!d) return null;
+    if (g.m === 'ball') {
+      const q = Object.assign({}, NONE, g.q);
+      let k = 0, n = 0;
+      d.recs.forEach((r) => {
+        if (!sessions.has(r.m.session) || (r.m.vs === 'AI') !== ai || !pass(d, r, q)) return;
+        n += 1;
+        k += r.ok ? 1 : 0;
+      });
+      return [k, n];
+    }
+    const sums = ER.rows('match_sums');
+    if (!sums) return null;
+    const [nf, df] = G_MEASURES.find((x) => x[0] === g.m);
+    const keys = new Set(d.ms.filter((m) => sessions.has(m.session) && (m.vs === 'AI') === ai).map((m) => m.key));
+    let k = 0, n = 0;
+    sums.forEach((r) => {
+      if (!keys.has(r.key)) return;
+      k += r[nf] || 0;
+      n += r[df] || 0;
+    });
+    return [k, n];
+  };
+  // every goal as it stands for one session: met is true, false, or null (not counted yet, or too few tries to judge)
+  const goalsFor = (s) => goalList().map((g) => {
+    const on = g.from <= s.date, c = on ? goalCount(g, new Set([s.key])) : null;
+    const k = c ? c[0] : 0, n = c ? c[1] : 0, value = n ? 100 * k / n : null;
+    return {g, name: goalName(g), on, k, n, value, met: !on || n < G_FEW ? null : value >= g.t};
+  });
+  ER.goals = {list: goalList, forSession: goalsFor, name: goalName, max: G_MAX, few: G_FEW,
+    add: (g) => ER.notes.save(`goal|${Date.now().toString(36)}`, JSON.stringify(g)), remove: (key) => ER.notes.save(key, '')};
+  const gToday = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+  const ballPicked = () => Object.fromEntries(G_BALL.filter((k) => f[k]).map((k) => [k, f[k]]));
+  draws['session-goals'] = (el) => {
+    const s = ER.sessionRow();
+    if (!s) return ER.wait(el, ['sessions']);
+    const rows = goalsFor(s);
+    if (!rows.length) return el.replaceChildren(ER.el('li', 'er-muted', ER.tr('No goals yet. Pick a measure and a target below before you play.')));
+    el.replaceChildren(...rows.map((r) => {
+      const li = ER.el('li'), body = ER.el('div'), num = ER.el('div', 'er-sxnum');
+      const mark = ER.el('span', 'er-mark ' + (r.met ? 'good' : r.met === false ? 'bad' : 'note'), r.met ? '✓' : r.met === false ? '×' : '·');
+      mark.setAttribute('role', 'img');
+      mark.setAttribute('aria-label', ER.tr(r.met ? 'Met' : r.met === false ? 'Missed' : 'Not judged'));
+      const gap = r.value == null ? 0 : Math.round(10 * Math.abs(r.value - r.g.t)) / 10;
+      const how = !r.on ? ER.tr('Counts from {0} on, so not for this session.', ER.F.date(r.g.from))
+        : !r.n ? ER.tr('Nothing to count in this session.')
+          : r.n < G_FEW ? ER.tr('{0} of {1} in this session: too few to judge.', ER.F.int(r.k), ER.F.int(r.n))
+            : r.met ? ER.tr('Met: {0} of {1} in this session, {2} points over the target.', ER.F.int(r.k), ER.F.int(r.n), ER.fmt1(gap))
+              : ER.tr('Missed: {0} of {1} in this session, {2} points under the target.', ER.F.int(r.k), ER.F.int(r.n), ER.fmt1(gap));
+      body.append(ER.el('span', 'er-strong', r.name), ER.el('p', 'er-muted', how));
+      num.append(ER.el('b', null, r.value == null || !r.on ? '—' : rate(r.k, r.n)), ER.el('span', 'er-muted', ER.tr('target {0}', ER.F.pct(r.g.t))));
+      const del = ER.el('button', 'er-btn', ER.tr(gst.sure === r.g.key ? 'Remove for good?' : 'Remove'));
+      del.type = 'button';
+      del.dataset.act = 'remove';
+      del.addEventListener('click', () => {
+        if (gst.sure !== r.g.key) {
+          gst.sure = r.g.key;
+          return redraw(['session-goals']);
+        }
+        gst.sure = '';
+        gst.said = '';
+        ER.goals.remove(r.g.key).catch(() => {
+          gst.said = 'failed';
+          redraw(['goal-hint']);
+        });
+      });
+      li.append(mark, body, num, del);
+      return li;
+    }));
+  };
+  draws['goal-form'] = (form) => {
+    const kept = G_KEPT.includes(ER.notes.where()), full = goalList().length >= G_MAX;
+    const sel = form.querySelector('#goal-measure'), target = form.querySelector('#goal-target');
+    const q = ballPicked(), ball = Object.keys(q).length ? ballText(q) : '';
+    if (!ER.same(sel, [ER.lang(), ball, ER.vs()])) {
+      const was = sel.value;
+      const opts = G_MEASURES.map(([v, , label]) => new Option(ER.tr(label), v));
+      const o = new Option(ball ? ER.tr('Landed, the balls picked in Find shots: {0}', ball) : ER.tr('A kind of ball: set the filters in Find shots first'), 'ball');
+      o.disabled = !ball;
+      sel.replaceChildren(...opts, o);
+      sel.value = was && !(was === 'ball' && !ball) ? was : 'retOk';
+    }
+    form.querySelectorAll('input, select, button').forEach((c) => (c.disabled = !kept || full));
+    if (!form.dataset.on) {
+      form.dataset.on = '1';
+      sel.addEventListener('change', () => redraw(['goal-hint']));
+      form.addEventListener('submit', (ev) => {
+        ev.preventDefault();
+        const t = Math.round(Number(target.value)), picked = ballPicked();
+        if (!(t >= 1 && t <= 100) || !G_KEPT.includes(ER.notes.where()) || goalList().length >= G_MAX) return;
+        if (sel.value === 'ball' && !Object.keys(picked).length) return;
+        gst.said = '';
+        ER.goals.add(sel.value === 'ball' ? {m: 'ball', q: picked, t, from: gToday()} : {m: sel.value, t, from: gToday()}).then(() => {
+          target.value = '';
+          gst.said = 'saved';
+          redraw(['goal-hint']);
+        }, (e) => {
+          gst.said = e && e.code === 'quota_exceeded' ? 'full' : 'failed';
+          redraw(['goal-hint']);
+        });
+      });
+    }
+  };
+  // what you did on the measure picked over your last five sessions, to set a target by; then where goals are kept
+  draws['goal-hint'] = (el) => {
+    const sel = $('goal-measure'), d = data(), w = ER.notes.where(), out = [];
+    const said = gst.said === 'saved' ? ER.k('Goal added.') : gst.said === 'full' ? ER.k('Not saved: there is no room left for notes.') : gst.said === 'failed' ? ER.k('Not saved. Try again.') : '';
+    if (said) out.push(ER.el('b', null, ER.tr(said)), ' ');
+    if (goalList().length >= G_MAX) out.push(ER.tr('Three goals is the most: remove one to set another.'), ' ');
+    else if (sel && d && sel.value) {
+      const g = sel.value === 'ball' ? {m: 'ball', q: ballPicked()} : {m: sel.value};
+      const last = new Set(d.ss.slice(-5).map((x) => x.key)), c = g.m === 'ball' && !Object.keys(g.q).length ? null : goalCount(g, last);
+      if (c && c[1]) out.push(ER.tr('Over your last {0} sessions: {1} ({2} of {3}).', ER.F.int(last.size), rate(c[0], c[1]), ER.F.int(c[0]), ER.F.int(c[1])), ' ');
+    }
+    const where = w === 'workspace' ? ER.k('Goals are kept in your elevendash folder on this computer, with your match notes.')
+      : w === 'browser' ? ER.k('Goals are kept in this browser on this device, with your match notes.')
+        : w === 'account' ? ER.k('Only you can see your goals, even when this dashboard is shared.')
+          : w === 'loading' ? ER.k('Loading your goals…') : ER.k("Goals can't be kept in this view.");
+    out.push(ER.tr(where));
+    el.replaceChildren(...out);
+  };
+
   Object.keys(draws).forEach((n) => dash.draw(n, draws[n]));
 
   const on = (id, type, fn) => {
@@ -6843,7 +7043,11 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   });
   const P_PACE = {f: ER.k('fast'), s: ER.k('slower')};
   const ballName = (spin, side, pace) => ER.tr('{0}, {1}, {2}', ER.tr(P_SPIN[spin]), ER.tr(P_SIDE[side]), ER.tr(P_PACE[pace]));
-  ER.shots = {data, ballName, filters: f, chosen, apply, groups, strokeRows, versus, attackSum, landSum, hitSum, timeSum, works, state: st, patterns, patState: pst};
+  ER.shots = {data, ballName, filters: f, chosen, apply, groups, strokeRows, versus, attackSum, landSum, hitSum, timeSum, works, apply1: (k, v) => {
+    f[k] = v;
+    st.only = '';
+    redraw(['sx-filter', ...OUT]);
+  }, state: st, patterns, patState: pst};
 })();
 </script>
 

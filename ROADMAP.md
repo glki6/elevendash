@@ -43,6 +43,7 @@ the order they are planned. Nothing here is a promise of a date.
    and Form charts, with a before-and-since comparison built like item 5. *Done in v0.12.0, under Progress by day.*
 9. **Session goals.** Pick up to three measurable targets before you play (returns landed, points won on your serve, a
    kind of ball from the Shot explorer). After the import, the session report and session card say how each went.
+   *Done in v0.13.0, in the Session report.*
 10. **Side-by-side replay.** A shot you landed and one you missed against a similar ball, in two 3D replays that play
     in step from the moment the ball reaches you.
 11. **Training plan history.** When each item joined the plan, whether it left it, and whether it came back.

@@ -117,6 +117,10 @@ The other side of the training plan: your three best serves, the stroke that win
 
 The kinds of ball you miss most, each one click away from its replays, and a filter that finds any shot by the ball that came at you. For the balls you pick it also compares your strokes, sets your misses against the shots you landed, and shows what happens after you attack: how often the attack wins the point there, how often it comes back, and how those points go. A map of the far half shows where your shots land and the points you win from each part of the table, by depth, by side and by direction (cross-court or down the line). Another card answers how hard to hit: the share you land and the points you win at each speed off your bat, by whether the ball was still rising and how soon after the bounce you met it, with a speed by spin grid of what lands. And a chart follows one skill over time: for the balls you pick, the share you landed in each session, week or month with its likely range, apart from whether you won the matches.
 
+### Session goals
+
+Before you play, pick up to three targets in the session report: a share of returns landed, points won on your serve, or the share you land against one kind of ball picked in the shot explorer. After the next import the session report and the session card say how each went, and a session with too few tries is not judged.
+
 ### Training journal
 
 Under Progress by day you can write down what the logs cannot know: a drill, a game setting, new equipment, a change of technique. Each entry is marked on the progress and form charts, and opens a before-and-since table: your matches from that day on against the four weeks before, measure by measure. Entries are kept with your match notes on your own computer, never in the dashboard file.
