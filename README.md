@@ -64,6 +64,10 @@ never send or post it. *Export as CSV* or *JSON* writes your matches, points and
 `export`, with a `columns.txt` that says what each column holds: match data only, with no log lines, tokens or account
 details.
 
+To show a coach some of your matches and not your whole history, pick them under **Matches you pick** and press
+**Share these matches…**. It writes a dashboard file of those matches alone into `share` (see
+[Sharing the dashboard](#sharing-the-dashboard)).
+
 No Wi-Fi sharing? Copy the `ALL-*.log` files off the headset another way (a USB cable, a file manager) and use
 **From files…**.
 
@@ -257,6 +261,7 @@ No Wi-Fi sharing? Copy the `ALL-*.log` files off the headset any other way (USB 
 | `elevendash backup [--out FILE]` | One file with your logs, notes and settings, to move to another computer. It holds your account tokens: keep it on your own drives |
 | `elevendash restore FILE [DIR]` | Unpack a backup into a new or empty folder and build its dashboard |
 | `elevendash export [--format csv\|json] [--out DIR]` | Matches, points and shots as tables for other tools (`export/`, with `columns.txt`). Match data only |
+| `elevendash share --last N \| --from DATE [--to DATE] \| --match KEY [--out FILE]` | A dashboard of some matches only (`share/`), to send to a coach |
 | `elevendash demo [DIR]` | A workspace of made-up matches and its dashboard |
 | `elevendash redact LOG OUT` | A copy of a log without account, people or location data |
 
@@ -271,6 +276,11 @@ static host (GitHub Pages, Netlify, Cloudflare Pages). A view's level, session a
 `#`, so a link can open a particular match. In the browser, Save as PDF prints it.
 
 If you upload session videos (below), the dashboard links to them. `--no-videos` leaves those links out.
+
+**Some matches only.** `elevendash share --last 1` (the last session; or `--from DATE --to DATE`, or `--match KEY`),
+or **Share these matches…** in the app, writes a dashboard of just those matches into `share/`. It is built as if
+they were all the matches you have, so nothing of the others is in the file: every number, chart and plan in it comes
+from the shared matches, and sessions are counted among them. It holds no video links, notes, journal or goals.
 
 The dashboard opens dark and in English; switches at the top change the look (dark or light) and the language
 (English or Traditional Chinese), and the address remembers the choice. `?theme=light` or `?lang=zh` on the file's

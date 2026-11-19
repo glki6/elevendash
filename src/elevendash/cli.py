@@ -14,6 +14,8 @@
   elevendash backup [--out FILE]         one file with your logs, notes and settings, to move to another computer
   elevendash restore FILE [DIR]          unpack a backup into a new workspace and build it
   elevendash export [--format csv|json]  matches, points and shots as tables for other tools (match data only)
+  elevendash share --last N | --from DATE [--to DATE] | --match KEY
+                                         a dashboard file of some matches only, to send to a coach
   elevendash demo [DIR]                  try it without a Quest: a workspace of made-up matches and its dashboard
   elevendash redact LOG OUT              a copy of a log without account, people or location data, to show someone
 
@@ -22,10 +24,13 @@ Game logs contain your Eleven and Meta account tokens: keep the workspace privat
 """
 import argparse
 import contextlib
+import datetime
 import io
+import json
 import os
 import runpy
 import sys
+import tempfile
 
 from . import __version__, fetch, report, workspace
 from .page import LANGS, THEMES
@@ -67,17 +72,21 @@ def do_fetch(ws, quest=None, say=print):
     return got
 
 
-def do_build(ws, verbose=False, say=print):
+def do_build(ws, verbose=False, say=print, only=None, out=None):
+    """Build the workspace's data. With only (match keys) and out (a folder), build those matches alone into that
+    folder, with no video links, and leave the workspace's own data as it is (do_share)."""
     n = log_count(ws)
     if not n:
         raise SystemExit(f'No game logs in {ws.logs} yet. Run "elevendash fetch" or "elevendash import" first.')
     say(f'Building match data from {n} log file(s) ...')
     from . import health, i18n
+    build = out or ws.build
+    videos = ws.videos if only is None else os.path.join(build, 'no-videos.json')       # a file that is not there
 
     def run(side, **given):
         """One pass of the builder: 'ai' writes every match and the sums against the AI, 'people' the online sums."""
         argv = sys.argv
-        sys.argv = ['elevendash.builddata', ws.logs, ws.build, ws.videos, ws.config().get('hand', 'auto'), side]
+        sys.argv = ['elevendash.builddata', ws.logs, build, videos, ws.config().get('hand', 'auto'), side]
         try:
             sink = contextlib.nullcontext() if verbose else contextlib.redirect_stdout(io.StringIO())
             with sink:
@@ -87,11 +96,11 @@ def do_build(ws, verbose=False, say=print):
             i18n.set_voice(None)
 
     def drop_online():
-        for name in os.listdir(ws.build):
+        for name in os.listdir(build):
             if name.endswith('_h.json'):
-                os.remove(os.path.join(ws.build, name))
+                os.remove(os.path.join(build, name))
 
-    made = run('ai')
+    made = run('ai', **({} if only is None else {'ONLY': set(only)}))
     if any(not m['ai'] for m, *_ in made['M']):
         try:        # the online side is built from the same matches; if it fails, the rest of the dashboard stands
             run('people', PARSED=(made['M'], made['PROBLEMS']))
@@ -101,10 +110,61 @@ def do_build(ws, verbose=False, say=print):
                 'please report this at https://github.com/glki6/elevendash/issues.')
     else:
         drop_online()
+    if only is not None:
+        return {}
     say(f'  Data in {ws.build}')
     for line in health.advice(made.get('PROBLEMS')):
         say(line)
     return made.get('PROBLEMS') or {}       # {log name: what looks misread in it}; the app lists these after an import
+
+
+def match_rows(ws):
+    """The workspace's matches as built: [{key, date, session, ...}], oldest first."""
+    try:
+        with open(os.path.join(ws.build, 'matches.json'), encoding='utf-8') as f:
+            return json.load(f)['rows']
+    except (OSError, ValueError, KeyError):
+        raise SystemExit('No match data yet. Run "elevendash build" first.')
+
+
+def do_share(ws, keys, out=None, say=print, theme=None, lang=None):
+    """A dashboard file built from some matches only, to send to a coach instead of the whole history. It is built
+    as if those were all the matches there are: nothing of the others is in the file, and no video links.
+    Returns (the file, how many matches)."""
+    want = set(keys)
+    keys = [r['key'] for r in match_rows(ws) if r['key'] in want]
+    if not keys:
+        raise SystemExit('None of those matches are in your data. Pick matches from the dashboard, or see "elevendash share --help".')
+    n = len(keys)
+    stamp = datetime.datetime.now().strftime('%Y-%m-%d-%H%M')
+    out = os.path.abspath(out or os.path.join(ws.root, 'share', f'elevendash-{n}-match{"" if n == 1 else "es"}-{stamp}.html'))
+    os.makedirs(os.path.dirname(out), exist_ok=True)
+    c = ws.config()
+    with tempfile.TemporaryDirectory(dir=ws.root, prefix='.share-') as tmp:         # beside the data, never in the system's temp folder
+        try:
+            do_build(ws, say=lambda *a: None, only=keys, out=tmp)
+            build_site(tmp, out, videos=False, theme=theme or c.get('theme', 'dark'), lang=lang or c.get('lang', 'en'))
+        except SystemExit:
+            raise
+        except Exception as e:
+            raise SystemExit(f'A dashboard of only {"that match" if n == 1 else f"those {n} matches"} could not be built '
+                             f'({type(e).__name__}: {e}). Try a few more matches, and please report this at '
+                             'https://github.com/glki6/elevendash/issues.')
+    say(f'Shared dashboard: {out} ({n} match{"" if n == 1 else "es"}, {os.path.getsize(out) // 1024:,} KB).')
+    say('  It holds those matches only, as match data: no logs, tokens, account details, names or video links.')
+    return out, n
+
+
+def share_keys(ws, last=None, since=None, until=None, matches=()):
+    """The matches an "elevendash share" command names: the last N sessions, a stretch of dates, and single matches."""
+    rows = match_rows(ws)
+    keys = set(matches)
+    if last:
+        sessions = sorted({r['session'] for r in rows})[-last:]
+        keys |= {r['key'] for r in rows if r['session'] in sessions}
+    if since or until:
+        keys |= {r['key'] for r in rows if (since or '') <= r['date'] <= (until or '9999')}
+    return [r['key'] for r in rows if r['key'] in keys]
 
 
 def do_report(ws, say=print):
@@ -221,6 +281,14 @@ def main(argv=None):
     p = sub.add_parser('export', help='write matches, points and shots as CSV or JSON')
     p.add_argument('--format', choices=('csv', 'json'), default='csv')
     p.add_argument('--out', help='the folder to write into (default: export/ in the workspace)')
+    p = sub.add_parser('share', help='write a dashboard of some matches only, to send to a coach')
+    p.add_argument('--last', type=int, metavar='N', help='the last N sessions')
+    p.add_argument('--from', dest='since', metavar='DATE', help='matches from this day on (YYYY-MM-DD)')
+    p.add_argument('--to', dest='until', metavar='DATE', help='matches up to this day (YYYY-MM-DD)')
+    p.add_argument('--match', action='append', default=[], metavar='KEY', help='one match, by its start: "YYYY-MM-DD HH:MM:SS" (may repeat)')
+    p.add_argument('--out', help='where to write it (default: share/ in the workspace)')
+    p.add_argument('--theme', choices=THEMES)
+    p.add_argument('--lang', choices=LANGS)
     p = sub.add_parser('update', help='fetch, build, report and site in one go')
     p.add_argument('--offline', action='store_true', help='do not contact the Quest; rebuild from the logs you have')
     p.add_argument('--quest', help="the Quest's File Sharing address (remembered for next time)")
@@ -301,6 +369,12 @@ def main(argv=None):
             got = export.write(ws.build, a.out or os.path.join(ws.root, 'export'), a.format)
             print(f'Export: {got["dir"]} ({", ".join(got["files"])})')
             print('  ' + ', '.join(f'{n:,} {k}' for k, n in got['rows'].items()) + '. Match data only: no log lines, tokens or account details.')
+            return 0
+        if a.cmd == 'share':
+            if not (a.last or a.since or a.until or a.match):
+                print('elevendash share: say which matches: --last N (sessions), --from DATE [--to DATE], or --match KEY', file=sys.stderr)
+                return 2
+            do_share(ws, share_keys(ws, a.last, a.since, a.until, a.match), a.out, theme=a.theme, lang=a.lang)
             return 0
         if a.cmd == 'pdf':
             from .pdf import make_pdf

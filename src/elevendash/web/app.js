@@ -55,7 +55,8 @@
     [bar.imp, bar.files, bar.rebuild].forEach((b) => (b.disabled = true));
     const step = (s.lines || []).filter((l) => l.trim()).slice(-1)[0] || '';
     const what = s.kind === 'site' ? ['Redrawing the dashboard…', '正在重繪儀表板…'] : s.kind === 'rebuild'
-      ? ['Rebuilding from the logs…', '正在從記錄重新建立…'] : s.kind === 'restore' ? ['Restoring the backup…', '正在還原備份…'] : ['Importing…', '正在匯入…'];
+      ? ['Rebuilding from the logs…', '正在從記錄重新建立…'] : s.kind === 'restore' ? ['Restoring the backup…', '正在還原備份…']
+        : s.kind === 'share' ? ['Writing the dashboard to share…', '正在寫入要分享的儀表板…'] : ['Importing…', '正在匯入…'];
     say(bar.msg, what[0] + (step ? ' ' + step.trim() : ''), what[1] + (step ? ' ' + step.trim() : ''));
     showLog(s.lines, mine);
   };
@@ -75,7 +76,16 @@
       return true;
     }
     bar.help.hidden = r.code !== 'unreachable';
-    if (r.code === 'nothing') {
+    if (r.code === 'shared') {
+      const en = `Dashboard to share written: ${r.file} (${plural(r.n, 'match', 'matches')}). It holds those matches only, as match data.`;
+      const zh = `已寫入要分享的儀表板：${r.file}（${r.n} 場比賽）。裡面只有這些比賽的比賽資料。`;
+      say(bar.msg, en, zh, 'ok');
+      if (share) say(share.msg, en, zh, 'ok');
+      if (mine) openSub('share');
+    } else if (!r.ok && s.kind === 'share') {
+      say(bar.msg, 'Not shared: ' + (r.message || 'the dashboard could not be built'), '未能分享：' + (r.message || '無法建立儀表板'), 'bad');
+      if (share) say(share.msg, 'Not shared: ' + (r.message || 'the dashboard could not be built'), '未能分享：' + (r.message || '無法建立儀表板'), 'bad');
+    } else if (r.code === 'nothing') {
       say(bar.msg, 'No new logs on the Quest. Play a session and import again.', '頭戴裝置上沒有新記錄。打完一場再匯入。', 'ok');
       if (s.kind === 'files') say(bar.msg, 'Those logs are already in.', '這些記錄已經匯入過了。', 'ok');
     } else if (r.code === 'need_quest') {
@@ -192,7 +202,7 @@
   }
 
   // Your data (Settings, on the computer only): a backup of the workspace, and the match data as tables
-  const data = {box: $('ed-data'), backup: $('ed-backup'), csv: $('ed-export-csv'), json: $('ed-export-json'), msg: $('ed-data-msg'),
+  const data = {box: $('ed-mine'), backup: $('ed-backup'), csv: $('ed-export-csv'), json: $('ed-export-json'), msg: $('ed-mine-msg'),
     restore: $('ed-restore'), restoreInput: $('ed-restore-input')};
   const mb = (n) => (n / 1048576).toFixed(n < 10485760 ? 1 : 0);
   const openSub = (sub) => A.api('POST', '/api/folder', {sub}).catch(() => {});
@@ -244,8 +254,54 @@
     });
   }
 
+  // Share some matches (on the computer only): a button under the dashboard's "Matches you pick", which writes a
+  // dashboard file of the picked matches alone, to send to a coach instead of the whole history
+  let share = null;
+  const shareUi = (s) => {
+    const host = document.getElementById('pick-choose');
+    if (!host || s.remote) return;
+    if (!share) {
+      const box = document.createElement('div'), btn = document.createElement('button'), note = document.createElement('small'),
+        msg = document.createElement('span');
+      box.className = 'ed-share';
+      box.id = 'ed-share';
+      btn.type = 'button';
+      btn.className = 'ed-app-btn';
+      btn.id = 'ed-share-btn';
+      btn.append(...two('Share these matches…', '分享這些比賽…'));
+      note.append(...two('Writes a dashboard file of only the matches picked above, to send to a coach. It is built as if they were all your matches: nothing of the others is in it, and no logs, tokens, account details, names or video links.',
+        '寫出一個只含上面所選比賽的儀表板檔案，可傳給教練。它會當作你只有這些比賽來建立：檔案裡沒有其他比賽的任何資料，也沒有記錄、權杖、帳號資料、姓名或影片連結。'));
+      msg.className = 'ed-app-msg';
+      msg.setAttribute('role', 'status');
+      box.append(btn, note, msg);
+      host.append(box);
+      share = {box, btn, msg};
+      btn.addEventListener('click', async () => {
+        const p = window.ER && window.ER.pick && window.ER.pick();
+        const keys = p ? p.rows.map((r) => r.key) : [];
+        if (!keys.length) return say(share.msg, 'Pick some matches above first.', '請先在上面選取比賽。', 'bad');
+        say(share.msg, `Writing a dashboard of ${plural(keys.length, 'match', 'matches')}…`, `正在寫入 ${keys.length} 場比賽的儀表板…`);
+        mine = true;
+        try {
+          const st = await A.api('POST', '/api/share', {matches: keys});
+          if (st.httpStatus === 409) {
+            mine = false;
+            say(share.msg, 'Something else is running. Try again when it is done.', '有其他工作正在執行，完成後再試。', 'bad');
+          }
+          render(st);
+        } catch (err) {
+          mine = false;
+          say(share.msg, 'Not shared: ' + err.message, '未能分享：' + err.message, 'bad');
+        }
+        poll();
+      });
+    }
+    share.btn.disabled = !!s.busy;
+  };
+
   const render = (s) => {
     last = s;
+    shareUi(s);
     data.box.hidden = !!s.remote || !s.logs;
     if (data.restore) data.restore.parentNode.hidden = !!s.remote || !!s.logs;
     data.csv.hidden = data.json.hidden = !s.built;
@@ -268,8 +324,9 @@
     if (s.busy) return busy(s);
     if (seq !== null && s.seq !== seq && mine) {
       seq = s.seq;
+      const done = finished(s);
       mine = false;
-      if (finished(s)) return;
+      if (done) return;
     } else {
       const other = seq !== null && s.seq !== seq && s.result && s.result.ok && s.result.changed;
       seq = s.seq;

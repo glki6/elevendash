@@ -156,6 +156,10 @@ class App:
                 result['changed'] = True
             elif kind == 'restore':
                 result.update(self._restore(say))
+            elif kind == 'share':
+                say('Building a dashboard of the matches you picked ...')
+                path, n = cli.do_share(self.ws, kw['keys'], say=say)
+                result.update(code='shared', file=path, n=n)
             elif kind == 'site':
                 cli.do_site(self.ws, say=say)
                 result['changed'] = True
@@ -293,6 +297,13 @@ class App:
                   'version': __version__, 'remote': remote, 'phone': bool(self.phone_server), 'report': self.report})
         if not remote:            # where things are on the computer is the computer's business
             v.update({'home': self.ws.root, 'shortcut': os.name == 'nt'})
+            return v
+
+        def hide(x):              # and so is what a job said about where it wrote
+            return x.replace(self.ws.root, '…') if isinstance(x, str) else x
+        v['lines'] = [hide(x) for x in v['lines']]
+        if v['result']:
+            v['result'] = {k: hide(x) for k, x in v['result'].items()}
         return v
 
     def save_settings(self, body):
@@ -682,6 +693,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 return self._send(200, app.make_backup())
             if path == '/api/export' and m == 'POST':
                 return self._send(200, app.make_export(self._body(4096).get('format', 'csv')))
+            if path == '/api/share' and m == 'POST':
+                keys = self._body(1 << 20).get('matches')
+                if not isinstance(keys, list) or not keys or not all(isinstance(k, str) for k in keys):
+                    raise ValueError('pick some matches first')
+                if not app.built():
+                    raise ValueError('there is no match data to share yet')
+                started = app.start_job('share', keys=keys)
+                return self._send(202 if started else 409, app.status(self.remote))
             if path == '/api/restore' and m == 'POST':
                 app.receive_backup(self.rfile, int(self.headers.get('Content-Length') or 0))
                 started = app.start_job('restore')

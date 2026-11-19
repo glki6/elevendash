@@ -66,7 +66,7 @@ the order they are planned. Nothing here is a promise of a date.
 - **Export.** Matches, points and shots as CSV or JSON for other tools. Match data only: no log lines, tokens or
   account details. *Done in v0.18.0: Settings, and `elevendash export`.*
 - **Share some matches.** A dashboard file built from only the matches you pick, for a coach, instead of your whole
-  history.
+  history. *Done in v0.19.0: under Matches you pick in the app, and `elevendash share`.*
 - **First-run guide.** A step-by-step check of the headset connection in the welcome screen: File Sharing on, address
   reachable, logs found. *Done in v0.17.0.*
 

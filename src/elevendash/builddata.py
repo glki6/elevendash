@@ -93,6 +93,8 @@ else:
                 you = m['you']
                 M.append((m, you, 'B' if you == 'A' else 'A', [p for g in m['games'] for p in g['points']]))
     M.sort(key=lambda t: (t[0]['date'], t[0]['start']))
+    if 'ONLY' in globals():     # a dashboard of some matches (elevendash share): the rest are left out before anything is counted
+        M = [t for t in M if f"{t[0]['date']} {t[0]['start']}" in ONLY]     # noqa: F821
 
 # Your paddle hand decides which side is your backhand. The game's paddle settings say which hand holds the paddle;
 # the hand used in most AI matches counts, unless the workspace sets one (elevendash config hand=left).

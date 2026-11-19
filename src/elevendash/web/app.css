@@ -42,6 +42,12 @@ html[lang="zh-Hant"] .ed-app div[data-l=zh],html[lang="zh-Hant"] .ed-welcome [da
 .ed-app-data-btns b{color:var(--color-fg);font-weight:600}
 .ed-app-data small{font-size:12px;max-width:88ch}
 .ed-app-data .ed-app-msg{overflow-wrap:anywhere}
+.ed-share{display:grid;gap:6px;justify-items:start;margin-top:14px;padding-top:12px;border-top:1px solid var(--color-border-line);font-size:13px;color:var(--color-fg-muted)}
+.ed-share small{font-size:12px;max-width:80ch}
+.ed-share .ed-app-msg{overflow-wrap:anywhere}
+.ed-share [data-l=zh],html[lang="zh-Hant"] .ed-share [data-l=en]{display:none}
+html[lang="zh-Hant"] .ed-share span[data-l=zh]{display:inline}
+@media print{.ed-share{display:none}}
 .ed-app-phone{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-start;border-top:1px solid var(--color-border-line);padding-top:10px}
 .ed-app-phone-text{flex:1 1 280px;min-width:0;display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--color-fg-muted)}
 .ed-app-phone-text small{font-size:12px;max-width:72ch}

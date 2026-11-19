@@ -216,6 +216,46 @@ class AppServer(unittest.TestCase):
             self.assertEqual(self.call('POST', '/api/restore', raw=f.read())[0], 400)
 
 
+    def test_9c2_the_bar_keeps_to_its_own_names(self):
+        """The bar is put into the dashboard's page: an id of the bar's that the dashboard also uses breaks one of them
+        (v0.18.0's ed-data was the dashboard's own data element)."""
+        import re
+        web = os.path.join(os.path.dirname(os.path.abspath(app.__file__)), 'web')
+        with open(os.path.join(web, 'app.html'), encoding='utf-8') as f:
+            bar = re.findall(r'id="([^"]+)"', f.read())
+        self.assertEqual(len(bar), len(set(bar)))
+        with open(self.app.site_file(), encoding='utf-8') as f:
+            page = f.read()
+        used = set(re.findall(r'id="([^"]+)"', page)) | set(re.findall(r"""getElementById\(['"]([^'"]+)['"]\)""", page))
+        self.assertEqual(sorted(set(bar) & used), [])
+        with open(os.path.join(web, 'app.js'), encoding='utf-8') as f:
+            made = re.findall(r"""\.id = '([^']+)'""", f.read())
+        self.assertEqual(sorted(set(made) & (used | set(bar))), [])
+
+    def test_9d_share_some_matches(self):
+        with open(os.path.join(self.ws.build, 'matches.json'), encoding='utf-8') as f:
+            keys = [r['key'] for r in json.load(f)['rows']]
+        self.assertEqual(self.call('POST', '/api/share', {'matches': []})[0], 400)
+        self.assertEqual(self.call('POST', '/api/share', {'matches': 'all'})[0], 400)
+        before = os.path.getmtime(os.path.join(self.ws.build, 'matches.json'))
+        self.assertEqual(self.call('POST', '/api/share', {'matches': keys[:3] + ['2001-01-01 00:00:00']})[0], 202)
+        s = self.wait()
+        r = s['result']
+        self.assertEqual((r['ok'], r['code'], r['n'], r['changed']), (True, 'shared', 3, False), s['lines'])
+        self.assertEqual(os.path.dirname(r['file']), os.path.join(self.ws.root, 'share'))
+        self.assertTrue(os.path.isfile(r['file']))
+        self.assertEqual(os.path.getmtime(os.path.join(self.ws.build, 'matches.json')), before)     # your own data is as it was
+        self.assertEqual([n for n in os.listdir(self.ws.root) if n.startswith('.share-')], [])
+        # the phone is not told where the file is
+        seen = json.dumps(self.app.status(remote=True), ensure_ascii=False)
+        self.assertNotIn(json.dumps(self.ws.root)[1:-1], seen)
+        self.assertIn('Shared dashboard', seen)
+        self.assertEqual(self.call('POST', '/api/share', {'matches': ['2001-01-01 00:00:00']})[0], 202)
+        r = self.wait()['result']
+        self.assertFalse(r['ok'])
+        self.assertIn('None of those matches', r['message'])
+
+
 class Restore(unittest.TestCase):
     """A new computer: the welcome screen takes a backup, and the dashboard is there."""
 
