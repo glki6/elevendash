@@ -332,6 +332,8 @@
 .er-sxgroups>li>div:last-child{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
 .er-sxrank{font-variant-numeric:tabular-nums;color:var(--color-fg-muted)}
 .er-sxgroups p{margin:0}
+.er-t.er-then td .er-chg{min-width:0;margin-left:0;white-space:nowrap}
+.er-t.er-then tbody th{white-space:normal}
 .er-patctl{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center}
 #patterns-card{grid-template-columns:minmax(0,1fr)}
 .er-pat tbody tr.on th{color:inherit}
@@ -929,6 +931,15 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
       <p class="er-muted" data-draw="pick-more" data-source="match_sums"></p>
       <details class="er-how"><summary>How to read this</summary><p class="er-muted">Each bar's tick is your other AI matches at the same levels, so you can see what was different about the ones you picked. The last column is the gap in percentage points. It is coloured when the gap is bigger than chance gives about one time in ten with this many points.</p></details>
     </div>
+  </div>
+  <div class="er-card" id="pick-then">
+    <h3>Then and now</h3>
+    <p class="er-muted">The matches you picked against an earlier stretch of your matches, to see what moved.</p>
+    <div class="er-rbar"><label class="er-ctl" for="then-mode">Then</label><select class="dash-select" id="then-mode" data-draw="then-mode" data-source="matches"></select></div>
+    <p class="er-pstat" data-draw="then-head" data-source="match_sums" role="status"></p>
+    <div class="er-tablewrap" id="then-table"><table class="er-t er-then"><thead><tr><th>Measure</th><th>Then</th><th>Now</th><th>Change</th><th>Against the same balls</th></tr></thead><tbody data-draw="then-rows" data-source="match_sums"></tbody></table></div>
+    <p class="er-muted" data-draw="then-mix" data-source="shots"></p>
+    <details class="er-how"><summary>How to read this</summary><p class="er-muted">Now is the matches you picked above; Then is an earlier stretch of your matches. Only matches at the same AI level as the ones you picked are used. The rows are in order of how far each measure moved, the surest moves first, and the change is in percentage points. A change is coloured when it is bigger than chance gives about one time in ten with this many points or shots. Against the same balls holds the mix of balls you faced the same: the share you landed then is worked out again as if each kind of ball (by its spin, side, depth and speed, returns apart from rally shots) had come as often as it does now, so a change in what was sent to you does not pass for a change in you. It is empty for measures that are not about one shot, and it says so when fewer than four in five of the balls you face now are of a kind you also faced then.</p></details>
   </div>
   <details class="er-card er-fold" id="metrics-pick">
     <summary><h3>11hero metrics over the matches you picked</h3><span class="er-muted">Your other matches are your other AI matches at the same levels.</span></summary>
@@ -2621,7 +2632,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
 
   // Quick picks. Each is pressed while the pick is exactly its matches.
   const QUICK = [
-    ['last', ER.k('Last session')], ['last3', ER.k('Last 3 sessions')], ['last20', ER.k('Last 20 matches')],
+    ['last', ER.k('Last session')], ['last3', ER.k('Last 3 sessions')], ['week', ER.k('Last 7 days')], ['last20', ER.k('Last 20 matches')],
     ['level', ER.k('All at level {0}')], ['notes', ER.k('With your notes')], ['none', ER.k('Clear')],
   ];
   const noted = (x) => x.ai.filter((o) => ER.notes.has(x.ord.get(o).key));
@@ -2630,6 +2641,10 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     if (q === 'last') return lastSessions(x, 1);
     if (q === 'last3') return lastSessions(x, 3);
     if (q === 'last20') return x.ai.slice(-20);
+    if (q === 'week') {       // the seven days up to your latest match
+      const day = (o) => Date.parse(x.ord.get(o).date + 'T00:00:00Z') / 864e5, end = x.ai.length ? day(x.ai[x.ai.length - 1]) : 0;
+      return x.ai.filter((o) => end - day(o) < 7);
+    }
     if (q === 'level') return x.ai.filter((o) => x.ord.get(o).level === main);
     if (q === 'notes') return noted(x);
     return [];
@@ -2828,6 +2843,188 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   };
   dash.draw('pick-compare', (el) => compare(el, RATES));
   dash.draw('pick-ends', (el) => compare(el, ENDS));
+
+  // Then and now: the matches picked (now) against an earlier stretch of matches at the same levels (then), every
+  // measure of the comparison above with how far it moved, the surest moves first. The two landing rates are also set
+  // against the same balls: the earlier rate worked out again with each kind of ball (returns and rally shots apart,
+  // by spin, side, depth and speed) in the proportions it comes in now, so a change in what was sent to you does not
+  // pass for a change in you. That needs the shot records, which the shot explorer reads (ER.shots.data).
+  const THEN = [['weeks4', ER.k('The four weeks before them')], ['same', ER.k('As many matches just before them')], ['before', ER.k('Every match before them')]];
+  const MIN_COVER = 0.8;
+  let thenMode = 'weeks4';
+  const dayNum = (d) => Date.parse(d + 'T00:00:00Z') / 864e5;
+  // every non-serve shot you hit, counted by match and by kind of ball: match key -> Map(role + class -> [shots, landed])
+  let ballMemo = null;
+  const ballsByMatch = () => {
+    const d = ER.shots && ER.shots.data ? ER.shots.data() : null;
+    if (!d) return null;
+    if (ballMemo && ballMemo.d === d) return ballMemo.by;
+    const by = new Map();
+    d.recs.forEach((r) => {
+      if (r.role === 'S' || r.shot === 'X') return;
+      let m = by.get(r.m.key);
+      if (!m) by.set(r.m.key, (m = new Map()));
+      const k = r.role + r.cls, c = m.get(k);
+      if (c) {
+        c[0] += 1;
+        c[1] += r.ok ? 1 : 0;
+      } else m.set(k, [1, r.ok ? 1 : 0]);
+    });
+    ballMemo = {d, by};
+    return by;
+  };
+  const ballsOf = (by, rows, role) => {
+    const out = new Map();
+    rows.forEach((row) => (by.get(row.key) || []).forEach((c, k) => {
+      if (role && k[0] !== role) return;
+      const o = out.get(k);
+      if (o) {
+        o[0] += c[0];
+        o[1] += c[1];
+      } else out.set(k, [c[0], c[1]]);
+    }));
+    return out;
+  };
+  // The change in the share landed with the mix of balls held as it is now: over the kinds of ball met in both
+  // stretches, each weighted by its count now. Null when those kinds cover too little of what comes now.
+  const sameBalls = (now, then) => {
+    let all = 0, w = 0, diff = 0, v = 0;
+    now.forEach((c) => {
+      all += c[0];
+    });
+    now.forEach(([n1, k1], kind) => {
+      const t = then.get(kind);
+      if (!t || !n1) return;
+      const [n2, k2] = t, q1 = (k1 + 0.5) / (n1 + 1), q2 = (k2 + 0.5) / (n2 + 1);
+      w += n1;
+      diff += n1 * (k1 / n1 - k2 / n2);
+      v += n1 * n1 * (q1 * (1 - q1) / n1 + q2 * (1 - q2) / n2);
+    });
+    if (!all || w / all < MIN_COVER) return null;
+    const se = Math.sqrt(v) / w, z = se ? diff / w / se : 0;
+    return {d: r1(100 * diff / w), z, g: z >= MIN_Z ? 1 : z <= -MIN_Z ? -1 : 0, cover: w / all};
+  };
+  const zOf = (a, n, b, m) => {
+    if (!n || !m) return 0;
+    const p = (a + b) / (n + m), se = Math.sqrt(p * (1 - p) * (1 / n + 1 / m));
+    return se ? (a / n - b / m) / se : 0;
+  };
+  const SAME = {retOk: 'R', rallyOk: ''};       // the measures that are about one shot: the role of the shots they count
+  let thenMemo = null;
+  const thenNow = () => {
+    const a = pick();
+    if (!a) return null;
+    const balls = ballsByMatch();
+    if (thenMemo && thenMemo.a === a && thenMemo.mode === thenMode && thenMemo.balls === balls) return thenMemo;
+    const out = {a, mode: thenMode, balls, rows: null, then: [], sum: null};
+    if (a.n && a.sums) {
+      const x = a.x, first = Math.min(...a.set), lv = new Set(a.levels), d0 = dayNum(a.rows[0].date);
+      let os = x.ai.filter((o) => o < first && lv.has(x.ord.get(o).level));
+      if (thenMode === 'same') os = os.slice(-a.n);
+      else if (thenMode === 'weeks4') os = os.filter((o) => d0 - dayNum(x.ord.get(o).date) <= 28);
+      out.then = os.map((o) => x.ord.get(o));
+      if (out.then.length) {
+        const byKey = new Map(a.sums.map((r) => [r.key, r]));
+        const s = a.sum, t = (out.sum = out.then.reduce((acc, r) => add(acc, byKey.get(r.key)), {}));
+        out.rows = RATES.concat(ENDS).map(([label, nf, df, up]) => {
+          const now = pc(s[nf] || 0, s[df]), then = pc(t[nf] || 0, t[df]);
+          const row = {label, nf, up, now, then, d: now == null || then == null ? null : r1(now - then), z: 0, g: 0, same: null};
+          if (row.d != null) {
+            row.z = zOf(s[nf] || 0, s[df], t[nf] || 0, t[df]);
+            row.g = gap(s[nf] || 0, s[df], t[nf] || 0, t[df]);
+          }
+          if (balls && nf in SAME) row.same = sameBalls(ballsOf(balls, a.rows, SAME[nf]), ballsOf(balls, out.then, SAME[nf]));
+          return row;
+        }).sort((p, q) => Math.abs(q.z) - Math.abs(p.z));
+        // the kind of rally ball whose share moved most (spin, side and speed; depth left aside)
+        if (balls) {
+          const share = (rows) => {
+            const m = new Map();
+            let n = 0;
+            ballsOf(balls, rows, 'A').forEach((c, k) => {
+              if (k[2] === '-') return;
+              const key = k[1] + k[2] + k[4];
+              m.set(key, (m.get(key) || 0) + c[0]);
+              n += c[0];
+            });
+            return {m, n};
+          };
+          const now = share(a.rows), then = share(out.then);
+          if (now.n >= MIN_TRIES && then.n >= MIN_TRIES) {
+            let best = null;
+            new Set([...now.m.keys(), ...then.m.keys()]).forEach((k) => {
+              const p = 100 * (now.m.get(k) || 0) / now.n, q = 100 * (then.m.get(k) || 0) / then.n;
+              if (!best || Math.abs(p - q) > Math.abs(best.now - best.then)) best = {key: k, now: p, then: q};
+            });
+            out.shift = best;
+          }
+        }
+      }
+    }
+    thenMemo = out;
+    return out;
+  };
+  ER.thenNow = thenNow;
+  const thenDraws = {};
+  const thenRedraw = () => Object.keys(thenDraws).forEach((n) => document.querySelectorAll(`[data-draw="${n}"]`).forEach((el) => thenDraws[n](el)));
+  thenDraws['then-mode'] = (sel) => {
+    if (!ER.same(sel, [ER.lang()])) sel.replaceChildren(...THEN.map(([v, label]) => new Option(ER.tr(label), v)));
+    sel.value = thenMode;
+    sel.onchange = () => {
+      thenMode = sel.value;
+      thenRedraw();
+    };
+  };
+  thenDraws['then-head'] = (el) => {
+    const t = thenNow(), wrap = document.getElementById('then-table');
+    if (wrap) wrap.hidden = !t || !t.rows;
+    if (!t) return ER.wait(el, ['matches', 'sessions']);
+    const a = t.a;
+    if (!a.n) return el.replaceChildren(ER.tr('Nothing picked.'));
+    if (!a.sums) return ER.wait(el, ['match_sums']);
+    if (!t.rows) return el.replaceChildren(ER.tr('You have no earlier matches to set these against in that stretch. Pick later matches, or another stretch.'));
+    const b = (v) => ER.el('b', null, v), th = t.then;
+    const out = ER.trn('Matches now: {0} ({1} to {2}). Matches then: {3} ({4} to {5}).', b(ER.F.int(a.n)), ER.F.date(a.from), ER.F.date(a.to),
+      b(ER.F.int(th.length)), ER.F.date(th[0].date), ER.F.date(th[th.length - 1].date));
+    const good = t.rows.filter((r) => r.g * (r.up ? 1 : -1) > 0).length, bad = t.rows.filter((r) => r.g * (r.up ? 1 : -1) < 0).length;
+    out.push(' ', ...(good || bad ? ER.trn('{0} of the {1} measures moved clearly: {2} for the better and {3} for the worse.',
+      b(ER.F.int(good + bad)), ER.F.int(t.rows.length), b(ER.F.int(good)), b(ER.F.int(bad))) : [ER.tr('None of the {0} measures moved clearly.', ER.F.int(t.rows.length))]));
+    el.replaceChildren(...out);
+  };
+  thenDraws['then-rows'] = (tb) => {
+    const t = thenNow();
+    if (!t || !t.rows) return tb.replaceChildren();
+    const move = (d, g, up) => {
+      const td = ER.el('td');
+      if (d == null) {
+        td.textContent = '—';
+        return td;
+      }
+      const tone = g * (up ? 1 : -1);
+      const chg = ER.el('span', 'er-chg' + (tone > 0 ? ' good' : tone < 0 ? ' bad' : ''));
+      const arrow = ER.el('span', null, d > 0 ? '▲ ' : d < 0 ? '▼ ' : '');
+      arrow.setAttribute('aria-hidden', 'true');
+      chg.append(arrow, (d > 0 ? '+' : d < 0 ? '−' : '') + ER.fmt1(Math.abs(d)));
+      if (tone) chg.title = ER.tr(tone > 0 ? 'Clearly better.' : 'Clearly worse.');
+      td.appendChild(chg);
+      return td;
+    };
+    tb.replaceChildren(...t.rows.map((r) => {
+      const tr = ER.el('tr'), th = ER.el('th', null, ER.tr(r.label));
+      th.scope = 'row';
+      const same = r.same ? move(r.same.d, r.same.g, r.up) : ER.el('td', 'er-muted', r.nf in SAME ? ER.tr('too few balls in common') : '');
+      if (r.same) same.title = ER.tr('{0} of the balls you face now are of a kind you also faced then.', ER.F.pct(Math.round(1000 * r.same.cover) / 10));
+      tr.append(th, ER.el('td', null, ER.F.pct(r.then)), ER.el('td', 'er-strongcell', ER.F.pct(r.now)), move(r.d, r.g, r.up), same);
+      return tr;
+    }));
+  };
+  thenDraws['then-mix'] = (el) => {
+    const t = thenNow(), s = t && t.rows ? t.shift : null;
+    if (!s || Math.abs(s.now - s.then) < 3 || !ER.shots.ballName) return el.replaceChildren();
+    el.replaceChildren(ER.tr('The rally balls that came at you changed most here: {0} was {1} of them then and is {2} now.',
+      ER.shots.ballName(s.key[0], s.key[1], s.key[2]), ER.F.pct(Math.round(s.then * 10) / 10), ER.F.pct(Math.round(s.now * 10) / 10)));
+  };
+  Object.keys(thenDraws).forEach((n) => dash.draw(n, thenDraws[n]));
 
   dash.draw('pick-more', (el) => {
     const a = pick();
@@ -6059,7 +6256,9 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     pst.limit += PAGE;
     redraw(['pat-points', 'pat-points-count']);
   });
-  ER.shots = {filters: f, chosen, apply, groups, strokeRows, versus, attackSum, landSum, hitSum, state: st, patterns, patState: pst};
+  const P_PACE = {f: ER.k('fast'), s: ER.k('slower')};
+  const ballName = (spin, side, pace) => ER.tr('{0}, {1}, {2}', ER.tr(P_SPIN[spin]), ER.tr(P_SIDE[side]), ER.tr(P_PACE[pace]));
+  ER.shots = {data, ballName, filters: f, chosen, apply, groups, strokeRows, versus, attackSum, landSum, hitSum, state: st, patterns, patState: pst};
 })();
 </script>
 

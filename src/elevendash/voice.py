@@ -101,6 +101,8 @@ PHRASES = [
      '是按訓練計畫的等級計算的', '是按你的線上比賽計算的'),
     ('your other AI matches at the same levels', 'your other online matches', '你在相同等級的其他 AI 比賽', '你的其他線上比賽'),
     ('any of your AI matches', 'any of your online matches', '任選你對 AI 的比賽', '任選你的線上比賽'),
+    ('Only matches at the same AI level as the ones you picked are used.', 'Only your online matches are used.',
+     '只使用與你所選比賽相同 AI 等級的比賽。', '只使用你的線上比賽。'),
     ('The tick is your one other AI match at level {1}.', 'The tick is your one other online match.',
      '刻度是你在等級 {1} 的另外一場 AI 比賽。', '刻度是你另外一場線上比賽。'),
     ('The tick is your other {0} AI matches at level {1}.', 'The tick is your other {0} online matches.',

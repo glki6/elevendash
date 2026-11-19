@@ -25,7 +25,7 @@ the order they are planned. Nothing here is a promise of a date.
    point, at each speed you hit them, and a speed by spin map of the shots you landed and missed. Also landing rate
    by when you met the ball: rising or falling, and how soon after the bounce. Answers "how hard should I hit this
    ball?" with your own numbers rather than one fixed speed.
-5. **Then and now.** Pick two stretches of matches (say the month before you started winning and the month after)
+5. **Then and now.** *Done in v0.9.0, in Matches you pick.* Pick two stretches of matches (say the month before you started winning and the month after)
    and see which measures moved most, at the same AI level and with the mix of balls you faced held the same, so a
    change in what the AI sent you does not pass for a change in you. Built on Matches you pick. Quick picks for
    "this week against the four before".

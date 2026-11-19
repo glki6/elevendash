@@ -187,6 +187,26 @@
       check('patterns: each holds its points, and a row lists them', !bad, rowsSeen + ' patterns' + (bad ? '; wrong:' + bad : ''));
     }
 
+    // 4d. then and now: each stretch is earlier matches at the same levels, and every measure has its row
+    {
+      const sel = q('#then-mode');
+      let bad = '', seen = 0;
+      for (const mode of ['weeks4', 'same', 'before']) {
+        sel.value = mode;
+        sel.dispatchEvent(new Event('change'));
+        await wait(60);
+        const t = ER.thenNow(), a = t.a;
+        if (!a.n) continue;
+        const first = a.rows[0], lv = new Set(a.levels);
+        const fair = t.mode === mode && t.then.every((r) => lv.has(r.level) && (r.date < first.date || (r.date === first.date && r.start <= first.start)))
+          && (mode !== 'same' || t.then.length <= a.n) && (!t.rows || (t.rows.length === 12 && t.sum.pts === t.then.reduce((x, r) => x + r.points, 0)));
+        const drawn = qa('[data-draw="then-rows"] tr').length === (t.rows ? 12 : 0) && q('#then-table').hidden === !t.rows;
+        if (!fair || !drawn) bad += ' ' + mode;
+        seen += t.then.length;
+      }
+      check('then and now: earlier matches at the same levels, a row for each measure', !bad, seen + ' matches then' + (bad ? '; wrong:' + bad : ''));
+    }
+
     // 5. open a shot of another match from the list (of another month, when there is one): the match changes, its
     //    replays are unpacked, and the point asked for is the one on the table
     const list = ER.shots.chosen().list;

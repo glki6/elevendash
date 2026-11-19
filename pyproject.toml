@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "elevendash"
-version = "0.8.0"
+version = "0.9.0"
 description = "Match analysis and a shareable dashboard from Eleven Table Tennis (Quest) game logs"
 readme = "README.md"
 license = "MIT"
