@@ -53,6 +53,9 @@ class Health(unittest.TestCase):
     def test_state_after_hit_gone(self):
         got = self.found('postCollisionState:', 'stateAfter:')
         self.assertTrue(any('after a hit is missing' in s for s in got), got)
+        said = health.pairs({'a.log': got, 'b.log': []})
+        self.assertEqual(list(said), ['a.log'])
+        self.assertTrue(all(x['en'] and x['zh'] and x['zh'] != x['en'] for x in said['a.log']), said)
 
     def test_opponent_not_recognised(self):
         got = self.found('against AI', 'versus the computer')

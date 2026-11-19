@@ -82,7 +82,8 @@ else:
         try:
             found = extract_log(path)
         except Exception as e:      # a line the reader did not expect: leave this log out and say so, keep the others
-            PROBLEMS[os.path.basename(path)] = [f'could not be read ({type(e).__name__}) and was left out']
+            PROBLEMS[os.path.basename(path)] = [health.note(f'could not be read ({type(e).__name__}) and was left out',
+                                                            f'無法讀取（{type(e).__name__}），已略過')]
             continue
         bad = health.check_log(path, found)
         if bad:

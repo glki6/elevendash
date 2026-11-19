@@ -47,6 +47,11 @@ html[lang="zh-Hant"] .ed-app div[data-l=zh],html[lang="zh-Hant"] .ed-welcome [da
 .ed-app-check input{width:18px;height:18px;margin:0;accent-color:var(--chart-0)}
 .ed-app-qr{width:184px;max-width:100%;flex:0 0 auto;border-radius:8px;overflow:hidden;line-height:0}
 .ed-app-qr svg{width:100%;height:auto;display:block}
+.ed-app-report{display:grid;gap:8px;border-color:var(--color-bad)}
+.ed-app-report ul{margin:0;padding-left:1.2em;display:grid;gap:4px}
+.ed-app-report code{font-size:12px;overflow-wrap:anywhere}
+.ed-app-report a{color:var(--chart-0)}
+.ed-app-report .ed-app-link{justify-self:start}
 .ed-app [hidden]{display:none!important}
 @media print{.ed-app{display:none}}
 html.pdf .ed-app{display:none}
@@ -59,3 +64,16 @@ html.pdf .ed-app{display:none}
 .ed-welcome a{color:var(--chart-0)}
 .ed-welcome .ed-muted{color:var(--color-fg-muted);font-size:13px}
 .ed-welcome code{overflow-wrap:anywhere}
+html[lang="zh-Hant"] .ed-welcome span[data-l=zh]{display:inline}
+.ed-welcome h2{font-size:19px;line-height:1.25;margin:22px 0 4px}
+.ed-guide-form{display:flex;flex-wrap:wrap;gap:8px 10px;margin-top:8px}
+.ed-guide-form input{font:inherit;color:var(--color-fg);background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:8px;
+  padding:6px 9px;min-height:34px;box-sizing:border-box;flex:1 1 200px;max-width:280px;min-width:0}
+.ed-guide-form input:focus-visible,.ed-guide-form button:focus-visible{outline:2px solid var(--chart-0);outline-offset:2px}
+.ed-guide-form .ed-app-btn{font:inherit;font-weight:600}
+.ed-guide-checks{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:6px}
+.ed-guide-checks li{display:grid;grid-template-columns:1.2em minmax(0,1fr);gap:8px;align-items:baseline}
+.ed-guide-checks li.wait{color:var(--color-fg-muted)}
+.ed-guide-checks li.bad b{color:var(--color-bad)}
+.ed-guide-checks li.ok b{color:var(--color-ok)}
+.ed-welcome [hidden]{display:none!important}

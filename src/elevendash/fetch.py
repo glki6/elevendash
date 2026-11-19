@@ -7,6 +7,7 @@ import json
 import os
 import re
 import shutil
+import socket
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -26,6 +27,45 @@ def normalize_host(host):
     if not re.fullmatch(r'[A-Za-z0-9.\-]+(:\d{1,5})?', h):
         raise ValueError(f'not a host or host:port: {host!r}')
     return h if ':' in h else f'{h}:{DEFAULT_PORT}'
+
+
+def check(host, timeout=5):
+    """The connection to the headset, step by step, for the app's welcome screen: is this an address, does anything
+    answer there, is it Eleven's File Sharing, are there game logs. Reads the list of logs only (the first of the two
+    requests from_quest sends). Returns {ok, host, logs, steps: [{step, ok}]}, stopping at the first step that fails."""
+    out = {'ok': False, 'host': '', 'logs': 0, 'steps': []}
+
+    def step(name, ok):
+        out['steps'].append({'step': name, 'ok': bool(ok)})
+        return ok
+
+    try:
+        h = normalize_host(str(host or ''))
+    except ValueError:
+        step('address', False)
+        return out
+    out['host'] = h
+    name, _, port = h.partition(':')
+    if not step('address', 0 < int(port) < 65536):
+        return out
+    try:
+        socket.create_connection((name, int(port)), timeout=timeout).close()
+    except (OSError, OverflowError, ValueError):
+        step('reach', False)
+        return out
+    step('reach', True)
+    try:
+        with urllib.request.urlopen(f'http://{h}/getListing?path=logs', timeout=10) as r:
+            listing = json.load(r)['output']
+        if not isinstance(listing, list):
+            raise ValueError('not a listing')
+    except (urllib.error.URLError, OSError, ValueError, KeyError, TypeError):
+        step('sharing', False)
+        return out
+    step('sharing', True)
+    out['logs'] = sum(1 for f in listing if isinstance(f, dict) and f.get('type') == 'file' and LOG_NAME.match(str(f.get('name', ''))))
+    out['ok'] = bool(step('logs', out['logs'] > 0))
+    return out
 
 
 def from_quest(host, logs_dir, say=print):

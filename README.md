@@ -47,10 +47,15 @@ Then:
 
 1. On the headset, open Eleven, then **Settings › Network Settings › File Sharing**, and start it. It shows an address
    such as `192.168.1.20:8090`. The computer must be on the same Wi-Fi.
-2. In the app, open **Settings**, enter that address and press **Save**.
-3. Press **Import new logs**. It copies the logs that are new since last time, rebuilds the data and reloads the page
-   with your new session. Do this after every session: the headset keeps only its most recent logs, and elevendash
-   keeps a copy of every log it has seen.
+2. In the app's welcome screen, type that address and press **Check the connection**. It checks, step by step, that
+   the address is one, that something answers there, that it is Eleven's File Sharing and that there are game logs,
+   and says what to do at the first step that fails. (Later, the address is under **Settings**.)
+3. Press **Import the logs**, and after every later session **Import new logs**. It copies the logs that are new since
+   last time, rebuilds the data and reloads the page with your new session. Do this after every session: the headset
+   keeps only its most recent logs, and elevendash keeps a copy of every log it has seen.
+
+If a log does not read as expected after an import (a game update can change the log format), the app lists it above
+the dashboard and says why, as `elevendash build` does on the command line.
 
 No Wi-Fi sharing? Copy the `ALL-*.log` files off the headset another way (a USB cable, a file manager) and use
 **From files…**.

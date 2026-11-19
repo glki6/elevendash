@@ -90,8 +90,109 @@
     return false;
   };
 
+  // The import report: logs the last build could not read as usual, and why (health.py). Hidden until there is one;
+  // Hide puts it away until the next build has something to say.
+  const HID = 'elevendash.app.report';
+  const two = (en, zhText) => {
+    const a = document.createElement('span'), b = document.createElement('span');
+    a.dataset.l = 'en';
+    a.textContent = en;
+    b.dataset.l = 'zh';
+    b.lang = 'zh-Hant';
+    b.textContent = zhText;
+    return [a, b];
+  };
+  const showReport = (rep) => {
+    const box = $('ed-report');
+    if (!box) return;
+    const names = rep && rep.problems ? Object.keys(rep.problems) : [];
+    let hid = '';
+    try {
+      hid = sessionStorage.getItem(HID) || '';
+    } catch (e) {
+      // shown again, then
+    }
+    box.hidden = !names.length || hid === rep.at;
+    if (box.hidden) return;
+    $('ed-report-head').replaceChildren(...two(names.length === 1 ? '1 log did not read as expected' : `${names.length} logs did not read as expected`,
+      `有 ${names.length} 個記錄的讀取結果不如預期`));
+    $('ed-report-list').replaceChildren(...names.map((n) => {
+      const li = document.createElement('li'), code = document.createElement('code');
+      code.textContent = n;
+      li.append(code, ': ', ...two(rep.problems[n].map((p) => p.en).join('; '), rep.problems[n].map((p) => p.zh).join('；')));
+      return li;
+    }));
+    $('ed-report-hide').onclick = () => {
+      try {
+        sessionStorage.setItem(HID, rep.at);
+      } catch (e) {
+        // hidden for this page only
+      }
+      box.hidden = true;
+    };
+  };
+
+  // The welcome page's guide: check the headset connection step by step (the app asks the headset for its list of
+  // logs, nothing else), then import.
+  const guide = {form: $('ed-guide-form'), quest: $('ed-guide-quest'), check: $('ed-guide-check'), list: $('ed-guide-checks'), imp: $('ed-guide-import')};
+  const STEPS = [
+    ['address', ['That is an address.', '位址格式正確。'],
+      ['That does not look like an address. It is numbers with dots, then a colon and a number, such as 192.168.1.20:8090.', '這看起來不像位址。位址是用點分隔的數字，加上冒號和一個數字，例如 192.168.1.20:8090。']],
+    ['reach', ['Something answers at that address.', '該位址有回應。'],
+      ['Nothing answers at that address. Is the headset awake with Eleven open, and on the same Wi-Fi as this computer? Check the numbers against the headset.', '該位址沒有回應。頭戴裝置是否醒著並開著 Eleven，而且與這部電腦連上同一個 Wi-Fi？請對照頭戴裝置上的數字。']],
+    ['sharing', ["It is Eleven's File Sharing.", '這是 Eleven 的檔案分享。'],
+      ["Something answers there, but it is not Eleven's File Sharing. In Eleven, start it under Settings › Network Settings › File Sharing, and check the number after the colon.", '那裡有回應，但不是 Eleven 的檔案分享。請在 Eleven 的「設定 › 網路設定 › 檔案分享」啟動它，並檢查冒號後面的數字。']],
+    ['logs', null, ['File Sharing is on, but the headset has no game logs yet. Play a match, then check again.', '檔案分享已啟動，但頭戴裝置上還沒有遊戲記錄。打一場比賽後再檢查一次。']],
+  ];
+  const showChecks = (r) => {
+    const by = new Map((r.steps || []).map((s) => [s.step, s]));
+    guide.list.hidden = false;
+    guide.list.replaceChildren(...STEPS.map(([id, ok, bad]) => {
+      const s = by.get(id), li = document.createElement('li'), mark = document.createElement('b');
+      li.className = !s ? 'wait' : s.ok ? 'ok' : 'bad';
+      mark.textContent = !s ? '·' : s.ok ? '✓' : '✗';
+      mark.setAttribute('aria-hidden', 'true');
+      const text = !s ? ['Not checked yet.', '尚未檢查。'] : !s.ok ? bad
+        : ok || [r.logs === 1 ? '1 game log found.' : `${r.logs} game logs found.`, `找到 ${r.logs} 個遊戲記錄。`];
+      const span = document.createElement('span');
+      span.append(...two(text[0], text[1]));
+      li.append(mark, span);
+      return li;
+    }));
+    guide.imp.disabled = !r.ok;
+    if (r.ok) guide.imp.focus();
+  };
+  if (guide.form) {
+    guide.form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      guide.check.disabled = true;
+      guide.imp.disabled = true;
+      try {
+        const r = await A.api('POST', '/api/check', {quest: guide.quest.value});
+        if (r.host) guide.quest.value = r.host;
+        showChecks(r);
+      } catch (err) {
+        showChecks({steps: [], ok: false});
+        say(bar.msg, 'The check could not run: ' + err.message, '無法檢查：' + err.message, 'bad');
+      }
+      guide.check.disabled = false;
+    });
+    guide.imp.addEventListener('click', async () => {
+      guide.imp.disabled = true;
+      try {
+        render(await A.api('POST', '/api/settings', {quest: guide.quest.value}));
+        start('quest');
+      } catch (err) {
+        guide.imp.disabled = false;
+        say(bar.msg, err.message, err.message, 'bad');
+      }
+    });
+  }
+
   const render = (s) => {
     last = s;
+    showReport(s.report);
+    if (guide.quest && s.quest && !guide.quest.value && document.activeElement !== guide.quest) guide.quest.value = s.quest;
     // on the phone the bar leaves out what only makes sense at the computer: its folders, shortcuts and the phone link
     bar.home.textContent = s.home || '';
     bar.home.parentElement.hidden = bar.folder.hidden = !s.home;

@@ -138,6 +138,69 @@ class AppServer(unittest.TestCase):
     def test_8_second_start_finds_the_first(self):
         self.assertEqual(app.running_port(self.ws), self.port)
 
+    def test_9a_check_the_headset(self):
+        """The welcome screen's check stops at the first step that fails, and passes against a File Sharing stand-in."""
+        import http.server
+        steps = lambda r: [(x['step'], x['ok']) for x in r['steps']]
+        code, r = self.call('POST', '/api/check', {'quest': 'not an address!'})
+        self.assertEqual((code, r['ok'], steps(r)), (200, False, [('address', False)]))
+        with __import__('socket').socket() as free:        # a port nothing listens on
+            free.bind(('127.0.0.1', 0))
+            closed = free.getsockname()[1]
+        r = self.call('POST', '/api/check', {'quest': f'127.0.0.1:{closed}'})[1]
+        self.assertEqual(steps(r), [('address', True), ('reach', False)])
+        # this app answers, but it is not File Sharing
+        r = self.call('POST', '/api/check', {'quest': f'127.0.0.1:{self.port}'})[1]
+        self.assertEqual(steps(r)[-1], ('sharing', False))
+        seen = []
+
+        class Sharing(http.server.BaseHTTPRequestHandler):
+            files = []
+
+            def do_GET(self):
+                seen.append(self.path)
+                body = json.dumps({'output': self.files}).encode('utf-8')
+                self.send_response(200)
+                self.send_header('Content-Length', str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+
+            def log_message(self, *a):
+                pass
+
+        srv = http.server.HTTPServer(('127.0.0.1', 0), Sharing)
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        try:
+            host = f'127.0.0.1:{srv.server_address[1]}'
+            r = self.call('POST', '/api/check', {'quest': 'http://' + host + '/'})[1]
+            self.assertEqual((r['ok'], r['host'], steps(r)[-1]), (False, host, ('logs', False)))
+            Sharing.files = [{'name': self.names[0], 'type': 'file', 'size': 5}, {'name': 'notes.txt', 'type': 'file', 'size': 5},
+                             {'name': 'ALL-old', 'type': 'dir'}]
+            r = self.call('POST', '/api/check', {'quest': host})[1]
+            self.assertEqual((r['ok'], r['logs'], len(r['steps'])), (True, 1, 4))
+            self.assertEqual(set(seen), {'/getListing?path=logs'})      # the list of logs is all it asks the headset for
+        finally:
+            srv.shutdown()
+            srv.server_close()
+
+    def test_9b_import_report(self):
+        """A log that reads oddly is listed after the build, in both languages, and the list outlives a restart."""
+        s = self.call('GET', '/api/status')[1]
+        self.assertEqual(s['report']['problems'], {})
+        path = os.path.join(self.ws.logs, self.names[0])
+        with open(path, encoding='utf-8') as f:
+            text = f.read()
+        with open(path, 'w', encoding='utf-8') as f:
+            f.write(text.replace('postCollisionState:', 'stateAfter:'))
+        self.assertEqual(self.call('POST', '/api/import', {'source': 'rebuild'})[0], 202)
+        s = self.wait()
+        self.assertTrue(s['result']['ok'], s['lines'])
+        found = s['report']['problems']
+        self.assertEqual(list(found), [self.names[0]])
+        self.assertIn('after a hit is missing', found[self.names[0]][0]['en'])
+        self.assertIn('擊球後', found[self.names[0]][0]['zh'])
+        self.assertEqual(app.App(self.ws, port=0, open_browser=False).report, s['report'])
+
 
 class Phone(unittest.TestCase):
     """The phone server, bound here to 127.0.0.1 in place of a Tailscale address: it needs the phone key."""

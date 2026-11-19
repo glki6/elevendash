@@ -59,7 +59,7 @@ the order they are planned. Nothing here is a promise of a date.
 ## The app
 
 - **Import report.** After an import, the app lists any log that looks misread and why. Today only the command line
-  prints these.
+  prints these. *Done in v0.17.0.*
 - **Backup and restore.** One file holding the whole workspace, to move to a new computer. The logs inside it hold
   your account tokens, so the app says so and the file stays on your own drives.
 - **Export.** Matches, points and shots as CSV or JSON for other tools. Match data only: no log lines, tokens or
@@ -67,7 +67,7 @@ the order they are planned. Nothing here is a promise of a date.
 - **Share some matches.** A dashboard file built from only the matches you pick, for a coach, instead of your whole
   history.
 - **First-run guide.** A step-by-step check of the headset connection in the welcome screen: File Sharing on, address
-  reachable, logs found.
+  reachable, logs found. *Done in v0.17.0.*
 
 ## After the features: a new layout
 

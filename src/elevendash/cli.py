@@ -101,6 +101,7 @@ def do_build(ws, verbose=False, say=print):
     say(f'  Data in {ws.build}')
     for line in health.advice(made.get('PROBLEMS')):
         say(line)
+    return made.get('PROBLEMS') or {}       # {log name: what looks misread in it}; the app lists these after an import
 
 
 def do_report(ws, say=print):

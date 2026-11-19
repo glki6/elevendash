@@ -29,7 +29,7 @@ import urllib.parse
 import urllib.request
 import webbrowser
 
-from . import __version__, cli, fetch, qr, report, workspace
+from . import __version__, cli, fetch, health, qr, report, workspace
 from .page import LANGS, THEMES
 from .site import TITLE, tokens_css
 from .page import look as read_look
@@ -40,6 +40,7 @@ MAX_LOG = 200 << 20            # the largest log file an upload may carry
 MAX_NOTES = 4 << 20
 STATE = '.app.json'            # in the workspace: the port of the running app, so a second start finds it
 NOTES = 'notes.json'
+REPORT = '.import.json'        # in the workspace: the logs the last build could not read as usual, and why
 INCOMING = '.incoming'         # uploaded logs wait here until the import job copies them in
 APP_NAME = 'Eleven Dashboard'
 SETTINGS = {'hand': ('auto', 'right', 'left'), 'theme': THEMES, 'lang': LANGS}
@@ -118,6 +119,7 @@ class App:
         self.token = secrets.token_urlsafe(24)
         self.job = Job()
         self.seen = time.monotonic()
+        self.report = self._read_report()
         self.server = None
         self.page_cache = (None, None)       # (mtime, html)
         self.phone_server = None
@@ -168,8 +170,23 @@ class App:
             self.job.seq += 1
 
     def _rebuild(self, say):
-        cli.do_build(self.ws, say=say)
+        problems = cli.do_build(self.ws, say=say)
+        self.report = {'at': datetime.datetime.now().isoformat(timespec='seconds'), 'problems': health.pairs(problems)}
+        try:
+            with open(os.path.join(self.ws.root, REPORT), 'w', encoding='utf-8', newline='\n') as f:
+                json.dump(self.report, f, ensure_ascii=False, indent=1)
+        except OSError:
+            pass                # the report still shows until the app stops
         cli.do_site(self.ws, say=say)
+
+    def _read_report(self):
+        try:
+            with open(os.path.join(self.ws.root, REPORT), encoding='utf-8') as f:
+                v = json.load(f)
+            ok = isinstance(v, dict) and isinstance(v.get('problems'), dict)
+            return {'at': str(v.get('at', '')), 'problems': v['problems']} if ok else None
+        except (OSError, ValueError):
+            return None
 
     def _after_copy(self, got, say):
         if got:
@@ -219,7 +236,7 @@ class App:
         v = self.job.view()
         v.update({'quest': c.get('quest', ''), 'last_import': c.get('last_import', ''), 'logs': cli.log_count(self.ws),
                   'built': self.built(), 'settings': {k: c.get(k, SETTINGS[k][0]) for k in SETTINGS},
-                  'version': __version__, 'remote': remote, 'phone': bool(self.phone_server)})
+                  'version': __version__, 'remote': remote, 'phone': bool(self.phone_server), 'report': self.report})
         if not remote:            # where things are on the computer is the computer's business
             v.update({'home': self.ws.root, 'shortcut': os.name == 'nt'})
         return v
@@ -584,6 +601,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             if path == '/api/settings' and m == 'POST':
                 job = app.save_settings(self._body(4096))
                 return self._send(200, dict(app.status(self.remote), started=job))
+            if path == '/api/check' and m == 'POST':
+                return self._send(200, fetch.check(self._body(4096).get('quest', '')))
             if path == '/api/notes' and m == 'GET':
                 return self._send(200, app.read_notes())
             if path == '/api/notes' and m == 'PUT':

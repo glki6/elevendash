@@ -15,6 +15,12 @@
       <p><strong>頭戴裝置沒有回應。</strong>在頭戴裝置上開啟 Eleven，前往<b>設定 › 網路設定 › 檔案分享</b>並啟動。讓遊戲保持開啟，與這部電腦連上同一個 Wi-Fi，再按一次「匯入」。如果顯示的位址變了，請在「設定」中更新。</p>
     </div>
   </div>
+  <div class="ed-app-panel ed-app-report" id="ed-report" hidden>
+    <p><strong id="ed-report-head"></strong></p>
+    <ul id="ed-report-list"></ul>
+    <p><span data-l="en">A game update may have changed the log format, so numbers from these logs may be wrong or missing. The rest of the dashboard is unaffected. Please report it at <a href="https://github.com/glki6/elevendash/issues" target="_blank" rel="noopener">github.com/glki6/elevendash/issues</a>. Never attach a log as it is: it holds your account tokens. <code>elevendash redact LOG OUT</code> writes a copy without them.</span><span data-l="zh" lang="zh-Hant">遊戲更新可能改變了記錄的格式，所以這些記錄的數字可能有錯或缺漏。儀表板的其他部分不受影響。請到 <a href="https://github.com/glki6/elevendash/issues" target="_blank" rel="noopener">github.com/glki6/elevendash/issues</a> 回報。切勿直接附上記錄檔：裡面有你的帳號權杖。<code>elevendash redact LOG OUT</code> 會寫出一份不含權杖的副本。</span></p>
+    <button type="button" class="ed-app-link" id="ed-report-hide"><span data-l="en">Hide</span><span data-l="zh" lang="zh-Hant">隱藏</span></button>
+  </div>
   <form class="ed-app-panel ed-app-set" id="ed-set" hidden>
     <label class="ed-app-field ed-app-wide">
       <span><span data-l="en">Quest address</span><span data-l="zh" lang="zh-Hant">頭戴裝置位址</span></span>
