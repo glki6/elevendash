@@ -377,6 +377,13 @@
 .er-goals .er-strong{font-weight:var(--cds-font-weight-medium)}
 .er-jform input[type=number]{width:6.5em}
 @media (max-width:560px){.er-goals>li{grid-template-columns:20px minmax(0,1fr) auto}.er-goals>li>button{grid-column:2 / -1;justify-self:start}}
+.er-pair{display:flex;flex-wrap:wrap;gap:16px}
+.er-pair:empty{display:none}
+.er-pairside{margin:0;display:grid;gap:8px;flex:1 1 220px;max-width:300px;min-width:0;justify-items:start}
+.er-pairside figcaption{display:grid;gap:2px;font-size:var(--cds-font-size-caption)}
+.er-pairside figcaption b{font-size:var(--cds-font-size-body);font-weight:var(--cds-font-weight-medium)}
+.er-pairctl{display:grid;gap:10px;max-width:616px}
+.er-pairctl input[type=range]{flex:1 1 120px;min-width:0;margin:0;accent-color:var(--er-you)}
 .er-patctl{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center}
 #patterns-card{grid-template-columns:minmax(0,1fr)}
 .er-pat tbody tr.on th{color:inherit}
@@ -992,6 +999,17 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
       <p class="er-muted" data-draw="sx-versus-note" data-source="shots"></p>
       <div class="er-tablewrap"><table class="er-t er-sxst er-sxvs"><thead><tr><th>Measure</th><th data-out="ok">Landed</th><th data-out="n">Into the net</th><th data-out="l">Long</th><th data-out="w">Wide</th><th data-out="x">Not reached</th></tr></thead><tbody data-draw="sx-versus" data-source="shots"></tbody></table></div>
       <details class="er-how"><summary>How to read this</summary><p class="er-muted">The larger figure is the middle value of the shots in that column, and under it is the range the middle half of them sit in. An arrow marks a column that runs clearly higher or lower than the ones you landed: a gap that would come up by chance about one time in a hundred. That is stricter than elsewhere on the page, because this table makes many comparisons at once. There is no arrow, and the figures are greyed, when a column has fewer than 20 shots. A gap shows what went with the miss, which is not always what caused it. The angle is how steeply the ball left your bat: above zero it was going up. A ball you did not reach has no shot of yours to measure.</p></details>
+    </div>
+    <div class="er-sxstrokes" id="sx-pair-wrap">
+      <h4>Side by side: one you landed, one you missed</h4>
+      <p class="er-muted" data-draw="sx-pair-note" data-source="shots"></p>
+      <div class="er-rbar"><button class="er-btn" type="button" id="sx-pair-go">Show a pair</button><button class="er-btn" type="button" id="sx-pair-next" hidden>Another pair</button><button class="er-btn" type="button" id="sx-pair-hide" hidden>Close</button></div>
+      <div class="er-pair" data-draw="sx-pair" data-nomorph></div>
+      <div class="er-pairctl" id="sx-pair-ctl" hidden>
+        <div class="er-rbar"><button class="er-btn er-rplay" type="button" id="sx-pair-play"><span id="sx-pair-play-go">Play</span><span id="sx-pair-play-stop" hidden>Pause</span></button><input type="range" id="sx-pair-seek" min="0" max="1000" step="1" value="0" aria-label="Position in the two shots"></div>
+        <div class="er-rbar"><span class="er-ctl" id="sx-pair-rate-label">Speed</span><div class="er-tabs" id="sx-pair-rate" role="group" aria-labelledby="sx-pair-rate-label"><button class="er-tab" type="button" data-prate="1" aria-pressed="false">Full</button><button class="er-tab" type="button" data-prate="0.5" aria-pressed="false">Half</button><button class="er-tab" type="button" data-prate="0.25" aria-pressed="true">Quarter</button></div></div>
+      </div>
+      <details class="er-how"><summary>How to read this</summary><p class="er-muted">Two of your shots against balls as alike as the filters allow: the same kind of ball and stroke where it can be, then the nearest in speed, spin and where the ball bounced on your half. Each table shows the ball coming at you and your shot, and the two play in step: your bat meets the ball at the same instant on both, so a difference in how early you took it, how high, or where you sent it stands out. Drag either table to turn both. The spin ball in the corner turns the way your shot's spin turns it. Set the filters first to pick the kind of ball; Another pair goes to the next most alike.</p></details>
     </div>
     <div class="er-rbar" id="sx-only-wrap" hidden><span class="er-pstat" data-draw="sx-only" data-source="shots" role="status"></span><button class="er-btn" type="button" id="sx-only-clear">List every shot again</button></div>
     <div class="er-tablewrap" id="sx-list-wrap"><table class="er-t er-sxlist"><thead><tr><th>Point</th><th>Shot</th><th>Came at you</th><th>You played</th><th>Result</th><th>Open</th></tr></thead><tbody data-draw="sx-list" data-source="shots"></tbody></table></div>
@@ -4620,13 +4638,16 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     st.hits = p.hits;
     st.end = p.ev.length ? p.ev[p.ev.length - 1].t + HOLD : 0;
     st.t = play ? 0 : st.end;
-    // for the 3D view: the flight between each contact and the next, and points along it for the trail
-    st.fl = p.ev.slice(0, -1).map((a, i) => flight(a, p.ev[i + 1]));
-    st.seg = st.fl.map((fn, i) => {
-      const a = p.ev[i], dt = p.ev[i + 1].t - a.t, n = Math.max(2, Math.min(120, Math.ceil(dt / 0.012)));
-      return {by: a.by, t0: a.t, dt, n, P: Array.from({length: n + 1}, (x, j) => fn(j / n)), S: null};
-    });
+    Object.assign(st, flights(p.ev));
     st.call = verdict();
+  };
+  // for the 3D view: the flight between each contact and the next (fl), and points along it for the trail (seg)
+  const flights = (ev) => {
+    const fl = ev.slice(0, -1).map((a, i) => flight(a, ev[i + 1]));
+    return {fl, seg: fl.map((fn, i) => {
+      const a = ev[i], dt = ev[i + 1].t - a.t, n = Math.max(2, Math.min(120, Math.ceil(dt / 0.012)));
+      return {by: a.by, t0: a.t, dt, n, P: Array.from({length: n + 1}, (x, j) => fn(j / n)), S: null};
+    })};
   };
 
   // The ball's flight from contact a to contact b, as a function of the share of the time gone (0 to 1) giving
@@ -4737,8 +4758,8 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   };
   // Where a shot came down: the first time the ball meets the table or anything else but the net. A serve bounces
   // on the server's own half first: that is not it (you are at z below 0, so your shots land at z above 0).
-  const landing = (h) => {
-    const after = st.ev.filter((e) => e.t > h.t), over = (e) => (e.z > 0) === h.you;
+  const landing = (h, ev) => {
+    const after = (ev || st.ev).filter((e) => e.t > h.t), over = (e) => (e.z > 0) === h.you;
     return after.find((e) => e.k === 'o' || (e.k === 'b' && (h.shot !== 'S' || over(e)))) || after[after.length - 1] || h;
   };
   // The landing call for the last shot of the point, as a line-call replay gives it. kind: in (met the far half of
@@ -5089,6 +5110,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       st.chase = null;        // turning it by hand takes the camera back from the deciding shot
       cam.yaw = yaw;
       cam.pitch = Math.max(0.08, Math.min(1.5, pitch));
+      if (g.turned) return g.turned();       // a table of the side-by-side view: both turn together
       look(g);
       paint();
     };
@@ -5191,6 +5213,212 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     if (n) show(n.key);
   };
   ER.replay = {show, mark, camera: () => st.chase};
+
+  // ---- Side by side: a shot you landed and one you missed against a similar ball, each on its own table in 3D ----
+  // A side is a small copy of what the replay keeps about a point (SWAP), cut down to the ball coming at you and your
+  // shot. The drawing code above runs on a side while the side stands in for the replay's own state. The two clocks
+  // are tied at the moment your bat meets the ball: tau is the time since then, the same on both tables.
+  const SWAP = ['key', 'ev', 'hits', 'fl', 'seg', 'end', 't', 'call', 'g', 'chase', 'slow', 'rate'];
+  const within = (c, fn) => {
+    const keep = {};
+    SWAP.forEach((k) => {
+      keep[k] = st[k];
+      st[k] = c[k];
+    });
+    try {
+      return fn();
+    } finally {
+      SWAP.forEach((k) => {
+        c[k] = st[k];
+        st[k] = keep[k];
+      });
+    }
+  };
+  const PAIR_MISS = {n: ER.k('Into the net'), l: ER.k('Long'), w: ER.k('Wide')};
+  const pr = {on: false, sig: '', index: 0, pairs: null, sides: [], tau: 0, lo: 0, hi: 0, rate: 0.25, playing: false, raf: 0, last: 0};
+  const side = (rec) => {
+    const tr = track(rec.pt.key);
+    if (!tr) return null;
+    const p = parse(tr), h = p.hits[rec.n - 1], lead = p.hits[rec.n - 2];
+    if (!h || !h.you || !lead) return null;
+    const land = landing(h, p.ev), i0 = p.ev.indexOf(lead), i1 = Math.max(p.ev.indexOf(land), p.ev.indexOf(h));
+    const ev = p.ev.slice(i0, i1 + 1);
+    ev.forEach((e) => {
+      e.by -= rec.n - 2;
+    });
+    const c = Object.assign({rec, key: rec.pt.key, ev, hits: [lead, h], end: ev[ev.length - 1].t + HOLD, t: 0, call: null, g: null, chase: null, slow: false, rate: pr.rate,
+      hit: h.t, from: lead.t, to: ev[ev.length - 1].t + HOLD}, flights(ev));
+    c.call = within(c, verdict);       // how your shot cleared the net and where it came down, as the replay calls it
+    return c;
+  };
+  // The pairs the filters allow, the most alike first and no shot in two of them. Alike: the same kind of ball and
+  // stroke, then the ball's speed, spin and where it bounced on your half. The newest 80 of each are looked at.
+  const pairList = () => {
+    const s = ER.shots ? ER.shots.chosen() : null;
+    if (!s) return null;
+    const sig = JSON.stringify(ER.shots.filters) + '|' + s.base.length;
+    if (pr.pairs && pr.sig === sig) return pr.pairs;
+    const mine = s.base.filter((r) => r.role !== 'S' && r.shot !== 'X' && r.n > 1);
+    const ok = mine.filter((r) => r.ok).slice(0, 80), bad = mine.filter((r) => !r.ok).slice(0, 80);
+    const gap = (a, b, k) => (a == null || b == null ? 1 : Math.abs(a - b) / k);
+    const all = [];
+    ok.forEach((a) => bad.forEach((b) => all.push({a, b, d: (a.cls === b.cls ? 0 : 3) + (a.shot === b.shot ? 0 : 2) + gap(a.inSpeed, b.inSpeed, 2)
+      + gap(a.inTop, b.inTop, 20) + gap(a.bx, b.bx, 0.2) + gap(a.bz, b.bz, 0.2)})));
+    all.sort((x, y) => x.d - y.d);
+    const used = new Set(), pairs = [];
+    all.forEach((c) => {
+      if (used.has(c.a) || used.has(c.b)) return;
+      used.add(c.a);
+      used.add(c.b);
+      pairs.push(c);
+    });
+    if (pr.sig !== sig) pr.index = 0;
+    Object.assign(pr, {sig, pairs, landed: mine.filter((r) => r.ok).length, missed: mine.filter((r) => !r.ok).length});
+    return pairs;
+  };
+  const pairSync = () => {
+    const show = (id, on) => {
+      const el = $(id);
+      if (el) el.hidden = !on;
+    };
+    const n = pr.pairs ? pr.pairs.length : 0, live = pr.on && pr.sides.length === 2;
+    show('sx-pair-go', !pr.on);
+    show('sx-pair-next', pr.on && n > 1);
+    show('sx-pair-hide', pr.on);
+    show('sx-pair-ctl', live);
+    show('sx-pair-play-go', !pr.playing);
+    show('sx-pair-play-stop', pr.playing);
+    const go = $('sx-pair-go');
+    if (go) go.disabled = !n;
+    document.querySelectorAll('#sx-pair-rate [data-prate]').forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.prate) === pr.rate)));
+  };
+  const pairPaint = () => {
+    pr.sides.forEach((c) => within(c, () => {
+      st.t = Math.max(c.from, Math.min(c.to, c.hit + pr.tau));
+      st.rate = pr.rate;
+      if (st.g) paint3(st.g);
+    }));
+    const seek = $('sx-pair-seek');
+    if (seek) seek.value = pr.hi > pr.lo ? Math.round(1000 * (pr.tau - pr.lo) / (pr.hi - pr.lo)) : 0;
+  };
+  const pairStop = () => {
+    pr.playing = false;
+    if (pr.raf) cancelAnimationFrame(pr.raf);
+    pr.raf = 0;
+    pairSync();
+  };
+  const pairFrame = (ms) => {
+    pr.raf = 0;
+    if (!pr.playing) return;
+    pr.tau = Math.min(pr.hi, pr.tau + Math.min(0.1, (ms - pr.last) / 1000) * pr.rate);
+    pr.last = ms;
+    pairPaint();
+    if (pr.tau >= pr.hi) return pairStop();
+    pr.raf = requestAnimationFrame(pairFrame);
+  };
+  const pairPlay = () => {
+    if (pr.sides.length !== 2) return;
+    if (pr.tau >= pr.hi) pr.tau = pr.lo;
+    pr.playing = true;
+    pr.last = performance.now();
+    pairSync();
+    if (!pr.raf) pr.raf = requestAnimationFrame(pairFrame);
+  };
+  // the two tables, drawn into the card's box; a pair with a replay missing is passed over for the next
+  const pairDraw = (el) => {
+    const pairs = pairList();
+    pairStop();
+    pr.sides = [];
+    if (!pr.on || !pairs || !pairs.length) {
+      pr.on = pr.on && !!pairs && pairs.length > 0;
+      el.replaceChildren();
+      return pairSync();
+    }
+    let waiting = false, got = null;
+    for (let i = 0; i < pairs.length && !got && !waiting; i += 1) {
+      const c = pairs[(pr.index + i) % pairs.length];
+      if ([c.a, c.b].some((r) => !monthRows(r.pt.key))) waiting = true;       // its month of replays is on its way
+      else {
+        const sides = [side(c.a), side(c.b)];
+        if (sides[0] && sides[1]) {
+          got = sides;
+          pr.index = (pr.index + i) % pairs.length;
+        }
+      }
+    }
+    if (waiting) {
+      const c = pairs[pr.index];
+      ER.wait(el, [ER.replayId(c.a.pt.key), ER.replayId(c.b.pt.key)]);
+      return pairSync();
+    }
+    if (!got) {
+      el.replaceChildren(ER.el('p', 'er-muted', ER.tr('None of these shots has a replay to show.')));
+      return pairSync();
+    }
+    const cw = el.clientWidth || 600, W = Math.max(200, Math.min(300, cw >= 520 ? Math.floor((cw - 16) / 2) : cw)), H = Math.round(W * 1.3);
+    el.replaceChildren();
+    pr.sides = got;
+    const turned = () => pr.sides.forEach((c) => within(c, () => {
+      if (!st.g) return;
+      look(st.g);
+      paint3(st.g);
+    }));
+    got.forEach((c, i) => {
+      const r = c.rec, fig = ER.el('figure', 'er-pairside'), cap = ER.el('figcaption'), stage = ER.el('div', 'er-chart er-rcourt'), open = ER.el('button', 'er-btn', ER.tr('Open this point'));
+      const how = PAIR_MISS[r.miss];
+      cap.append(ER.el('b', null, i ? (how ? ER.tr('Missed: {0}', ER.tr(how)) : ER.tr('Missed')) : ER.tr('Landed')),
+        ER.el('span', 'er-muted', ER.tr('{0} · {1}, {2} m/s, against a ball at {3} m/s', ER.F.date(r.m.date), ER.tr(SHOT[r.shot] || r.shot),
+          r.speed == null ? '—' : ER.fmt1(r.speed), r.inSpeed == null ? '—' : ER.fmt1(r.inSpeed))));
+      open.type = 'button';
+      open.addEventListener('click', () => {
+        pairStop();
+        show(c.key, r.n, 'sx-pair-wrap');
+      });
+      fig.append(cap, stage, open);
+      el.appendChild(fig);
+      within(c, () => {
+        draw3(stage, W, H);
+        st.g.turned = turned;
+      });
+    });
+    pr.lo = -Math.min(1.5, Math.max(...got.map((c) => c.hit - c.from)));
+    pr.hi = Math.max(...got.map((c) => c.to - c.hit));
+    pr.tau = calm() ? pr.hi : pr.lo;
+    pairPaint();
+    pairSync();
+    if (!calm()) pairPlay();
+  };
+  const pairRedraw = () => document.querySelectorAll('[data-draw="sx-pair"]').forEach(pairDraw);
+  ER.replay.pair = {draw: pairDraw, list: pairList, state: pr};
+  const pairOn = (id, type, fn) => {
+    const el = $(id);
+    if (el) el.addEventListener(type, fn);
+  };
+  pairOn('sx-pair-go', 'click', () => {
+    pr.on = true;
+    pairRedraw();
+  });
+  pairOn('sx-pair-next', 'click', () => {
+    pr.index += 1;
+    pairRedraw();
+  });
+  pairOn('sx-pair-hide', 'click', () => {
+    pr.on = false;
+    pairRedraw();
+  });
+  pairOn('sx-pair-play', 'click', () => (pr.playing ? pairStop() : pairPlay()));
+  pairOn('sx-pair-seek', 'input', (ev) => {
+    pairStop();
+    pr.tau = pr.lo + (pr.hi - pr.lo) * Number(ev.target.value) / 1000;
+    pairPaint();
+  });
+  pairOn('sx-pair-rate', 'click', (ev) => {
+    const b = ev.target.closest && ev.target.closest('[data-prate]');
+    if (!b) return;
+    pr.rate = Number(b.dataset.prate);
+    pairSync();
+    pairPaint();
+  });
 
   const draws = {};
   draws.replay = (el) => {
@@ -5561,7 +5789,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   const draws = {};
   const redraw = (names) => names.forEach((n) => document.querySelectorAll(`[data-draw="${n}"]`).forEach((el) => draws[n](el)));
   const OUT = ['sx-summary', 'sx-bars', 'sx-strokes-note', 'sx-strokes', 'sx-attack-note', 'sx-attack-head', 'sx-attack', 'sx-attack-next',
-    'sx-land-note', 'sx-land-head', 'sx-land-rows', 'sx-land-map', 'sx-hit-note', 'sx-hit-head', 'sx-hit-rows', 'sx-hit-map', 'sx-time-note', 'sx-time-head', 'sx-time', 'goal-form', 'goal-hint', 'sx-versus-note', 'sx-versus', 'sx-only', 'sx-map', 'sx-list', 'sx-count'];
+    'sx-land-note', 'sx-land-head', 'sx-land-rows', 'sx-land-map', 'sx-hit-note', 'sx-hit-head', 'sx-hit-rows', 'sx-hit-map', 'sx-time-note', 'sx-time-head', 'sx-time', 'goal-form', 'goal-hint', 'sx-pair-note', 'sx-pair', 'sx-versus-note', 'sx-versus', 'sx-only', 'sx-map', 'sx-list', 'sx-count'];
   // what a change of st.only (the list narrowed to one line of a card) redraws
   const ONLY_OUT = ['sx-attack', 'sx-attack-next', 'sx-land-rows', 'sx-land-map', 'sx-hit-rows', 'sx-hit-map', 'sx-time', 'sx-only', 'sx-map', 'sx-list', 'sx-count'];
 
@@ -6811,6 +7039,18 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     el.replaceChildren(...out);
   };
 
+  // Side by side (the tables are the replay's: ER.replay.pair): how many shots there are to pair, and the pair itself
+  draws['sx-pair-note'] = (el) => {
+    const s = chosen(), list = s && ER.replay && ER.replay.pair ? ER.replay.pair.list() : null;
+    if (!list) return el.replaceChildren();
+    const p = ER.replay.pair.state;
+    el.replaceChildren(p.landed && p.missed
+      ? ER.tr('Among the shots the filters pick you landed {0} and missed {1}, leaving out serves and balls you did not reach. The most alike are paired first.', ER.F.int(p.landed), ER.F.int(p.missed))
+      : ER.tr('A pair needs a shot you landed and one you missed among the shots the filters pick.'));
+  };
+  draws['sx-pair'] = (el) => {
+    if (ER.replay && ER.replay.pair) ER.replay.pair.draw(el);
+  };
   // Session goals: up to three targets to play for, each a share to reach in a session. A goal is one of the session
   // report's measures, or the share landed against the kind of ball the filters here pick. Goals are kept with the
   // match notes (goal|<id>, the goal as JSON), so they stay on this computer. A goal counts for the sessions from the

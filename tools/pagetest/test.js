@@ -188,6 +188,34 @@
       }
     }
 
+    // 4b5. side by side: a landed shot and a miss on two tables, their clocks tied at your contact
+    {
+      const pair = ER.replay.pair, list = pair.list();
+      if (!list || !list.length) {
+        check('side by side: two tables in step', q('#sx-pair-go').disabled, 'no pair to show here');
+      } else {
+        q('#sx-pair-go').click();
+        for (let i = 0; i < 40 && qa('[data-draw="sx-pair"] svg').length < 2 && !q('[data-draw="sx-pair"] p'); i += 1) await wait(150);
+        const p = pair.state, two = qa('[data-draw="sx-pair"] svg.er-r3d').length === 2 && p.sides.length === 2;
+        let tied = false, fair = false;
+        if (two) {
+          q('#sx-pair-play').click();
+          await wait(40);
+          if (p.playing) q('#sx-pair-play').click();
+          const seek = q('#sx-pair-seek');
+          seek.value = String(Math.round(1000 * (0 - p.lo) / (p.hi - p.lo)));
+          seek.dispatchEvent(new Event('input', {bubbles: true}));
+          await wait(40);
+          tied = p.sides.every((c) => Math.abs(c.t - c.hit) < 0.01 && c.from <= c.hit && c.hit < c.to && c.hits.length === 2 && c.hits[1].you && !c.hits[0].you);
+          fair = p.sides[0].rec.ok && !p.sides[1].rec.ok && p.sides[0].rec !== p.sides[1].rec && !q('#sx-pair-ctl').hidden;
+        }
+        q('#sx-pair-hide').click();
+        await wait(60);
+        const closed = !qa('[data-draw="sx-pair"] svg').length && q('#sx-pair-ctl').hidden && !q('#sx-pair-go').hidden;
+        check('side by side: two tables in step', two && tied && fair && closed, list.length + ' pairs' + (two ? '' : '; not drawn') + (tied ? '' : '; clocks apart') + (closed ? '' : '; not closed'));
+      }
+    }
+
     // 4c. patterns that win points: every pattern holds its points, a row lists them, and the way back leads to the card
     {
       let bad = '', rowsSeen = 0, opened = false;
