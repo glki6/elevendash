@@ -315,6 +315,13 @@
 .er-sxtrack{background:var(--er-track);border-radius:0 4px 4px 0;min-width:0}
 .er-sxtrack i{display:block;height:8px;min-width:1px;border-radius:0 4px 4px 0;background:var(--er-ai)}
 .er-sxbar.ok .er-sxtrack i{background:var(--er-you)}
+.er-sxbars.wide .er-sxbar{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr) 3.4em 3.8em}
+.er-sxpick{background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;text-align:left;cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;border-radius:2px}
+.er-sxpick:hover,.er-sxbar.on .er-sxpick{color:var(--color-fg)}
+.er-sxpick:disabled{cursor:default;text-decoration:none}
+.er-sxpick:focus-visible{outline:2px solid var(--er-you);outline-offset:2px}
+.er-sxattack h5{margin:6px 0 0;font-size:var(--cds-font-size-caption);font-weight:var(--cds-font-weight-medium);color:var(--color-fg-muted)}
+.er-sxattack .er-pstat b{color:var(--color-fg);font-weight:var(--cds-font-weight-medium)}
 .er-sw.ball.ring{background:transparent;box-shadow:inset 0 0 0 2px var(--er-ai),0 0 0 3px var(--er-court)}
 .er-sxgroups{list-style:none;margin:0;padding:0;display:grid}
 .er-sxgroups>li{display:grid;grid-template-columns:1.5em minmax(0,1fr) minmax(80px,150px) auto auto;gap:6px 16px;align-items:center;padding:12px 0;border-top:1px solid var(--er-line)}
@@ -829,12 +836,22 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
       <div class="er-tablewrap"><table class="er-t er-sxst"><thead><tr><th>Stroke</th><th>Shots</th><th>Landed</th><th>Point won</th></tr></thead><tbody data-draw="sx-strokes" data-source="shots"></tbody></table></div>
       <details class="er-how"><summary>How to read this</summary><p class="er-muted">An arrow marks a stroke that lands, or goes on to win the point, clearly more or less often than your other strokes against the same balls: a gap that large would come up by chance about one time in ten. The range is where the true share sits nine times in ten. There is no arrow when the stroke, or your other strokes together, has fewer than 20 shots.</p></details>
     </div>
+    <div class="er-sxstrokes er-sxattack" id="sx-attack-wrap">
+      <h4>After you attack</h4>
+      <p class="er-muted" data-draw="sx-attack-note" data-source="shots"></p>
+      <p class="er-pstat" data-draw="sx-attack-head" data-source="shots" role="status"></p>
+      <div class="er-sxbars wide" data-draw="sx-attack" data-source="shots"></div>
+      <h5 id="sx-attack-next-head">When it came back, your next shot</h5>
+      <div class="er-sxbars wide" id="sx-attack-next" data-draw="sx-attack-next" data-source="shots"></div>
+      <details class="er-how"><summary>How to read this</summary><p class="er-muted">An attack is a drive or loop of yours, not a serve, that left your bat at 10 m/s or more. A point is counted once, by the first attack in it that the filters pick. It came back when the next ball landed on your side: you then hit it, or did not reach it. An attack that landed with no ball coming back won the point there and then, by a clean winner or by the return missing. Click a line to list those attacks below, each with its replay.</p></details>
+    </div>
     <div class="er-sxstrokes" id="sx-versus-wrap">
       <h4>Your misses against the ones you landed</h4>
       <p class="er-muted" data-draw="sx-versus-note" data-source="shots"></p>
       <div class="er-tablewrap"><table class="er-t er-sxst er-sxvs"><thead><tr><th>Measure</th><th data-out="ok">Landed</th><th data-out="n">Into the net</th><th data-out="l">Long</th><th data-out="w">Wide</th><th data-out="x">Not reached</th></tr></thead><tbody data-draw="sx-versus" data-source="shots"></tbody></table></div>
       <details class="er-how"><summary>How to read this</summary><p class="er-muted">The larger figure is the middle value of the shots in that column, and under it is the range the middle half of them sit in. An arrow marks a column that runs clearly higher or lower than the ones you landed: a gap that would come up by chance about one time in a hundred. That is stricter than elsewhere on the page, because this table makes many comparisons at once. There is no arrow, and the figures are greyed, when a column has fewer than 20 shots. A gap shows what went with the miss, which is not always what caused it. The angle is how steeply the ball left your bat: above zero it was going up. A ball you did not reach has no shot of yours to measure.</p></details>
     </div>
+    <div class="er-rbar" id="sx-only-wrap" hidden><span class="er-pstat" data-draw="sx-only" data-source="shots" role="status"></span><button class="er-btn" type="button" id="sx-only-clear">List every shot again</button></div>
     <div class="er-tablewrap" id="sx-list-wrap"><table class="er-t er-sxlist"><thead><tr><th>Point</th><th>Shot</th><th>Came at you</th><th>You played</th><th>Result</th><th>Open</th></tr></thead><tbody data-draw="sx-list" data-source="shots"></tbody></table></div>
     <div class="er-rbar"><button class="er-btn" type="button" id="sx-more" hidden>Show more</button><span class="er-muted" data-draw="sx-count" data-source="shots"></span></div>
   </div>
@@ -4846,8 +4863,9 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   const HALL = 'color-mix(in oklab, var(--er-court) 30%, #0b111c)';
   const NONE = {role: '', shot: '', out: '', spin: '', side: '', depth: '', pace: '', level: '', period: '', moment: '', rally: ''};
   const f = Object.assign({}, NONE);
-  const st = {limit: PAGE, scope: 'recent'};
+  const st = {limit: PAGE, scope: 'recent', only: ''};       // only: the list shows your attacks that ended one way
   const SRC = ['shots', 'matches', 'points', 'sessions', 'plan'];
+  const FAST = 10, ATTACK = new Set(['D', 'L', 'F']);       // an attack: a drive or loop off your bat at FAST m/s or more
   const $ = (id) => document.getElementById(id);
   const calm = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   const STROKE = {S: ER.k('Serve'), D: ER.k('Drive'), L: ER.k('Slow loop'), F: ER.k('Fast loop'), P: ER.k('Push'), C: ER.k('Chop')};
@@ -4873,7 +4891,10 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     const rows = ER.rows('shots'), ms = ER.rows('matches'), ps = ER.rows('points'), ss = ER.rows('sessions'), plan = ER.rows('plan');
     if (!rows || !ms || !ps || !ss || !plan) return null;
     if (memo && memo.rows === rows && memo.ms === ms && memo.ps === ps && memo.ss === ss && memo.plan === plan) return memo;
-    if (memo && memo.vs !== ER.vs()) Object.assign(f, NONE);     // filters set for the other side's matches do not carry over
+    if (memo && memo.vs !== ER.vs()) {      // filters set for the other side's matches do not carry over
+      Object.assign(f, NONE);
+      st.only = '';
+    }
     const mBy = new Map(ms.map((m) => [m.key, m])), pBy = new Map(ps.map((r) => [r.key, r]));
     const recs = [];
     rows.forEach((row) => {
@@ -4889,11 +4910,32 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
           top: num(7, 1), cy: num(10, 1), since: num(16, 1000), up: num(19, 10), cz: num(20, 100)});
       });
     });
+    // your next shot in the same point, or the ball you did not reach: two shots on, with the opponent's in between
+    const byN = new Map(recs.map((r) => [`${r.pt.key}|${r.n}`, r]));
+    recs.forEach((r) => {
+      r.next = byN.get(`${r.pt.key}|${r.n + 2}`) || null;
+    });
     recs.reverse();
     memo = {rows, ms, ps, ss, plan, recs, vs: ER.vs(), online: !ER.people() && ms.some((m) => m.vs !== 'AI'),
       levels: [...new Set(ms.filter((m) => m.vs === 'AI').map((m) => m.level))].sort((a, b) => a - b),
       recentFrom: plan.length ? plan[0].recentFrom : null, last: ss.length ? ss[ss.length - 1].key : null};
     return memo;
+  };
+  // After you attack: each point once, by the first attack in it among the shots picked (newest first, as they come).
+  // kind: miss it did not land, out it landed and nothing came back, backWon and backLost it came back and the point
+  // went that way. next, when it came back: ok your next shot landed, nmiss it missed, nx you did not reach the ball.
+  const attacks = (base) => {
+    const seen = new Set(), out = [];
+    for (let i = base.length - 1; i >= 0; i -= 1) {
+      const r = base[i];
+      if (r.role === 'S' || !ATTACK.has(r.shot) || !(r.speed >= FAST) || seen.has(r.pt)) continue;
+      seen.add(r.pt);
+      const nx = r.ok ? r.next : null;
+      if (r.ok && !nx && !r.pt.won) continue;      // the log lost the end of the point
+      out.push({r, kind: !r.ok ? 'miss' : !nx ? 'out' : r.pt.won ? 'backWon' : 'backLost',
+        next: !nx ? '' : nx.shot === 'X' ? 'nx' : nx.ok ? 'ok' : 'nmiss', nextWon: !!(nx && nx.ok && r.pt.won)});
+    }
+    return out.reverse();
   };
   const outOk = (r, o) => !o || (o === 'ok' ? r.ok : o === 'fail' ? !r.ok : r.miss === o);
   // every filter but Result
@@ -4909,10 +4951,12 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   const chosen = () => {
     const d = data();
     if (!d) return null;
-    const key = JSON.stringify(f);
+    const key = JSON.stringify(f) + st.only;
     if (was && was.d === d && was.key === key) return was;
     const base = d.recs.filter((r) => pass(d, r, f));
-    const list = f.out ? base.filter((r) => outOk(r, f.out)) : base;
+    const hit = attacks(base);
+    const list = st.only ? hit.filter((a) => a.kind === st.only || a.next === st.only).map((a) => a.r)
+      : f.out ? base.filter((r) => outOk(r, f.out)) : base;
     let ref = null;
     if ((f.shot || f.spin || f.side || f.depth || f.pace || f.moment || f.rally) && base.length) {
       const roles = new Set(base.map((r) => r.role));
@@ -4924,14 +4968,15 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     const q = Object.assign({}, f, {shot: ''});
     const same = d.recs.filter((r) => r.role !== 'S' && pass(d, r, q));
     const strokes = same.filter((r) => r.shot !== 'X');
-    was = {d, key, base, list, ref, strokes, unreached: same.length - strokes.length};
+    was = {d, key, base, list, ref, strokes, unreached: same.length - strokes.length, attacks: hit};
     return was;
   };
   const rate = (a, b) => ER.F.pct(Math.round(1000 * a / b) / 10);
 
   const draws = {};
   const redraw = (names) => names.forEach((n) => document.querySelectorAll(`[data-draw="${n}"]`).forEach((el) => draws[n](el)));
-  const OUT = ['sx-summary', 'sx-bars', 'sx-strokes-note', 'sx-strokes', 'sx-versus-note', 'sx-versus', 'sx-map', 'sx-list', 'sx-count'];
+  const OUT = ['sx-summary', 'sx-bars', 'sx-strokes-note', 'sx-strokes', 'sx-attack-note', 'sx-attack-head', 'sx-attack', 'sx-attack-next',
+    'sx-versus-note', 'sx-versus', 'sx-only', 'sx-map', 'sx-list', 'sx-count'];
 
   // The filters. Each select is drawn once for a language, then only told what is chosen.
   const options = (k, d) => {
@@ -5044,6 +5089,94 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       tr.append(th, ER.el('td', null, ER.F.int(c.n)), cell(c.ok, c.n, c.okMove), cell(c.won, c.n, c.wonMove));
       return tr;
     }));
+  };
+
+  // After you attack: what became of the points in which you attacked a ball the filters pick.
+  const A_KINDS = [['out', ER.k('Landed and won the point there'), 1], ['backWon', ER.k('Came back, and you won the point'), 1],
+    ['backLost', ER.k('Came back, and you lost the point'), 0], ['miss', ER.k('The attack missed'), 0]];
+  const A_NEXT = [['ok', ER.k('Landed'), 1], ['nmiss', ER.k('Missed'), 0], ['nx', ER.k('Not reached'), 0]];
+  const A_ONLY = {out: ER.k('Listing {0} attacks that landed and won the point there.'), backWon: ER.k('Listing {0} attacks that came back, in points you won.'),
+    backLost: ER.k('Listing {0} attacks that came back, in points you lost.'), miss: ER.k('Listing {0} attacks that missed.'),
+    ok: ER.k('Listing {0} attacks that came back, where your next shot landed.'), nmiss: ER.k('Listing {0} attacks that came back, where your next shot missed.'),
+    nx: ER.k('Listing {0} attacks that came back, where you did not reach the next ball.')};
+  const attackSum = (s) => {
+    if (s.asum) return s.asum;
+    const c = {n: s.attacks.length, miss: 0, out: 0, backWon: 0, backLost: 0, ok: 0, nmiss: 0, nx: 0, okWon: 0};
+    s.attacks.forEach((a) => {
+      c[a.kind] += 1;
+      if (a.next) c[a.next] += 1;
+      if (a.nextWon) c.okWon += 1;
+    });
+    c.landed = c.n - c.miss;
+    c.back = c.backWon + c.backLost;
+    s.asum = c;
+    return c;
+  };
+  const range = (k, n) => {
+    const [lo, hi] = likely(k, n);
+    return ER.tr('{0} to {1}', ER.F.pct(Math.round(lo * 10) / 10), ER.F.pct(Math.round(hi * 10) / 10));
+  };
+  draws['sx-attack-note'] = (el) => {
+    const s = chosen(), wrap = $('sx-attack-wrap');
+    const c = s ? attackSum(s) : null, show = !!c && c.n >= MIN_SHOWN;
+    if (wrap) wrap.hidden = !show;
+    if (!show) return el.replaceChildren();
+    el.replaceChildren(ER.tr('{0} points in which you attacked a ball the filters pick, whatever Result is set to.', ER.F.int(c.n)));
+  };
+  draws['sx-attack-head'] = (el) => {
+    const s = chosen(), c = s ? attackSum(s) : null;
+    if (!c || c.n < MIN_SHOWN) return el.replaceChildren();
+    const b = (t) => ER.el('b', null, t), out = [];
+    if (c.n < MIN_STROKE) out.push(ER.tr('Too few attacks here for shares to mean much.'));
+    else {
+      out.push(...ER.trn('{0} of these attacks landed ({1}).', b(rate(c.landed, c.n)), range(c.landed, c.n)));
+      if (c.landed >= MIN_STROKE) out.push(' ', ...ER.trn('One that landed won the point there and then {0} of the time.', b(rate(c.out, c.landed))));
+      if (c.back >= MIN_STROKE) {
+        out.push(' ', ...ER.trn('When it came back, you won {0} of those points ({1}).', b(rate(c.backWon, c.back)), range(c.backWon, c.back)));
+        if (c.ok >= MIN_STROKE) out.push(' ', ...ER.trn('With your next shot on the table, you won {0} of them.', b(rate(c.okWon, c.ok))));
+      } else if (c.back) out.push(' ', ER.tr('It came back {0} times: too few to say how those points go.', ER.F.int(c.back)));
+    }
+    el.replaceChildren(...out);
+  };
+  const attackBars = (el, kinds, c, n) => {
+    el.replaceChildren(...kinds.map(([k, label, good]) => {
+      const row = ER.el('div', 'er-sxbar' + (good ? ' ok' : '') + (st.only === k ? ' on' : ''));
+      const pick = ER.el('button', 'er-sxpick', ER.tr(label)), track = ER.el('div', 'er-sxtrack'), fill = ER.el('i');
+      pick.type = 'button';
+      pick.setAttribute('aria-pressed', String(st.only === k));
+      pick.title = ER.tr('List these attacks below');
+      pick.disabled = !c[k];
+      pick.addEventListener('click', () => {
+        st.only = st.only === k ? '' : k;
+        st.limit = PAGE;
+        redraw(['sx-attack', 'sx-attack-next', 'sx-only', 'sx-map', 'sx-list', 'sx-count']);
+      });
+      fill.style.width = (n ? 100 * c[k] / n : 0).toFixed(1) + '%';
+      track.appendChild(fill);
+      const first = ER.el('span');
+      first.appendChild(pick);
+      row.append(first, track, ER.el('b', null, ER.F.int(c[k])), ER.el('span', null, n ? rate(c[k], n) : '—'));
+      return row;
+    }));
+  };
+  draws['sx-attack'] = (el) => {
+    const s = chosen(), c = s ? attackSum(s) : null;
+    if (!c || c.n < MIN_SHOWN) return el.replaceChildren();
+    attackBars(el, A_KINDS, c, c.n);
+  };
+  draws['sx-attack-next'] = (el) => {
+    const s = chosen(), c = s ? attackSum(s) : null, head = $('sx-attack-next-head');
+    const show = !!c && c.n >= MIN_SHOWN && c.back > 0;
+    if (head) head.hidden = !show;
+    el.hidden = !show;
+    if (!show) return el.replaceChildren();
+    attackBars(el, A_NEXT, c, c.back);
+  };
+  draws['sx-only'] = (el) => {
+    const s = chosen(), wrap = $('sx-only-wrap');
+    if (wrap) wrap.hidden = !st.only;
+    if (!s || !st.only) return el.replaceChildren();
+    el.replaceChildren(ER.tr(A_ONLY[st.only], ER.F.int(s.list.length)));
   };
 
   // Your misses against the ones you landed: the shots the filters pick (Result left aside), by how they ended, on
@@ -5243,6 +5376,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     Object.assign(f, NONE, {role: g.role, spin: g.spin, side: g.side, depth: g.depth || '', pace: g.pace || '', out,
       level: ER.people() ? '' : String(g.level), period: g.scope === 'recent' ? 'recent' : ''});
     st.limit = PAGE;
+    st.only = '';
     redraw(['sx-filter', ...OUT]);
     const card = $('shots-find');
     if (card) card.scrollIntoView({behavior: calm() ? 'auto' : 'smooth', block: 'start'});
@@ -5303,7 +5437,13 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   on('sx-clear', 'click', () => {
     Object.assign(f, NONE);
     st.limit = PAGE;
+    st.only = '';
     redraw(['sx-filter', ...OUT]);
+  });
+  on('sx-only-clear', 'click', () => {
+    st.only = '';
+    st.limit = PAGE;
+    redraw(['sx-attack', 'sx-attack-next', 'sx-only', 'sx-map', 'sx-list', 'sx-count']);
   });
   on('sx-more', 'click', () => {
     st.limit += PAGE;
@@ -5316,7 +5456,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     document.querySelectorAll('#sx-scope [data-scope]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
     redraw(['sx-groups-note', 'sx-groups']);
   });
-  ER.shots = {filters: f, chosen, apply, groups, strokeRows, versus};
+  ER.shots = {filters: f, chosen, apply, groups, strokeRows, versus, attackSum, state: st};
 })();
 </script>
 

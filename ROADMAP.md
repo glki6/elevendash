@@ -9,7 +9,7 @@ the order they are planned. Nothing here is a promise of a date.
 
 ## Next: what to do differently
 
-1. **After you attack.** Not just whether your fast loop or fast drive landed, but what happened next: won outright,
+1. **After you attack.** *Done in v0.5.0.* Not just whether your fast loop or fast drive landed, but what happened next: won outright,
    came back and you won the point anyway, or came back and you lost it. Split by the ball you attacked and by whether
    your next shot landed, so it shows whether your openers are backed by your follow-ups. A card in the Shot explorer
    that follows its filters. Needs only the shots the page already holds, plus who won each point.

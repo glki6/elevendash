@@ -111,7 +111,7 @@ What to practise next, ranked by how many points a match each item is worth, wit
 
 ![A ranked list of the kinds of ball missed most, each with a bar for the miss rate against the usual rate.](pages/img/shots.png)
 
-The kinds of ball you miss most, each one click away from its replays, and a filter that finds any shot by the ball that came at you.
+The kinds of ball you miss most, each one click away from its replays, and a filter that finds any shot by the ball that came at you. For the balls you pick it also compares your strokes, sets your misses against the shots you landed, and shows what happens after you attack: how often the attack wins the point there, how often it comes back, and how those points go.
 
 ### Form and stamina
 

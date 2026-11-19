@@ -82,6 +82,30 @@
     q('#sx-clear').click();
     await wait(120);
 
+    // 4b. after you attack: the lines add up, and a line lists exactly its attacks
+    {
+      const s0 = ER.shots.chosen(), c = ER.shots.attackSum(s0);
+      const sums = c.out + c.backWon + c.backLost + c.miss === c.n && c.ok + c.nmiss + c.nx === c.back && c.n === s0.attacks.length;
+      const fair = s0.attacks.every((a) => a.r.role !== 'S' && a.r.speed >= 10 && 'DLF'.includes(a.r.shot))
+        && new Set(s0.attacks.map((a) => a.r.pt)).size === c.n;
+      check('after you attack: the lines add up', sums && fair, c.n + ' points');
+      const bars = qa('[data-draw="sx-attack"] .er-sxpick');
+      if (c.n >= 5) {
+        const k = ['out', 'backWon', 'backLost', 'miss'].findIndex((x) => c[x] > 0);
+        const kind = ['out', 'backWon', 'backLost', 'miss'][k];
+        bars[k].click();
+        await wait(80);
+        const l = ER.shots.chosen().list;
+        const listed = bars.length === 4 && l.length === c[kind] && !q('#sx-only-wrap').hidden && ER.shots.state.only === kind;
+        q('#sx-only-clear').click();
+        await wait(80);
+        const back = ER.shots.chosen().list.length === s0.base.length && q('#sx-only-wrap').hidden;
+        check('after you attack: a line lists its attacks, and back', listed && back, kind + ' ' + c[kind]);
+      } else {
+        check('after you attack: a line lists its attacks, and back', q('#sx-attack-wrap').hidden, 'too few attacks: hidden');
+      }
+    }
+
     // 5. open a shot of another match from the list (of another month, when there is one): the match changes, its
     //    replays are unpacked, and the point asked for is the one on the table
     const list = ER.shots.chosen().list;
