@@ -30,7 +30,8 @@ the order they are planned. Nothing here is a promise of a date.
    change in what the AI sent you does not pass for a change in you. Built on Matches you pick. Quick picks for
    "this week against the four before".
 6. **A skill over time.** For the balls the Shot explorer's filters pick (returning fast topspin, say), your landing
-   rate month by month with its likely range, apart from your match results.
+   rate month by month with its likely range, apart from your match results. *Done in v0.10.0, in Find shots: by
+   session, week or month.*
 7. **What works for you.** A short page of your best serves, your best stroke against each kind of ball and your best
    patterns, rebuilt after every import from items 1 to 4. Comes after them.
 

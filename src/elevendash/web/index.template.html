@@ -891,6 +891,14 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
       </div>
       <details class="er-how"><summary>How to read this</summary><p class="er-muted">Every shot of yours the filters pick, without the balls you did not reach. Serves are counted only when Kind of shot is set to Serves. Speed and spin are as the ball left your bat. Spin is in turns a second (r/s), and a shot has topspin or backspin when it carries more than 20 of them. A ball is still rising when it was going up as you met it. Time from the bounce runs from the ball's bounce on your half to your bat; a serve has neither. A harder shot is not better in itself: it wins more often when it lands and it misses more often, so read the two columns together. The share of points won counts how the whole point ended, not only this shot. An arrow marks a row that lands, or goes with points won, clearly more or less often than your other shots here: a gap that would come up by chance about one time in a hundred. A square with fewer than 20 shots is left grey. Click a row or a square to list those shots below, each with its replay.</p></details>
     </div>
+    <div class="er-sxstrokes" id="sx-time-wrap">
+      <h4>These shots over time</h4>
+      <div class="er-rbar"><span class="er-ctl" id="sx-time-step-label">One dot for each</span><div class="er-tabs" id="sx-time-step" role="group" aria-labelledby="sx-time-step-label"><button class="er-tab" type="button" data-per="session" aria-pressed="false">Session</button><button class="er-tab" type="button" data-per="week" aria-pressed="false">Week</button><button class="er-tab" type="button" data-per="month" aria-pressed="false">Month</button></div></div>
+      <p class="er-muted" data-draw="sx-time-note" data-source="shots"></p>
+      <p class="er-pstat" data-draw="sx-time-head" data-source="shots" role="status"></p>
+      <div class="er-chart" data-draw="sx-time" data-source="shots"></div>
+      <details class="er-how"><summary>How to read this</summary><p class="er-muted">Each dot is the share of these shots that landed in one session, week or month, and the bar through it is its likely range: where your true rate probably sits, given how many shots there were. A hollow dot stands on fewer than 20 shots and has no range. The dashed line is your share over all of them, and the number under each date is how many shots there were. The scale does not start at zero, so a small move looks large: read the ranges, and take two dots whose ranges overlap as not clearly different. This follows one skill, apart from whether you won the matches. Click a dot to list its shots below, each with its replay.</p></details>
+    </div>
     <div class="er-sxstrokes" id="sx-versus-wrap">
       <h4>Your misses against the ones you landed</h4>
       <p class="er-muted" data-draw="sx-versus-note" data-source="shots"></p>
@@ -5212,18 +5220,21 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     && (!q.moment || Math.max(r.pt.youBefore, r.pt.aiBefore) >= 10) && (!q.rally || r.pt.hits >= 5);
   // What the filters pick: base is everything but Result (the bars), list is base with Result (the map and the list),
   // ref is the same kind of shot over the same matches with nothing else set (your usual).
+  const tst = {step: ''};       // these shots over time: the step picked, or none yet
   let was = null;
   const chosen = () => {
     const d = data();
     if (!d) return null;
-    const key = JSON.stringify(f) + st.only;
+    const key = JSON.stringify(f) + st.only + '|' + tst.step;
     if (was && was.d === d && was.key === key) return was;
     const base = d.recs.filter((r) => pass(d, r, f));
     const hit = attacks(base);
     const lands = base.filter((r) => r.role !== 'S' && r.ok && r.lx != null && r.lz != null);       // where your shots land
     // your speed, spin and timing: every shot you hit; serves only when the filter asks for them
     const hits = base.filter((r) => r.shot !== 'X' && r.speed != null && (f.role === 'S' || r.role !== 'S'));
+    const step = st.only.startsWith('T:') ? timeStep(base) : '';
     const list = st.only.startsWith('L:') ? lands.filter(tagPick(st.only, landOf)) : st.only.startsWith('H:') ? hits.filter(tagPick(st.only, hitOf))
+      : step ? base.filter((r) => String(periodOf(r, step)) === st.only.slice(6))       // T:per:<the period's key>
       : st.only ? hit.filter((a) => a.kind === st.only || a.next === st.only).map((a) => a.r)
         : f.out ? base.filter((r) => outOk(r, f.out)) : base;
     let ref = null;
@@ -5245,9 +5256,9 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   const draws = {};
   const redraw = (names) => names.forEach((n) => document.querySelectorAll(`[data-draw="${n}"]`).forEach((el) => draws[n](el)));
   const OUT = ['sx-summary', 'sx-bars', 'sx-strokes-note', 'sx-strokes', 'sx-attack-note', 'sx-attack-head', 'sx-attack', 'sx-attack-next',
-    'sx-land-note', 'sx-land-head', 'sx-land-rows', 'sx-land-map', 'sx-hit-note', 'sx-hit-head', 'sx-hit-rows', 'sx-hit-map', 'sx-versus-note', 'sx-versus', 'sx-only', 'sx-map', 'sx-list', 'sx-count'];
+    'sx-land-note', 'sx-land-head', 'sx-land-rows', 'sx-land-map', 'sx-hit-note', 'sx-hit-head', 'sx-hit-rows', 'sx-hit-map', 'sx-time-note', 'sx-time-head', 'sx-time', 'sx-versus-note', 'sx-versus', 'sx-only', 'sx-map', 'sx-list', 'sx-count'];
   // what a change of st.only (the list narrowed to one line of a card) redraws
-  const ONLY_OUT = ['sx-attack', 'sx-attack-next', 'sx-land-rows', 'sx-land-map', 'sx-hit-rows', 'sx-hit-map', 'sx-only', 'sx-map', 'sx-list', 'sx-count'];
+  const ONLY_OUT = ['sx-attack', 'sx-attack-next', 'sx-land-rows', 'sx-land-map', 'sx-hit-rows', 'sx-hit-map', 'sx-time', 'sx-only', 'sx-map', 'sx-list', 'sx-count'];
 
   // The filters. Each select is drawn once for a language, then only told what is chosen.
   const options = (k, d) => {
@@ -5449,6 +5460,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     if (!s || !st.only) return el.replaceChildren();
     el.replaceChildren(st.only.startsWith('L:') ? ER.tr('Listing {0} shots of yours by where they landed: {1}.', ER.F.int(s.list.length), landName(st.only.slice(2)))
       : st.only.startsWith('H:') ? ER.tr('Listing {0} shots of yours: {1}.', ER.F.int(s.list.length), hitName(st.only.slice(2)))
+      : st.only.startsWith('T:') ? ER.tr('Listing {0} shots from {1}.', ER.F.int(s.list.length), timeName(s, st.only.slice(6)))
         : ER.tr(A_ONLY[st.only], ER.F.int(s.list.length)));
   };
 
@@ -6196,6 +6208,113 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     svg.append('text').attr('x', 0).attr('y', 10).attr('text-anchor', 'start').text(ER.tr('Topspin, r/s'));
   };
 
+  // These shots over time: the shots the filters pick (Result left aside, counting the balls you did not reach), by
+  // the session, week or month they were played in, each with the share landed and its likely range. Until a step is
+  // picked it is the coarsest that still gives a few dots to look at.
+  const weekOf = (date) => {
+    const d = new Date(date + 'T00:00:00Z');
+    d.setUTCDate(d.getUTCDate() - (d.getUTCDay() + 6) % 7);       // back to its Monday
+    return d.toISOString().slice(0, 10);
+  };
+  const periodOf = (r, step) => (step === 'month' ? r.m.date.slice(0, 7) : step === 'week' ? weekOf(r.m.date) : r.m.session);
+  const monthName = (k) => (ER.lang() === 'zh' ? `${k.slice(0, 4)}年${Number(k.slice(5, 7))}月` : d3.utcFormat('%b %Y')(new Date(k + '-01T00:00:00Z')));
+  // the step picked, when it gives at least two dots; else the coarsest that gives a few
+  const timeStep = (base) => {
+    const count = (step) => new Set(base.map((r) => periodOf(r, step))).size;
+    return tst.step && count(tst.step) > 1 ? tst.step : count('month') >= 4 ? 'month' : count('week') >= 3 ? 'week' : 'session';
+  };
+  const timeSum = (s) => {
+    if (s.tsum) return s.tsum;
+    const step = timeStep(s.base), by = new Map();
+    s.base.forEach((r) => {       // newest first
+      const k = periodOf(r, step);
+      let c = by.get(k);
+      if (!c) by.set(k, (c = {key: String(k), date: r.m.date, n: 0, ok: 0}));
+      c.n += 1;
+      c.ok += r.ok ? 1 : 0;
+      if (r.m.date < c.date) c.date = r.m.date;
+    });
+    const rows = [...by.values()].reverse();
+    rows.forEach((c) => {
+      [c.lo, c.hi] = likely(c.ok, c.n);
+      c.rate = 100 * c.ok / c.n;
+    });
+    s.tsum = {step, rows, n: s.base.length, ok: s.base.filter((r) => r.ok).length};
+    return s.tsum;
+  };
+  const periodName = (c, step) => (step === 'month' ? monthName(c.key) : step === 'week' ? ER.tr('the week of {0}', ER.F.date(c.key)) : ER.F.date(c.date));
+  const timeName = (s, key) => {
+    const t = timeSum(s), c = t.rows.find((x) => x.key === key);
+    return c ? periodName(c, t.step) : '';
+  };
+  const timeOf = (s) => (s && s.base.length >= MIN_SHOWN ? timeSum(s) : null);
+  draws['sx-time-note'] = (el) => {
+    const t = timeOf(chosen()), wrap = $('sx-time-wrap'), show = !!t && t.rows.length > 1;
+    if (wrap) wrap.hidden = !show;
+    document.querySelectorAll('#sx-time-step [data-per]').forEach((b) => b.setAttribute('aria-pressed', String(!!t && b.dataset.per === t.step)));
+    if (!show) return el.replaceChildren();
+    const out = [ER.tr('The share landed of the {0} shots the filters pick, counting the balls you did not reach, whatever Result is set to.', ER.F.int(t.n))];
+    if (mixed()) out.push(' ', ER.tr('No stroke or kind of ball is picked, so this is every shot you played. Set the filters to follow one skill.'));
+    el.replaceChildren(...out);
+  };
+  draws['sx-time-head'] = (el) => {
+    const t = timeOf(chosen());
+    if (!t || t.rows.length < 2) return el.replaceChildren();
+    const last = t.rows[t.rows.length - 1], rest = {n: t.n - last.n, ok: t.ok - last.ok};
+    if (last.n < MIN_STROKE || rest.n < MIN_STROKE) return el.replaceChildren(ER.tr('Too few shots in the latest stretch to say which way this is going.'));
+    const b = (v) => ER.el('b', null, v), move = apart(last.ok, last.n, rest.ok, rest.n);
+    const out = ER.trn('Latest, {0}: {1} landed ({2}). Before that: {3}.', periodName(last, t.step), b(rate(last.ok, last.n)), range(last.ok, last.n), b(rate(rest.ok, rest.n)));
+    out.push(' ', ER.tr(move > 0 ? 'That is clearly more than before.' : move < 0 ? 'That is clearly less than before.' : 'The gap is within what chance gives.'));
+    el.replaceChildren(...out);
+  };
+  draws['sx-time'] = (el) => {
+    const t = timeOf(chosen());
+    if (!t || t.rows.length < 2) return el.replaceChildren();
+    const cw = el.clientWidth;      // before emptying: see ER.tableFrame
+    el.replaceChildren();
+    const W = Math.max(260, cw || 600), H = 220, rows = t.rows;
+    const svg = ER.svg(el, W, H, ER.tr('The share of these shots that landed, period by period, each with its likely range'));
+    const solid = rows.filter((c) => c.n >= MIN_STROKE), use = solid.length ? solid : rows;
+    const lo = d3.min(use, (c) => c.lo), hi = d3.max(use, (c) => c.hi), pad = (hi - lo) * 0.1 || 2;
+    const y = d3.scaleLinear().domain([Math.max(0, lo - pad), Math.min(100, hi + pad)]).nice(4);
+    const ticks = y.ticks(4), all = 100 * t.ok / t.n;
+    const m = {t: 12, r: 14, b: 38, l: Math.ceil(d3.max(ticks, (v) => ER.textW(svg, v + '%'))) + 10};
+    y.range([H - m.b, m.t]).clamp(true);
+    const x = d3.scalePoint().domain(rows.map((c) => c.key)).range([m.l, W - m.r]).padding(0.5);
+    ticks.forEach((v) => {
+      svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(v)).attr('y2', y(v)).style('stroke', 'var(--cds-chart-grid)');
+      svg.append('text').attr('x', m.l - 6).attr('y', y(v)).attr('text-anchor', 'end').attr('dominant-baseline', 'middle').attr('class', 'er-num').text(v + '%');
+    });
+    // your share over all of them, as a dashed line
+    svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(all)).attr('y2', y(all))
+      .style('stroke', 'var(--color-fg-muted)').style('stroke-dasharray', '4 4');
+    const every = Math.max(1, Math.ceil(rows.length / Math.max(2, Math.floor((W - m.l - m.r) / 64))));
+    const short = (c) => (t.step === 'month' ? monthName(c.key) : ER.F.date(t.step === 'week' ? c.key : c.date));
+    rows.forEach((c, i) => {
+      if ((rows.length - 1 - i) % every) return;
+      svg.append('text').attr('x', x(c.key)).attr('y', H - m.b + 16).attr('text-anchor', 'middle').attr('class', 'er-num').text(short(c));
+      svg.append('text').attr('x', x(c.key)).attr('y', H - m.b + 30).attr('text-anchor', 'middle').attr('class', 'er-num').style('fill-opacity', 0.75).text(ER.F.int(c.n));
+    });
+    svg.append('path').datum(solid).attr('d', d3.line().x((c) => x(c.key)).y((c) => y(c.rate)))
+      .style('fill', 'none').style('stroke', ER.YOU).style('stroke-width', 2).style('stroke-linejoin', 'round').style('stroke-linecap', 'round');
+    const tip = ER.tip(el), band = Math.max(16, x.step());
+    rows.forEach((c) => {
+      const few = c.n < MIN_STROKE, on = st.only === 'T:per:' + c.key, g = svg.append('g').style('cursor', 'pointer');
+      if (!few) g.append('line').attr('x1', x(c.key)).attr('x2', x(c.key)).attr('y1', y(c.lo)).attr('y2', y(c.hi)).style('stroke', ER.YOU).style('stroke-width', 2).style('stroke-opacity', 0.45);
+      g.append('circle').attr('cx', x(c.key)).attr('cy', y(c.rate)).attr('r', on ? 6 : 4.5)
+        .style('fill', few ? 'var(--color-panel)' : ER.YOU).style('stroke', few ? 'var(--color-fg-muted)' : on ? 'var(--color-fg)' : 'var(--color-panel)').style('stroke-width', 2);
+      g.append('rect').attr('x', x(c.key) - band / 2).attr('y', m.t).attr('width', band).attr('height', H - m.t - m.b).style('fill', 'transparent')
+        .on('click', () => onlyToggle('T:per:' + c.key))
+        .on('pointermove pointerdown', (evt) => tip.show(evt, [
+          periodName(c, t.step),
+          ER.tr('{0} of {1} shots landed: {2}', ER.F.int(c.ok), ER.F.int(c.n), rate(c.ok, c.n)),
+          few ? ER.tr('Too few shots for a range') : ER.tr('Likely range: {0}', range(c.ok, c.n)),
+          ER.tr('Over all of them: {0}', rate(t.ok, t.n)),
+        ]))
+        .on('pointerleave', () => tip.hide());
+    });
+  };
+
   Object.keys(draws).forEach((n) => dash.draw(n, draws[n]));
 
   const on = (id, type, fn) => {
@@ -6223,6 +6342,14 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     st.scope = b.dataset.scope;
     document.querySelectorAll('#sx-scope [data-scope]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
     redraw(['sx-groups-note', 'sx-groups']);
+  });
+  on('sx-time-step', 'click', (ev) => {
+    const b = ev.target.closest && ev.target.closest('[data-per]');
+    if (!b) return;
+    tst.step = b.dataset.per;
+    if (st.only.startsWith('T:')) st.only = '';
+    st.limit = PAGE;
+    redraw(['sx-time-note', 'sx-time-head', ...ONLY_OUT]);
   });
   const patTabs = (id, attr, set) => on(id, 'click', (ev) => {
     const b = ev.target.closest && ev.target.closest(`[data-${attr}]`);
@@ -6258,7 +6385,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   });
   const P_PACE = {f: ER.k('fast'), s: ER.k('slower')};
   const ballName = (spin, side, pace) => ER.tr('{0}, {1}, {2}', ER.tr(P_SPIN[spin]), ER.tr(P_SIDE[side]), ER.tr(P_PACE[pace]));
-  ER.shots = {data, ballName, filters: f, chosen, apply, groups, strokeRows, versus, attackSum, landSum, hitSum, state: st, patterns, patState: pst};
+  ER.shots = {data, ballName, filters: f, chosen, apply, groups, strokeRows, versus, attackSum, landSum, hitSum, timeSum, state: st, patterns, patState: pst};
 })();
 </script>
 

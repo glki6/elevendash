@@ -156,6 +156,38 @@
       }
     }
 
+    // 4b4. these shots over time: every step holds all the shots, and a dot lists its shots
+    {
+      const s0 = ER.shots.chosen();
+      let bad = '', seen = '';
+      for (const step of ['month', 'week', 'session']) {
+        q(`#sx-time-step [data-per="${step}"]`).click();
+        await wait(60);
+        const t = ER.shots.timeSum(ER.shots.chosen()), rows = t.rows;
+        const adds = rows.reduce((a, c) => a + c.n, 0) === s0.base.length && rows.reduce((a, c) => a + c.ok, 0) === t.ok
+          && rows.every((c, i) => !i || rows[i - 1].date <= c.date) && rows.every((c) => c.lo <= c.rate + 1e-9 && c.rate <= c.hi + 1e-9);
+        const pressed = q('#sx-time-step [aria-pressed="true"]');
+        const drawn = q('#sx-time-wrap').hidden === rows.length < 2 && qa('[data-draw="sx-time"] circle').length === (rows.length < 2 ? 0 : rows.length)
+          && !!pressed && pressed.dataset.per === t.step;
+        if (!adds || !drawn) bad += ' ' + step;
+        seen += ' ' + rows.length;
+      }
+      check('over time: every step holds all the shots', !bad, 'dots:' + seen + (bad ? '; wrong:' + bad : ''));
+      const t = ER.shots.timeSum(ER.shots.chosen());
+      if (t.rows.length > 1) {
+        qa('[data-draw="sx-time"] rect')[0].dispatchEvent(new MouseEvent('click', {bubbles: true}));
+        await wait(80);
+        const only = ER.shots.state.only, l = ER.shots.chosen().list;
+        const listed = only === 'T:per:' + t.rows[0].key && l.length === t.rows[0].n && !q('#sx-only-wrap').hidden;
+        q('#sx-only-clear').click();
+        await wait(80);
+        const back = ER.shots.chosen().list.length === s0.base.length && q('#sx-only-wrap').hidden;
+        check('over time: a dot lists its shots, and back', listed && back, only + ' ' + l.length);
+      } else {
+        check('over time: a dot lists its shots, and back', q('#sx-time-wrap').hidden, 'one period: hidden');
+      }
+    }
+
     // 4c. patterns that win points: every pattern holds its points, a row lists them, and the way back leads to the card
     {
       let bad = '', rowsSeen = 0, opened = false;
