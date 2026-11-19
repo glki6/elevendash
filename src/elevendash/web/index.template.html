@@ -217,6 +217,19 @@
 .er-plan.keep{grid-template-columns:repeat(2,minmax(0,1fr));gap:0 44px}
 .er-plan.keep .er-pitem{grid-template-columns:minmax(0,1fr)}
 .er-keephead{display:grid;gap:4px;padding-top:6px}
+.er-keephead .er-legend{padding-top:6px}
+.er-sw.ok{background:color-mix(in oklab,var(--color-ok) 45%,var(--color-panel))}
+.er-sw.none{background:var(--er-track)}
+.er-phist{position:relative;display:grid;gap:18px;min-width:0}
+.er-phist>p{margin:0;font-size:var(--cds-font-size-caption)}
+.er-phitem{display:grid;gap:7px;min-width:0}
+.er-phitem p{margin:0;font-size:var(--cds-font-size-caption);line-height:1.45;max-width:78ch}
+.er-phhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;min-width:0}
+.er-phhead a{font-weight:var(--cds-font-weight-medium);color:inherit}
+.er-phstrip{display:flex;gap:2px;height:16px;max-width:860px;min-width:0}
+.er-phstrip i{flex:1 1 0;min-width:2px;max-width:28px;border-radius:2px;background:var(--er-track)}
+.er-phstrip i.s1{background:var(--er-you)}
+.er-phstrip i.s0{background:color-mix(in oklab,var(--color-ok) 45%,var(--color-panel))}
 .er-sw.hollow{border-radius:50%;background:var(--color-panel);box-shadow:inset 0 0 0 2px var(--er-you)}
 .er-sw.band{width:16px;height:10px;border-radius:2px;background:color-mix(in oklab,var(--er-you) 22%,transparent)}
 .er-sw.mute{background:color-mix(in oklab,var(--color-fg-muted) 55%,transparent)}
@@ -874,6 +887,10 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
   <ol class="er-plan" id="plan-items" data-draw="plan-items" data-source="plan"></ol>
   <div class="er-keephead"><h3>Already working</h3><p class="er-muted">At or close to the level of the matches you won. Nothing to drill here; keep doing it.</p></div>
   <ul class="er-plan keep" id="plan-keep" data-draw="plan-keep" data-source="plan"></ul>
+  <div class="er-keephead" id="plan-history"><h3>Plan history</h3><p class="er-muted">When each item joined the plan, whether it left, and whether it came back.</p>
+    <div class="er-legend"><span><i class="er-sw"></i>On the plan</span><span><i class="er-sw ok"></i>Already working</span><span><i class="er-sw none"></i>No target yet</span></div>
+    <details class="er-how"><summary>How to read this</summary><p class="er-muted">One square is one of the sessions the plan is built from, the oldest on the left. The plan keeps no record of its own, so it is worked out again as it would have stood after each session, from the sessions up to that one only. An item is on the plan when its recent number is under its target (the same number in the matches you had won by then) and closing the gap is worth 0.15 points a match or more. Otherwise it is already working. Until you have won some of those matches there is no target. An item close to that line can go on and off the plan from one session to the next by chance: read one square lightly and a long run seriously.</p></details></div>
+  <div class="er-phist" data-draw="plan-history" data-source="plan_history"></div>
 </section>
 
 <section class="er-section" id="works">
@@ -1332,7 +1349,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
   // matches. Online matches all stand at one level, ER.H_LEVEL, where the AI side has the AI's levels. A dashboard
   // with matches on one side only shows that side, and no switch.
   ER.H_LEVEL = 999;
-  ER.H_SETS = new Set(['summary', 'sessions', 'session_notes', 'plan', 'plan_trend', 'plan_progress', 'form', 'session_shape',
+  ER.H_SETS = new Set(['summary', 'sessions', 'session_notes', 'plan', 'plan_trend', 'plan_progress', 'plan_history', 'form', 'session_shape',
     'form_notes', 'serve_flow', 'serve_types', 'serve_next', 'serve_notes', 'days', 'levels', 'insights', 'zones', 'won_vs_lost',
     'shot_groups', 'findings', 'rating', 'rating_bands', 'rating_notes']);
   const raw = (id) => {
@@ -3576,6 +3593,85 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   };
   dash.draw('plan-items', list(false));
   dash.draw('plan-keep', list(true));
+
+  // Plan history. plan_history holds the state of every item after each session at the plan's level (1 on the plan,
+  // 0 already working, - no target yet). Drawn as one square a session, with in words when the item joined, whether
+  // it left and whether it came back.
+  const H_STATE = {1: ER.k('On the plan'), 0: ER.k('Already working'), '-': ER.k('No target yet')};
+  const H_CLASS = {1: 's1', 0: 's0', '-': 'sn'};
+  const history = () => {
+    const rows = ER.rows('plan_history'), plan = ranked();
+    if (!rows || !plan) return null;
+    return plan.map((r) => {
+      const cells = rows.filter((h) => h.item === r.key).sort((a, b) => a.session - b.session);
+      const runs = [];          // the unbroken stretches on the plan, as places in cells
+      cells.forEach((c, i) => {
+        if (c.state !== '1') return;
+        const last = runs[runs.length - 1];
+        if (last && last.to === i - 1) last.to = i;
+        else runs.push({from: i, to: i});
+      });
+      return {r, cells, runs, on: cells.filter((c) => c.state === '1').length};
+    });
+  };
+  ER.planHistory = history;
+  const histWords = (h) => {
+    const {cells, runs} = h, n = cells.length;
+    const at = (i) => [ER.F.date(cells[i].date), String(cells[i].session)];
+    if (!n) return [];
+    if (!runs.length) {
+      return [cells[n - 1].state === '-' ? ER.tr('Never on the plan: no target yet.') : ER.tr('Never on the plan: already working in every session that had a target.')];
+    }
+    const first = runs[0], last = runs[runs.length - 1], onNow = last.to === n - 1, back = runs.length - 1;
+    const out = [ER.tr('Joined on {0} (session {1}).', ...at(first.from))];
+    if (!back && onNow) return out.concat(ER.tr('On the plan ever since.'));
+    if (!back) return out.concat(ER.tr('Left on {0} (session {1}) and has not come back.', ...at(first.to + 1)));
+    out.push(ER.tr('Left on {0} (session {1}).', ...at(first.to + 1)));
+    if (back === 1) out.push(ER.tr('Came back on {0} (session {1}).', ...at(last.from)));
+    else out.push(ER.tr('Came back {0} times, the latest on {1} (session {2}).', back, ...at(last.from)));
+    out.push(onNow ? ER.tr('On the plan since then.') : ER.tr('Left again on {0} (session {1}).', ...at(last.to + 1)));
+    out.push(ER.tr('On the plan after {0} of the {1} sessions since it joined.', h.on, n - first.from));
+    return out;
+  };
+  dash.draw('plan-history', (el) => {
+    const hist = history();
+    if (!hist) return ER.wait(el, ['plan', 'plan_history']);
+    if (ER.same(el, [ER.lang(), ER.rows('plan'), ER.rows('plan_history')])) return;
+    if (!hist.length || !hist[0].cells.length) return el.replaceChildren(ER.el('p', 'er-muted', ER.tr('No sessions to show yet.')));
+    el.replaceChildren();
+    const tip = ER.tip(el);
+    const span = ER.el('p', 'er-muted');
+    const c0 = hist[0].cells, n = c0.length;
+    span.textContent = n === 1 ? ER.tr('One session so far, on {0}.', ER.F.date(c0[0].date))
+      : ER.tr('{0} sessions, from {1} (session {2}) on the left to {3} (session {4}) on the right.', n,
+        ER.F.date(c0[0].date), c0[0].session, ER.F.date(c0[n - 1].date), c0[n - 1].session);
+    el.appendChild(span);
+    hist.forEach((h) => {
+      const row = ER.el('div', 'er-phitem'), head = ER.el('div', 'er-phhead'), strip = ER.el('div', 'er-phstrip'), words = ER.el('p', 'er-muted');
+      const state = h.cells[h.cells.length - 1].state, lines = histWords(h);
+      const a = ER.el('a', null, ER.tx(h.r, 'title'));
+      a.href = '#plan-' + h.r.key;
+      head.append(a, ER.el('span', 'er-ptag' + (state === '1' ? '' : state === '0' ? ' ok' : ' none'), ER.tr(H_STATE[state])));
+      strip.setAttribute('role', 'img');
+      strip.setAttribute('aria-label', lines.join(' '));
+      h.cells.forEach((c) => {
+        const i = ER.el('i', H_CLASS[c.state]);
+        i.dataset.source = 'plan_history';
+        i.dataset.field = 'state';
+        i.dataset.where = c.key;
+        i.addEventListener('pointerenter', (evt) => {
+          const t = [ER.tr('Session {0} · {1}', c.session, ER.F.date(c.date)), ER.tr(H_STATE[c.state])];
+          if (c.gain != null && c.state === '1') t.push(ER.tr('Worth {0} points a match then', '+' + ER.fmt1(c.gain)));
+          tip.show(evt, t);
+        });
+        i.addEventListener('pointerleave', () => tip.hide());
+        strip.appendChild(i);
+      });
+      words.textContent = lines.join(' ');
+      row.append(head, strip, words);
+      el.appendChild(row);
+    });
+  });
 })();
 </script>
 
@@ -5372,7 +5468,9 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       open.type = 'button';
       open.addEventListener('click', () => {
         pairStop();
-        show(c.key, r.n, 'sx-pair-wrap');
+        const go = () => show(c.key, r.n, 'sx-pair-wrap');
+        if (ER.matchKey() === r.m.key) return go();
+        ER.set({match: r.m.key}, null, {after: go});       // the replay shows the match on screen: bring this one up first
       });
       fig.append(cap, stage, open);
       el.appendChild(fig);

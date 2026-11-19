@@ -33,6 +33,8 @@ TITLES = {
                    'Each plan item\'s number in every session at that level, with how many tries it covers.'),
     'plan_progress': ('Training plan progress',
                       'For each plan item: the session that first put it on the plan, its number then, its number over the sessions since, and whether that is a clear change.'),
+    'plan_history': ('Training plan history',
+                     'Each plan item after every session at that level: on the plan, already working or without a target yet, and the points a match it was worth then.'),
     'serve_flow': ('Where serve points end',
                    'For each AI level and each kind of serve (side, spin, depth), yours and the AI\'s: the share of points that ended at each stage, from the serve to the later rally.'),
     'serve_types': ('Serve types',
@@ -96,6 +98,7 @@ for f in sorted(os.listdir(ws.build)):
 ONLINE = {
     'summary': 'Online win rates', 'sessions': 'Every online session', 'session_notes': 'Online session notes',
     'plan': 'Online training plan', 'plan_trend': 'Online training plan by session', 'plan_progress': 'Online training plan progress',
+    'plan_history': 'Online training plan history',
     'serve_flow': 'Where serve points end, online', 'serve_types': 'Serve types, online', 'serve_next': 'The shot after the serve, online',
     'serve_notes': 'Serve and return notes, online', 'shot_groups': 'Where your misses pile up, online', 'form': 'Rolling results, online',
     'session_shape': 'From the first match of a session to the last, online', 'form_notes': 'Warm-up and tiring, online',

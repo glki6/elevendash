@@ -137,6 +137,14 @@ class Build(unittest.TestCase):
         plan = {r['key']: r for r in self.rows('plan')}
         prog = self.rows('plan_progress')
         self.assertEqual(sorted(g['key'] for g in prog), sorted(plan))
+        # plan history: a row for every item and session at the plan's level, spelling out the same states
+        hist = self.rows('plan_history')
+        self.assertEqual(len({h['key'] for h in hist}), len(hist))
+        for g in prog:
+            mine = sorted((h for h in hist if h['item'] == g['key']), key=lambda h: h['session'])
+            self.assertEqual(''.join(h['state'] for h in mine), g['states'], g['key'])
+            self.assertEqual(mine[-1]['gain'], plan[g['key']]['gain'], g['key'])
+            self.assertTrue(all((h['gain'] is None) == (h['state'] == '-') for h in mine), g['key'])
         for g in prog:
             r, st = plan[g['key']], g['states']
             self.assertEqual(len(st), sum(x['level'] == r['level'] for x in sessions))

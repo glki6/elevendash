@@ -105,7 +105,7 @@ against your average before it.
 
 ![Training plan items, each with a drill, what it is worth in points a match, and a chart of the number against its target.](pages/img/plan.png)
 
-What to practise next, ranked by how many points a match each item is worth, with a drill, a target taken from the matches you won, and the trend.
+What to practise next, ranked by how many points a match each item is worth, with a drill, a target taken from the matches you won, and the trend. Plan history, under it, shows session by session when each item joined the plan, whether it left, and whether it came back.
 
 ### What works for you
 

@@ -47,6 +47,7 @@ the order they are planned. Nothing here is a promise of a date.
 10. **Side-by-side replay.** A shot you landed and one you missed against a similar ball, in two 3D replays that play
     in step from the moment the ball reaches you. *Done in v0.14.0, in Find shots.*
 11. **Training plan history.** When each item joined the plan, whether it left it, and whether it came back.
+    *Done in v0.15.0, under the Training plan.*
 
 ## Smaller additions
 

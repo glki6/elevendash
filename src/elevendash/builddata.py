@@ -459,7 +459,7 @@ for ms in split_sessions(other_ms):     # the other side's sessions, for the mat
         r['session'] = f"{ms[0]['date']} {ms[0]['start']}"; r['sessionMatch'] = i + 1
 # every dataset of sums, in the order written. A pass with no matches of its own (you only play online, or only the
 # AI) writes them empty, so nothing of an earlier build is left standing.
-SUMS_OF = ['summary', 'sessions', 'session_notes', 'plan', 'plan_trend', 'plan_progress', 'form', 'session_shape', 'form_notes',
+SUMS_OF = ['summary', 'sessions', 'session_notes', 'plan', 'plan_trend', 'plan_progress', 'plan_history', 'form', 'session_shape', 'form_notes',
            'serve_flow', 'serve_types', 'serve_next', 'serve_notes', 'days', 'shot_groups', 'findings', 'levels', 'insights',
            'zones', 'won_vs_lost'] + (['rating', 'rating_bands', 'rating_notes'] if PEOPLE else [])
 if not scope_ms:
@@ -829,6 +829,11 @@ if scope_ms:
                         'since': pc(since[num], since[den]), 'sinceTries': since[den], 'move': move})
         plan_progress.append(row)
     write('plan_progress', plan_progress)
+    # plan_history: every item's state after each session at the plan's level, with what it was worth then. The page draws
+    # from it when each item joined the plan, whether it left and whether it came back.
+    write('plan_history', [{'key': f"{key}|{row['n']}", 'item': key, 'session': row['n'], 'sessionKey': row['key'], 'date': row['date'],
+                            'state': h[key]['state'], 'gain': h[key]['gain']}
+                           for key, *_ in PLAN for (row, _c), h in zip(sess_tallies, plan_hist)])
 
     # ---------------- form: your latest matches at a level, and how a session goes from its first match to its last ----------------
     # form: one row per AI match, in order at its level, with the share of matches and of points won over the last 10, 20

@@ -45,6 +45,20 @@
     const showing = () => qa('.er-page [hidden]').filter((e) => e.getClientRects().length);
     check('nothing hidden shows', showing().length === 0, showing().slice(0, 3).map((e) => e.className || e.id || e.tagName).join(', '));
 
+    // 2b. plan history: every item has a square for each session at the plan's level, as the plan stood after it
+    {
+      const hist = await until(() => ER.planHistory()), rows = qa('[data-draw="plan-history"] .er-phitem');
+      const prog = ER.rows('plan_progress') || [];
+      const square = hist && hist.length && rows.length === hist.length && hist.every((h, i) => h.cells.length === hist[0].cells.length
+        && rows[i].querySelectorAll('.er-phstrip i').length === h.cells.length && rows[i].querySelectorAll('.er-phstrip i.s1').length === h.on
+        && rows[i].querySelector('p').textContent.trim().length > 10);
+      const agree = hist && hist.every((h) => {
+        const g = prog.find((x) => x.key === h.r.key), first = h.runs[0];
+        return g && g.states === h.cells.map((c) => c.state).join('') && (first ? g.ever === 1 && h.cells[first.from].session === g.session : g.ever === 0);
+      });
+      check('plan history: a square a session, as the plan stood', square && agree, hist ? hist.length + ' items, ' + (hist[0] ? hist[0].cells.length : 0) + ' sessions' + (square ? '' : '; squares off') + (agree ? '' : '; not the plan progress') : 'no history');
+    }
+
     // 3. point replays: only the month of the match on screen is unpacked, and its court draws
     const months = lazy().length;
     check('the court draws', await until(() => q('#chart-replay svg')));
@@ -209,10 +223,19 @@
           tied = p.sides.every((c) => Math.abs(c.t - c.hit) < 0.01 && c.from <= c.hit && c.hit < c.to && c.hits.length === 2 && c.hits[1].you && !c.hits[0].you);
           fair = p.sides[0].rec.ok && !p.sides[1].rec.ok && p.sides[0].rec !== p.sides[1].rec && !q('#sx-pair-ctl').hidden;
         }
+        // Open this point brings up the shot's own match before its replay
+        let opened = !two;
+        if (two) {
+          const want = p.sides[1].rec;
+          qa('[data-draw="sx-pair"] .er-pairside button')[1].click();
+          opened = !!(await until(() => ER.matchKey() === want.m.key && shown() === want.pt.key, 10000));
+          if (q('#replay-back') && !q('#replay-back').hidden) q('#replay-back').click();
+          await wait(200);
+        }
         q('#sx-pair-hide').click();
         await wait(60);
         const closed = !qa('[data-draw="sx-pair"] svg').length && q('#sx-pair-ctl').hidden && !q('#sx-pair-go').hidden;
-        check('side by side: two tables in step', two && tied && fair && closed, list.length + ' pairs' + (two ? '' : '; not drawn') + (tied ? '' : '; clocks apart') + (closed ? '' : '; not closed'));
+        check('side by side: two tables in step', two && tied && fair && opened && closed, list.length + ' pairs' + (two ? '' : '; not drawn') + (tied ? '' : '; clocks apart') + (opened ? '' : '; its point did not open') + (closed ? '' : '; not closed'));
       }
     }
 
