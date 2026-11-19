@@ -27,6 +27,10 @@
   const lazy = () => qa('script[data-lazy]');
   const unpacked = () => lazy().filter((s) => s.textContent === '').length;
   const shown = () => q('#replay-select') && q('#replay-select').value;
+  const SECTIONS = ['area-overview', 'ov-findings', 'session', 'match', 'progress', 'form', 'won-lost', 'pick', 'records-part', 'findings', 'points-end', 'serve',
+    'shots', 'strokes', 'plan', 'works', 'journal-part'];
+  // on screen: laid out, and not put out of sight with its area or its part
+  const seen = (e) => !!e && e.getClientRects().length > 0 && getComputedStyle(e).visibility !== 'hidden' && e.getBoundingClientRect().height > 0;
 
   const run = async () => {
     // 1. the page draws, with no script errors
@@ -36,7 +40,7 @@
     const ER = window.ER;
 
     // 2. every section holds something, and nothing says it failed to load
-    for (const id of ['session', 'match', 'plan', 'shots', 'pick', 'progress', 'form', 'findings', 'serve', 'by-level']) {
+    for (const id of SECTIONS) {
       const s = q('#' + id);
       check('section ' + id, s && s.textContent.trim().length > 40, s ? s.textContent.trim().length + ' characters' : 'not in the page');
     }
@@ -44,6 +48,135 @@
     // a style that sets display must not bring back what the page has hidden
     const showing = () => qa('.er-page [hidden]').filter((e) => e.getClientRects().length);
     check('nothing hidden shows', showing().length === 0, showing().slice(0, 3).map((e) => e.className || e.id || e.tagName).join(', '));
+
+    // 2a. areas: the bar shows one area at a time and the address names it; a part shows only what belongs to it;
+    //     a card brings its area and its part with it, and the browser's Back returns
+    {
+      const areas = qa('.er-area'), tabs = qa('.er-areatab');
+      let bad = '';
+      for (const t of tabs) {
+        t.click();
+        await wait(60);
+        const on = areas.filter(seen), a = t.dataset.go;
+        if (on.length !== 1 || on[0].dataset.area !== a || ER.area() !== a || t.getAttribute('aria-current') !== 'page') bad += ' ' + a;
+        if (location.protocol !== 'file:' && (a === 'overview' ? location.hash.includes('area=') : !location.hash.includes('area=' + a))) bad += ' address:' + a;
+        if (qa('.er-areatab[aria-current],.er-bottab[aria-current]').length !== 2) bad += ' marked:' + a;
+      }
+      check('areas: one on screen at a time, named in the address', tabs.length === 6 && areas.length === 6 && !bad, tabs.length + ' areas' + (bad ? '; wrong:' + bad : ''));
+      bad = '';
+      let parts = 0;
+      for (const a of areas) {
+        for (const b of [...a.querySelectorAll('button[data-part]')].filter((x) => x.dataset.part)) {
+          ER.go({area: a.dataset.area, part: b.dataset.part});
+          await wait(40);
+          parts += 1;
+          const tagged = [...a.querySelectorAll('[data-part]:not(button)')];
+          const wrong = tagged.filter((e) => {
+            const off = !e.dataset.part.split(' ').includes(b.dataset.part);
+            return e.classList.contains('er-off') !== off || (off && seen(e));
+          });
+          if (wrong.length || !tagged.some(seen) || b.getAttribute('aria-pressed') !== 'true') bad += ` ${a.dataset.area}/${b.dataset.part}`;
+        }
+        ER.go({area: a.dataset.area, part: ''});
+        await wait(40);
+        if (a.querySelector('.er-off')) bad += ` ${a.dataset.area}/all`;
+      }
+      check('areas: a part shows what belongs to it', parts >= 15 && !bad, parts + ' parts' + (bad ? '; wrong:' + bad : ''));
+      ER.go({area: 'overview', part: ''});
+      await wait(40);
+      ER.goto(q('#shots-find'));
+      await wait(80);
+      const there = ER.area() === 'shots' && seen(q('#shots-find')) && !seen(q('#area-overview'));
+      history.back();
+      const backed = await until(() => ER.area() === 'overview' && seen(q('#area-overview')) && !seen(q('#shots-find')), 3000);
+      check('areas: a card brings its area, and Back returns', there && backed, ER.area());
+      ER.go({area: 'shots', part: 'misses'});
+      await wait(40);
+      const hid = !seen(q('#shots-find'));
+      ER.goto(q('#shots-find'));
+      await wait(60);
+      check('areas: a card brings its part', hid && ER.part() === 'explorer' && seen(q('#shots-find')), ER.part());
+      const jump = q('#area-overview [data-jump="plan"]');
+      ER.go({area: 'overview', part: ''});
+      await wait(40);
+      const steps = ER.trail();
+      jump.click();
+      await wait(80);
+      check('areas: the Overview opens a card where it lives', ER.area() === 'coaching' && seen(q('#plan')), ER.area());
+      // the jump leaves a way back, which returns to the Overview and then goes
+      const way = !q('#back-btn').hidden && seen(q('#back-btn')) && q('#back-btn').textContent.length > 4;
+      q('#back-btn').click();
+      await wait(80);
+      const back = ER.area() === 'overview' && seen(q('#area-overview')) && ER.trail() === steps;
+      // picking an area yourself clears it
+      q('.er-areatab[data-go="progress"]').click();
+      await wait(60);
+      check('areas: a jump leaves a way back', way && back && ER.trail() === 0 && q('#back-btn').hidden, ER.area() + ', steps back: ' + ER.trail());
+      // the finder lists what is in the area on screen, follows the part, and takes you to a heading
+      ER.go({area: 'progress', part: ''});
+      await wait(120);
+      const all = ER.finder.heads();
+      ER.go({area: 'progress', part: 'records'});
+      await wait(120);
+      const some = ER.finder.heads();
+      ER.go({area: 'tactics', part: ''});
+      await wait(120);
+      window.scrollTo(0, 0);
+      q('#find .er-finderbtn').click();
+      const items = qa('#find .er-findermenu button');
+      const names = items.map((b) => b.textContent);
+      const last = items[items.length - 1];
+      const opened = !q('#find .er-findermenu').hidden && items.length >= 8 && names.every((s) => s && s === s.trim());
+      if (last) last.click();
+      const went = await until(() => window.scrollY > 600 && q('#find .er-findermenu').hidden, 3000);
+      check('areas: the finder lists the area and jumps to a heading', all >= 8 && some < all && opened && !!went,
+        all + ' headings, ' + some + ' in a part, ' + items.length + ' listed, at ' + Math.round(window.scrollY));
+      window.scrollTo(0, 0);
+      // motion: the area that comes on screen has settled within a second, and the line sits under its tab
+      ER.go({area: 'coaching', part: ''});
+      const moving = () => q('#area-coaching').getAnimations({subtree: true}).filter((x) => ['er-rise', 'er-sweep'].includes(x.animationName) && x.playState === 'running').length;
+      const began = moving();
+      await wait(1000);
+      const line = q('.er-areas .er-ink'), tab = q('.er-areatab[aria-current=page]');
+      const under = !tab.offsetWidth || (!!line && Math.abs(line.getBoundingClientRect().left - tab.getBoundingClientRect().left) < 2
+        && Math.abs(line.getBoundingClientRect().width - tab.offsetWidth) < 2);
+      const calmed = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      check('motion: an area rises into place and settles', (calmed || began > 0) && moving() === 0 && under && getComputedStyle(q('#area-coaching h1')).opacity === '1',
+        began + ' moving at first, ' + moving() + ' after a second');
+      // a title does not repeat the tab: the name is kept for a screen reader and the PDF, and a line of its own shows
+      const titles = qa('.er-area h1');
+      const kept = titles.every((h) => { const n = h.querySelector('.er-areaname'); return !!n && n.textContent.trim() && n.offsetWidth <= 1; });
+      const said = titles.every((h) => { const s = h.querySelector('.er-areasay'); return !!s && s.textContent.trim().length > 12; });
+      const led = q('#area-overview .er-areasay').textContent, titleLine = q('#area-coaching .er-areasay').innerText.trim();
+      check('areas: a title says more than the tab above it', titles.length === 6 && kept && said && titleLine.length > 12 && led.replace(/[^0-9]/g, '').length >= 2,
+        titles.length + ' titles, names kept ' + kept + ', lines ' + said);
+      // the dock on a phone (the frame made narrow): at the foot of the screen, aside on the way down, back on the way up
+      const shell = q('.er-shell'), bot = q('#bot');
+      shell.style.maxWidth = '420px';
+      ER.go({area: 'tactics', part: ''});
+      await wait(400);
+      const atFoot = () => Math.abs(bot.getBoundingClientRect().bottom - window.innerHeight) < 2;
+      const aside = () => q('#page').classList.contains('er-dockoff');
+      const docked = bot.offsetHeight > 40 && atFoot() && !aside();
+      window.scrollTo(0, 900);
+      const wentOff = await until(() => aside(), 2000);
+      window.scrollTo(0, 700);
+      const cameBack = await until(() => !aside(), 2000);
+      await wait(400);
+      const footAgain = atFoot() && getComputedStyle(bot).opacity === '1';
+      window.scrollTo(0, 1300);
+      await until(() => aside(), 2000);
+      ER.go({area: 'coaching', part: ''});
+      await wait(200);
+      const fresh = !aside();
+      shell.style.maxWidth = '';
+      window.scrollTo(0, 0);
+      await wait(300);
+      check('areas: the phone dock stays at the foot, steps aside going down and returns going up', docked && !!wentOff && !!cameBack && footAgain && fresh,
+        'docked ' + docked + ', aside ' + !!wentOff + ', back ' + !!cameBack + ', at the foot ' + footAgain + ', shown in a new area ' + fresh);
+      ER.go({area: 'overview', part: ''});
+      await wait(60);
+    }
 
     // 2b. plan history: every item has a square for each session at the plan's level, as the plan stood after it
     {
@@ -229,7 +362,7 @@
           const want = p.sides[1].rec;
           qa('[data-draw="sx-pair"] .er-pairside button')[1].click();
           opened = !!(await until(() => ER.matchKey() === want.m.key && shown() === want.pt.key, 10000));
-          if (q('#replay-back') && !q('#replay-back').hidden) q('#replay-back').click();
+          if (ER.viewer && ER.viewer.isOpen()) ER.viewer.close();
           await wait(200);
         }
         q('#sx-pair-hide').click();
@@ -429,11 +562,24 @@
       const before = unpacked();
       const idx = list.indexOf(other);
       const rows = qa('.er-sxlist tbody tr');
+      const areaWas = ER.area(), yWas = window.scrollY;
       if (idx < rows.length && rows[idx].querySelector('button')) rows[idx].querySelector('button').click();
       else ER.set({match: other.m.key}, null, {after: () => ER.replay.show(other.pt.key, other.n, true)});
       const got = await until(() => ER.matchKey() === other.m.key && shown() === other.pt.key && q('#chart-replay svg'), 10000);
       check('a shot opens its point in the replay' + (far ? ' (another month)' : ''), got, 'on the table: ' + (shown() === other.pt.key));
-      check('the way back to the shot explorer shows', await until(() => q('#replay-back') && !q('#replay-back').hidden, 3000));
+      // the replay comes to the list: a window over the area you are in, with the replay's own card in it
+      const over = await until(() => ER.viewer && ER.viewer.isOpen() && q('#viewer #match-replay #chart-replay svg') && !q('.er-area #match-replay'), 3000);
+      check('the replay opens over the area you are in', !!over && ER.area() === areaWas && seen(q('#chart-replay')), ER.area());
+      q('#viewer-close').click();
+      const homed = await until(() => !ER.viewer.isOpen() && q('#area-review #match #match-replay') && !q('#viewer #match-replay'), 3000);
+      check('closing it puts the replay back and leaves you at the list', !!homed && ER.area() === areaWas && Math.abs(window.scrollY - yWas) < 4,
+        ER.area() + ', moved ' + Math.round(window.scrollY - yWas));
+      // and it can be opened where it lives, with a way back to the list
+      ER.replay.show(other.pt.key, other.n, true);
+      await until(() => ER.viewer.isOpen(), 3000);
+      q('#viewer-home').click();
+      const lives = await until(() => !ER.viewer.isOpen() && ER.area() === 'review' && seen(q('#area-review #chart-replay')) && !q('#back-btn').hidden, 3000);
+      check('the replay opens in Match review, with a way back', !!lives, ER.area() + ', steps back: ' + ER.trail());
       if (far) check('the other month is unpacked when asked for', unpacked() === before + 1, unpacked() + ' of ' + months);
       await wait(300);
       if (q('#replay-play-stop') && !q('#replay-play-stop').hidden) q('#replay-play').click();
@@ -454,7 +600,9 @@
 
     // 7. Chinese, and back: the page's own words (both languages are in the file, one is shown) and the drawn ones
     const cjk = (el) => /[一-鿿]/.test(el.innerText);
-    const words = () => [q('#shots h2'), q('[data-draw="sx-summary"]')];
+    const words = () => [q('#shots h2'), q('[data-draw="sx-summary"]'), q('.er-areatab'), q('#area-shots h1')];
+    ER.go({area: 'shots', part: ''});
+    await wait(120);
     q('#pref-lang').click();
     const zh = await until(() => root.lang === 'zh-Hant' && words().every(cjk), 5000);
     check('the page switches to Chinese', zh, words().map((e) => e.innerText.slice(0, 20)).join(' / '));
@@ -474,7 +622,7 @@
       await wait(500);
       const ms = ER.rows('matches') || [];
       check('online: only online matches are listed', ms.length > 0 && ms.every((r) => r.vs === 'Online') && ER.matchRow() && ER.matchRow().vs === 'Online', ms.length);
-      for (const id of ['session', 'match', 'plan', 'shots', 'pick', 'progress', 'form', 'findings', 'serve', 'by-level']) {
+      for (const id of SECTIONS) {
         const s = q('#' + id);
         if (!(s && s.textContent.trim().length > 40)) check('online: section ' + id, false, s ? s.textContent.trim().length + ' characters' : 'not in the page');
       }
@@ -487,7 +635,15 @@
         d.open = true;
       });
       await wait(400);
-      let text = page.innerText;
+      // one area is on screen at a time: read them all
+      let text = '';
+      for (const a of qa('.er-area')) {
+        ER.go({area: a.dataset.area, part: ''});
+        await wait(150);
+        text += '\n' + page.innerText;
+      }
+      ER.go({area: 'progress', part: ''});
+      await wait(150);
       kept.forEach((k) => {
         text = text.split(k).join('');
       });

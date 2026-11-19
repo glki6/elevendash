@@ -23,12 +23,18 @@ html.pdf body{background:var(--color-bg)}
 html.pdf #dash-root{box-sizing:content-box;width:968px;padding:34px 36px;margin:0;-webkit-box-decoration-break:clone;box-decoration-break:clone}
 html.pdf .er-page{border-radius:0}
 html.pdf .er{gap:40px}
-html.pdf .er-nav,html.pdf .er-ruler,html.pdf .er-rbar,html.pdf .er-rside>.er-muted,html.pdf .er-btn,html.pdf .er-save,html.pdf .er-smatches .er-muted{display:none}
+html.pdf .er-areas,html.pdf .er-prefs,html.pdf .er-bot,html.pdf .er-parts,html.pdf .er-goto,html.pdf .er-rbar,html.pdf .er-rside>.er-muted,html.pdf .er-btn,html.pdf .er-save,html.pdf .er-smatches .er-muted{display:none}
 html.pdf .er-how>summary,html.pdf .er-more>summary,html.pdf .er-fold>summary::after{display:none}
 html.pdf .er-how>p,html.pdf .er-more>p{margin-top:0}
 html.pdf .er-card,html.pdf .er-key,html.pdf .er-find,html.pdf .er-pitem,html.pdf .er-keephead,html.pdf .er-board,html.pdf .er-multi,html.pdf .er-sechead,html.pdf .er-mgrid>div,html.pdf .er-t tr{break-inside:avoid}
 html.pdf .er-sechead{break-after:avoid}
 html.pdf #match{break-before:page}
+/* every area is there, one after another, each starting a page; the bar keeps its name and what the numbers are about */
+html.pdf .er-bar{position:static}
+html.pdf .er-areaname{position:static;display:block;width:auto;height:auto;overflow:visible;clip-path:none;white-space:normal;font-size:40px;line-height:1}
+html.pdf .er-areasay{display:block;margin-top:12px;font-size:22px;line-height:1.25}
+html.pdf .er .er-areahead h1{max-width:none}
+html.pdf .er-area+.er-area{break-before:page}
 /* "Matches you pick" and the match card are tools to use on the page, and your notes are yours alone: the file keeps
    to the report */
 html.pdf #pick,html.pdf #match-card,html.pdf #session-card,html.pdf #match-note,html.pdf .er-unotes{display:none}

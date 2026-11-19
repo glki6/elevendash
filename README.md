@@ -2,7 +2,7 @@
 
 Match analysis for **Eleven Table Tennis** on Meta Quest, from the game's own log files.
 
-[![The top of the dashboard: matches won and lost at your main AI level and over every AI match, then the report on the last session.](pages/img/overview.png)](https://glki6.github.io/elevendash/demo/)
+[![The Overview: a bar of six areas, the last session's result as the heading, then matches won and lost at your main AI level and over every AI match.](pages/img/overview.png)](https://glki6.github.io/elevendash/demo/)
 
 *The pictures on this page are of the [demo](https://glki6.github.io/elevendash/demo/), built from made-up matches.*
 
@@ -54,6 +54,9 @@ Then:
    last time, rebuilds the data and reloads the page with your new session. Do this after every session: the headset
    keeps only its most recent logs, and elevendash keeps a copy of every log it has seen.
 
+Once there is a dashboard, **Import new logs** and **Settings** are behind the gear button at the top right, beside
+the theme and language buttons. A dot on the gear means it has something to tell you.
+
 If a log does not read as expected after an import (a game update can change the log format), the app lists it above
 the dashboard and says why, as `elevendash build` does on the command line.
 
@@ -85,6 +88,17 @@ running from sign-in (it doesn't open a browser tab then, and while the phone li
 **New link** ends the old one, for a lost phone. See `SECURITY.md`.
 
 ## What it looks like
+
+The dashboard is six areas, one on screen at a time, each answering a question: **Overview** (how am I doing?),
+**Match review** (what happened?), **Progress** (am I getting better?), **Tactics** (what wins me points?),
+**Shot analysis** (how well am I hitting the ball?) and **Coaching** (what should I work on?). The bar across the top
+picks the area (on a phone it runs along the foot of the screen) and says which AI level the numbers are about. An
+area can be narrowed to one of its parts, **Jump to** lists the cards of the area on screen and takes you to one, and
+a link from one card to another brings its area with it and leaves a
+**Back** button at the foot of the screen. A point opened from any list (Find shots, patterns, records) plays in the
+replay in a window over the page you are on: close it and you are at the list again, ready for the next one. The
+area and the part are kept in the address, so the browser's Back works too. It is still one file that works offline,
+and the PDF prints every area, one after another. The cards below are a few of them.
 
 ### Session report
 
@@ -306,7 +320,7 @@ recording up with the log by the sound of the ball, so every point on the dashbo
 | `src/elevendash/voice.py` | The wording for matches against people: every sentence that names the AI or an AI level, reworded by rule |
 | `src/elevendash/site.py`, `pdf.py` | The single-file dashboard and its PDF |
 | `src/elevendash/fetch.py`, `cli.py`, `workspace.py` | Getting logs, the command line, where your data lives |
-| `src/elevendash/app.py`, `web/app.*`, `web/welcome.html` | The app: a local server, the Import bar above the dashboard, notes kept in the workspace |
+| `src/elevendash/app.py`, `web/app.*`, `web/welcome.html` | The app: a local server, Import and Settings behind the dashboard's gear button, notes kept in the workspace |
 | `packaging/windows/` | The Windows app (PyInstaller) and its release notes |
 | `src/elevendash/sample.py`, `redact.py` | Generated logs for the demo and tests; redacted copies of real logs |
 | `tests/` | `python -m unittest discover -s tests` |
@@ -326,7 +340,7 @@ it lists text with no Chinese yet, entries nothing uses any more, and placeholde
 
 ## Status
 
-Early, and so far tested on one player's logs (Quest 3S, AI levels 75 to 100, a few hundred matches), plus generated
+Version 1.0, and so far tested on one player's logs (Quest 3S, AI levels 75 to 100, a few hundred matches), plus generated
 logs. The dashboard opens on your main level (the AI level with the most points in your last five sessions), and its
 findings are written from your numbers by fixed rules in `builddata.py`. Online play: see "Against the AI, and against
 people online" above. Left-handed play is handled but has only been tested by forcing `hand=left` on right-handed logs. Logs

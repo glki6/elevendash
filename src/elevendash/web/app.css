@@ -8,6 +8,25 @@ html[lang="zh-Hant"] .ed-app span[data-l=zh]{display:inline}
 html[lang="zh-Hant"] .ed-app div[data-l=zh],html[lang="zh-Hant"] .ed-welcome [data-l=zh]{display:block}
 .ed-app-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px}
 .ed-app-name{font-weight:600;margin-right:6px}
+/* On the dashboard the bar is a panel under the gear button (app.js); without a dashboard it stays a bar. */
+.ed-app[hidden]{display:none}
+.ed-app-pop{position:fixed;z-index:60;box-sizing:border-box;width:min(480px,calc(100vw - 16px));overflow:auto;overscroll-behavior:contain;
+  padding:14px 16px;border:1px solid var(--color-border-line);border-radius:12px;box-shadow:0 18px 48px rgba(0,0,0,.4)}
+.ed-app-pop .ed-app-name,.ed-app-pop #ed-set-btn{display:none}
+.ed-app-pop #ed-msg{flex-basis:100%}
+.ed-app-pop .ed-app-panel{margin-top:12px}
+@media (max-width:520px){.ed-app-pop{width:auto}}
+.ed-gear{position:relative}
+.ed-gear.ed-dot::after{content:"";position:absolute;top:3px;right:3px;width:7px;height:7px;border-radius:50%;background:var(--chart-0);box-shadow:0 0 0 2px var(--color-bg)}
+.ed-app-note{position:fixed;z-index:59;box-sizing:border-box;max-width:min(420px,calc(100vw - 16px));overflow:auto;padding:10px 14px;border:1px solid var(--color-border-line);
+  border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.35);cursor:pointer}
+.ed-app-note.bad{color:var(--color-bad)}
+@media (prefers-reduced-motion:no-preference){
+  @keyframes ed-drop{from{opacity:0;transform:translateY(-6px)}}
+  .ed-app-pop:not([hidden]),.ed-app-note{animation:ed-drop .16s ease-out}
+  .ed-gear svg{transition:transform .26s cubic-bezier(.2,.7,.2,1)}
+  .ed-gear[aria-expanded=true] svg{transform:rotate(60deg)}
+}
 .ed-app-btn{font:inherit;font-weight:600;min-height:34px;padding:6px 14px;border-radius:8px;border:1px solid var(--color-border-line);
   background:var(--color-bg);color:var(--color-fg);cursor:pointer}
 .ed-app-btn:hover{border-color:var(--chart-0)}

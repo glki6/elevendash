@@ -24,9 +24,7 @@ AI = chr(1)
 # (English, for people, Chinese, for people). Where one phrase holds another, the longer is replaced first.
 PHRASES = [
     # ---- whole labels
-    ('Eleven vs AI Report', 'Eleven Online Report', 'Eleven 對 AI 報告', 'Eleven 線上對戰報告'),
     ('Breakdown by AI level', 'Breakdown by opponent rating', '按 AI 等級細分', '按對手積分細分'),
-    ('By AI level', 'By opponent rating', '按 AI 等級', '按對手積分'),
     ('All AI matches', 'All online matches', '所有對 AI 的比賽', '所有線上比賽'),
     ('All at this level', 'All online', '此等級全部', '線上全部'),
     ('All at level {0}', 'All online', '等級 {0} 全部', '線上全部'),
@@ -128,8 +126,8 @@ PHRASES = [
     ('Your last {0} matches at level {1}', 'Your last {0} online matches', '你在等級 {1} 最近 {0} 場比賽', '你最近 {0} 場線上比賽'),
     ('matches {0} to {1} at level {2}', 'online matches {0} to {1}', '等級 {2} 的第 {0} 至 {1} 場', '線上第 {0} 至 {1} 場'),
     # ---- the top of the page
-    ('At {1} you have won', 'Online you have won', '在{1}，你', '線上比賽中，你'),
-    ('In your last session, on', 'In your last online session, on', '上一節（', '上一節線上比賽（'),
+    ('At {4} you have won', 'Online you have won', '在{4}，你', '線上比賽中，你'),
+    ('Last session: {1} of', 'Last online session: {1} of', '上一節：', '上一節線上比賽：'),
     ('On the last day you played,', 'On the last day you played online,', '你最後打球的那天（', '你最後打線上比賽的那天（'),
     ('What decides your points at {1}', 'What decides your points online', '你在{1}的得失分關鍵', '你在線上比賽的得失分關鍵'),
     # ---- serves, returns and the breakdown
@@ -160,6 +158,7 @@ KEEP = {
     "not a push, not a smash. Sets of 20, counting the ones that land. Once 15 land, have the feed moved around.",
     "Rally at a steady, firm pace with the ball machine, or with the AI at a level you beat comfortably, and count shots "
     "in a row, starting again at every miss. Aim for runs of 10 before you go back to matches.",
+    '{1} matches and {2} points at this level, {3} to {4}',
     'At the level of your matches won',
     'Close to the level of your matches won',
     'Every item is at the level of the matches you won. Time to move the targets.',

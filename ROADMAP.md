@@ -72,6 +72,10 @@ the order they are planned. Nothing here is a promise of a date.
 
 ## After the features: a new layout
 
+*Done in v1.0.0.* Three layouts were drawn from the plan below and reviewed: one long page with every card closed,
+six areas with one on screen at a time, and a list of findings beside the picked card. The second was built. The
+design rules behind it are in [`DESIGN.md`](DESIGN.md). What differs from the plan is marked below.
+
 The page has grown one section at a time, split into "Latest" and "All-time analysis", and Breakdown by AI level holds
 six different kinds of analysis. Once the items above have landed, the page is reorganised around the questions a
 player asks. New features are built into today's page first and move with everything else, so the reorganisation is
@@ -109,6 +113,10 @@ line win more points than drives across the table is tactics.
 | Breakdown by AI level | Split up: how points end and length of point to Tactics, where serves land to Tactics › Serves, matches won and lost to Progress › Compare, rally shots by type and 11hero metrics to Shot analysis, rating charts to Progress › Results |
 | How it's worked out | About these numbers |
 
+Kept where they are, and why: **session goals** stay with the session report (they are judged on the session
+picked); **after you attack**, **where your shots land**, **speed, spin and timing** and **a skill over time** stay
+inside Find shots in Shot analysis (they follow its filters).
+
 ### Rules for the new layout
 
 - **AI level is a filter, not a section.** One bar at the top says what you are looking at: AI or online, which
@@ -122,10 +130,12 @@ line win more points than drives across the table is tactics.
   the match picked.
 - **One look for comparisons.** You and the AI, landed and missed, won and lost, now and before, each with the same
   colours and the same tick-for-the-baseline everywhere.
-- **Still one page.** The sidebar groups the sections and keeps today's open-and-close behaviour; everything stays on
-  one scrolling page that works offline as a single file.
+- **One area at a time, in one file.** *Changed at review.* The plan was one scrolling page with a grouped sidebar.
+  The page had grown to about 29 screens on a desktop and 53 on a phone, so each section became an area of its own:
+  a bar of six across the top (along the foot of a phone), parts of an area as a filter, the area and part in the
+  address. It is still a single file that works offline.
 - **The PDF keeps its own order.** The printed report stays a linear report, it does not have to follow the
-  interactive layout.
+  interactive layout. *As built: every area in turn, each starting a page.*
 - **Settings stay in the app.** Import, import warnings, backup, export, phone and startup live in the app's bar and
   Settings, not in the dashboard; import warnings show right after the import that caused them. Theme and language
   stay on the page.

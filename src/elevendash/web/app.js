@@ -1,4 +1,4 @@
-// elevendash app (app.py): the bar above the dashboard. Import asks the app to copy new logs from the Quest (or the
+// elevendash app (app.py): the bar above the dashboard, behind the gear button once there is a dashboard. Import asks the app to copy new logs from the Quest (or the
 // files picked) and rebuild; when it has new data the page reloads, and says what came in.
 (() => {
   const A = window.__elevendashApp;
@@ -503,6 +503,91 @@
       say(bar.setMsg, err.message, err.message, 'bad');
     }
   });
+
+  // The gear. On the dashboard the bar sits behind a button beside the theme and language switches, and opens as a
+  // panel under it with the settings already open. A page without those switches (the welcome page) keeps the bar
+  // where it is. What the bar says while it is put away shows as a short note under the button, and a dot on the
+  // button says there is something to read.
+  const head = $('ed-app'), prefs = document.querySelector('#dash-root .er-prefs');
+  let gear = null, note = null, noteTimer = 0, said = '';
+  const place = (el) => {
+    const r = gear.getBoundingClientRect(), w = document.documentElement.clientWidth, narrow = w <= 520;
+    const top = Math.max(8, Math.round(r.bottom + 8));
+    el.style.top = top + 'px';
+    el.style.right = (narrow ? 8 : Math.max(8, Math.round(w - r.right))) + 'px';
+    el.style.left = narrow ? '8px' : '';
+    el.style.maxHeight = Math.max(160, window.innerHeight - top - 12) + 'px';
+  };
+  const unsay = () => {
+    clearTimeout(noteTimer);
+    if (note) note.remove();
+    note = null;
+  };
+  const flag = () => {
+    if (!gear) return;
+    const rep = $('ed-report'), text = bar.msg.textContent;
+    const loud = bar.msg.classList.contains('ok') || bar.msg.classList.contains('bad');
+    gear.classList.toggle('ed-dot', head.hidden && ((rep && !rep.hidden) || !bar.help.hidden || bar.msg.classList.contains('bad') || !!(last && last.busy)));
+    if (!head.hidden || !loud || text === said) return;
+    said = text;
+    unsay();
+    note = document.createElement('div');
+    note.className = 'ed-app ed-app-note' + (bar.msg.classList.contains('bad') ? ' bad' : '');
+    note.setAttribute('role', 'status');
+    note.append(...[...bar.msg.childNodes].map((n) => n.cloneNode(true)));
+    note.addEventListener('click', unsay);
+    document.body.appendChild(note);
+    place(note);
+    noteTimer = setTimeout(unsay, 12000);
+  };
+  const pop = (open) => {
+    if (!gear) return;
+    head.hidden = !open;
+    gear.setAttribute('aria-expanded', String(open));
+    if (open) {
+      unsay();
+      said = bar.msg.textContent;
+      place(head);
+      if (last) render(last);
+      openSettings(false);
+    }
+    flag();
+  };
+  if (head && prefs) {
+    gear = document.createElement('button');
+    gear.type = 'button';
+    gear.id = 'ed-gear';
+    gear.className = 'er-btn er-ibtn ed-gear';
+    gear.setAttribute('aria-controls', 'ed-app');
+    gear.setAttribute('aria-expanded', 'false');
+    gear.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round">'
+      + '<path d="M6.71 3.17L6.87 1.40L9.13 1.40L9.29 3.17L10.51 3.67L11.87 2.53L13.47 4.13L12.33 5.49L12.83 6.71L14.60 6.87L14.60 9.13L12.83 9.29L12.33 10.51L13.47 11.87L11.87 13.47L10.51 12.33L9.29 12.83L9.13 14.60L6.87 14.60L6.71 12.83L5.49 12.33L4.13 13.47L2.53 11.87L3.67 10.51L3.17 9.29L1.40 9.13L1.40 6.87L3.17 6.71L3.67 5.49L2.53 4.13L4.13 2.53L5.49 3.67Z"/>'
+      + '<circle cx="8" cy="8" r="2.1"/></g></svg>';
+    const name = () => {
+      const t = zh() ? '匯入與設定' : 'Import and settings';
+      gear.setAttribute('aria-label', t);
+      gear.title = t;
+    };
+    name();
+    new MutationObserver(name).observe(document.documentElement, {attributes: true, attributeFilter: ['lang']});
+    prefs.appendChild(gear);
+    head.classList.add('ed-app-pop');
+    head.hidden = true;
+    gear.addEventListener('click', () => pop(head.hidden));
+    document.addEventListener('pointerdown', (e) => {
+      if (!head.hidden && !head.contains(e.target) && !gear.contains(e.target)) pop(false);
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape' || head.hidden) return;
+      pop(false);
+      gear.focus();
+    });
+    window.addEventListener('resize', () => {
+      if (!head.hidden) place(head);
+      if (note) place(note);
+    });
+    new MutationObserver(flag).observe(head, {subtree: true, childList: true, attributes: true, attributeFilter: ['hidden', 'class']});
+  }
 
   // after a reload that an import caused: say what came in
   try {

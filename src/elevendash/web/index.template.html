@@ -29,7 +29,6 @@
   font-family:var(--font-anthropic-sans),var(--er-cjk);color:var(--color-fg);font-size:var(--cds-font-size-body);line-height:1.5}
 /* Chinese text falls back to a Traditional Chinese face; Latin letters and numbers keep the page's own */
 .er-page{--er-cjk:"Microsoft JhengHei","PingFang TC","Noto Sans TC","Noto Sans CJK TC","Source Han Sans TC",sans-serif}
-.er-nav{font-family:var(--font-anthropic-sans),var(--er-cjk)}
 .er h1{font-family:var(--er-display);font-weight:600;font-stretch:88%;font-size:clamp(32px,5.4cqi,48px);line-height:1;letter-spacing:-.005em;margin:0;text-wrap:balance}
 .er h2{font-family:var(--er-display);font-weight:600;font-stretch:92%;font-size:clamp(22px,3cqi,28px);line-height:1.1;margin:0;text-wrap:balance}
 .er h3{font-size:var(--cds-font-size-body);font-weight:var(--cds-font-weight-medium);line-height:1.3;margin:0;text-wrap:balance}
@@ -519,51 +518,8 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
 .er [data-dash-source-state=refreshing]{opacity:.5}
 .er-fail{color:var(--color-fg-muted);font-size:var(--cds-font-size-caption);padding:var(--cds-pad-md) 0}
 
-/* section menu: sits outside .er, so it reads the dashboard's own colours */
-.er-shell{container-type:inline-size;max-width:1396px;margin-inline:auto;--er-jump:64px;position:relative}
-.er-ruler{position:absolute;inset:0 auto 0 0;width:1px;overflow:hidden;display:grid;grid-auto-rows:240px;align-content:start;pointer-events:none;visibility:hidden}
-.er-ruler b{position:absolute;left:0;bottom:0;width:1px;height:2px}
+.er-shell{container-type:inline-size;max-width:1180px;margin-inline:auto;--er-jump:104px;position:relative}
 .er [id]{scroll-margin-top:var(--er-jump)}
-.er-nav{position:sticky;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:6;font-family:var(--font-anthropic-sans);font-size:var(--cds-font-size-caption);line-height:1.35}
-.er-nav ol{list-style:none;margin:0;padding:0}
-.er-nav ol ol{display:none}
-.er-nav li.on>ol{display:block}
-.er-nav a{display:block;color:var(--color-fg-muted);text-decoration:none}
-.er-nav a:hover{color:var(--color-fg)}
-.er-nav li.on>a{color:var(--color-fg);font-weight:var(--cds-font-weight-medium)}
-.er-nav ol ol li.on>a{font-weight:400}
-.er-nav a:focus-visible,.er-navbtn:focus-visible{outline:2px solid var(--er-c0,var(--color-fg));outline-offset:-2px}
-.er-navgroup{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--color-fg-muted)}
-/* one button that names the section you are in and opens the whole list */
-.er-navbtn{display:inline-flex;align-items:center;gap:9px;max-width:100%;font:inherit;font-size:13px;font-weight:var(--cds-font-weight-medium);color:var(--color-fg);background-color:var(--color-panel);
-  border:1px solid var(--color-border-line);border-radius:999px;padding:8px 14px 8px 13px;cursor:pointer;box-shadow:0 2px 10px rgb(0 0 0 / .14)}
-.er-navbtn svg{flex:none;color:var(--color-fg-muted)}
-.er-navbtn:hover svg{color:var(--color-fg)}
-.er-nav.open .er-navchev{transform:rotate(180deg)}
-@container (max-width:1127.98px){
-  .er-nav{width:fit-content;max-width:100%;margin:0 0 20px}
-  .er-nav>ol{display:none;position:absolute;left:0;top:calc(100% + 6px);width:max-content;min-width:236px;max-width:min(320px,100cqi);max-height:var(--er-room,70vh);overflow-y:auto;overscroll-behavior:contain;
-    padding:6px;background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:12px;box-shadow:0 10px 30px rgb(0 0 0 / .22)}
-  .er-nav.open>ol{display:block}
-  .er-nav a{padding:8px 12px;border-radius:8px;font-size:13px}
-  .er-nav a[aria-current=true]{background:color-mix(in oklab,var(--er-c0,var(--color-fg)) 14%,var(--color-panel))}
-  .er-nav ol ol a{padding:6px 12px 6px 26px;font-size:var(--cds-font-size-caption)}
-  .er-navgroup{padding:12px 12px 4px}
-  .er-navgroup:first-child{padding-top:6px}
-}
-@container (min-width:1128px){
-  .er-frame{--er-jump:24px;display:grid;grid-template-columns:172px minmax(0,1fr);gap:0 44px;align-items:start}
-  .er-frame>.er{margin-inline:0;width:100%}
-  .er-navbtn{display:none}
-  .er-nav{top:calc(env(safe-area-inset-top,0px) + 24px);margin:6px 0 0;max-height:calc(100vh - 48px);overflow-y:auto;scrollbar-width:thin}
-  .er-nav>ol{border-left:1px solid var(--color-border-line)}
-  .er-nav a{margin-left:-1px;padding:5px 6px 5px 13px;border-left:2px solid transparent;font-size:13px}
-  .er-nav a[aria-current=true]{border-left-color:var(--er-c0,var(--color-fg))}
-  .er-nav li.on>ol{padding:2px 0 6px}
-  .er-nav ol ol a{padding:3px 6px 3px 25px;font-size:var(--cds-font-size-caption)}
-  .er-navgroup{padding:16px 6px 7px 14px}
-  .er-navgroup:first-child{padding-top:0}
-}
 
 @container (max-width:900px){
   .er-multi{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -598,79 +554,172 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
 @media (prefers-reduced-motion:no-preference){
   .er-tab,.er-btn{transition:color var(--cds-dur-slow,.2s) var(--cds-ease-out,ease-out),background-color var(--cds-dur-slow,.2s) var(--cds-ease-out,ease-out),border-color var(--cds-dur-slow,.2s) var(--cds-ease-out,ease-out)}
 }
+
+/* The frame. A bar of six areas, one area on screen at a time; an area's parts are a filter on it. What is off stays
+   laid out at its own width, out of the flow and out of sight, so every drawing keeps its size, and a printed page
+   (html.pdf) shows everything. */
+.er{position:relative}
+.er-area{display:grid;gap:56px;min-width:0;position:relative}
+.er-section{position:relative}
+html:not(.pdf) .er-page .er-off{position:absolute!important;inset:0 0 auto 0;height:0!important;min-height:0!important;overflow:hidden!important;visibility:hidden!important;pointer-events:none!important}
+.er-bar{position:sticky;top:0;z-index:6;display:grid;background:var(--color-bg);border-bottom:1px solid var(--er-line);margin-bottom:-24px}
+.er-barrow{display:flex;align-items:center;gap:4px 18px;min-width:0}
+.er-brand{display:inline-flex;align-items:center;gap:9px;flex:none;font:inherit;font-family:var(--er-display);font-weight:600;font-stretch:92%;font-size:var(--cds-font-size-heading);color:var(--color-fg);background:none;border:0;padding:12px 6px 12px 0;cursor:pointer;white-space:nowrap}
+.er-areas{display:flex;gap:2px;flex:1 1 auto;min-width:0}
+.er-areatab{font:inherit;font-weight:var(--cds-font-weight-medium);color:var(--color-fg-muted);background:none;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;padding:14px 12px 12px;cursor:pointer;white-space:nowrap}
+.er-areatab:hover,.er-bottab:hover{color:var(--color-fg)}
+.er-areatab[aria-current=page]{color:var(--color-fg);border-bottom-color:var(--er-you)}
+.er-bar .er-prefs{margin-left:auto;flex:none}
+.er-bar .er-ibtn{display:inline-flex;align-items:center;justify-content:center;min-width:34px;min-height:32px;padding:5px 8px}
+.er-scope{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;padding:8px 0 10px;border-top:1px solid var(--er-line)}
+.er .er-scopesum{margin:0;max-width:none}
+.er-brand:focus-visible,.er-areatab:focus-visible,.er-bottab:focus-visible,.er-goto:focus-visible{outline:2px solid var(--er-you);outline-offset:-2px}
+.er-areahead{display:grid;gap:12px;margin-bottom:-22px}
+/* A title does not repeat the tab above it: the area's name is there for a screen reader and the PDF, and what
+   shows is the line that says what is in the area (the Overview: how the last session went). */
+.er .er-areahead h1{font-size:clamp(20px,3cqi,26px);line-height:1.2;max-width:64ch}
+.er .er-areahead h1,.er .er-mast h1{position:relative}
+.er-areaname{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.er-parts{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:6px}
+.er-parts .er-ctl{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.er-parts .er-tab{padding:6px 14px}
+.er-ov{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:16px}
+.er-ovhead{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 16px}
+.er-goto{font:inherit;font-size:var(--cds-font-size-caption);font-weight:var(--cds-font-weight-medium);color:var(--er-you);background:none;border:0;padding:4px 0;cursor:pointer;white-space:nowrap}
+.er-goto:hover{text-decoration:underline}
+.er-chart.er-ovform{min-height:150px}
+.er-ovplan{display:grid;gap:10px;align-content:start}
+.er-ovplan h4{margin:0;font-family:var(--er-display);font-weight:600;font-stretch:94%;font-size:calc(var(--cds-font-size-heading)*1.05);line-height:1.2;text-wrap:balance}
+.er-keys.er-ovkeys{grid-template-columns:repeat(3,minmax(0,1fr))}
+.er-bot{display:none}
+@container (max-width:899.98px){
+  .er-areatab{padding:14px 8px 12px;font-size:13px}
+}
+@container (max-width:799.98px){
+  .er{--er-goto:12px}
+  .er-bar{position:static}
+  .er-areas{display:none}
+  .er .er-scopesum{flex-basis:100%}
+  .er-keys.er-ovkeys{grid-template-columns:minmax(0,1fr)}
+  .er-bot{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));position:sticky;bottom:0;z-index:6;margin:0 -24px;padding:0 max(4px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(4px,env(safe-area-inset-left,0px));background:var(--color-panel);border-top:1px solid var(--er-line)}
+  .er-bottab{font:inherit;font-size:11px;font-weight:var(--cds-font-weight-medium);color:var(--color-fg-muted);background:none;border:0;border-top:2px solid transparent;margin-top:-1px;min-height:52px;padding:6px 2px;cursor:pointer;overflow-wrap:anywhere}
+  .er-bottab[aria-current=page]{color:var(--color-fg);border-top-color:var(--er-you)}
+}
+@container (max-width:488px){
+  .er-bot{margin-inline:-16px}
+}
+/* The way back after a jump: a button that floats at the foot of the screen (above the areas on a phone). */
+.er-backwrap{position:sticky;bottom:0;height:0;z-index:7}
+.er-backbtn{position:absolute;left:0;bottom:18px;font:inherit;font-weight:var(--cds-font-weight-medium);color:var(--color-fg);background:var(--color-panel);border:1px solid var(--er-you);border-radius:999px;padding:9px 18px;min-height:40px;cursor:pointer;box-shadow:0 10px 28px rgba(0,0,0,.35);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.er-backbtn:hover{background:var(--color-bg)}
+.er-backbtn:focus-visible{outline:2px solid var(--er-you);outline-offset:2px}
+/* The replay, opened from a list in another area: a window over the page. The card itself is moved into it, so it
+   is the same replay with the same controls, on a larger table. */
+dialog.er-viewer{box-sizing:border-box;width:min(1120px,calc(100vw - 32px));max-width:none;max-height:calc(100dvh - 32px);padding:0;border:1px solid var(--color-border-line);border-radius:14px;background:var(--color-bg);color:var(--color-fg);overflow:auto;overscroll-behavior:contain;box-shadow:0 24px 64px rgba(0,0,0,.5)}
+dialog.er-viewer::backdrop{background:rgba(6,10,18,.66)}
+.er-viewhead{position:sticky;top:0;z-index:3;display:flex;align-items:center;gap:8px 16px;padding:10px 16px;background:var(--color-bg);border-bottom:1px solid var(--er-line)}
+.er .er-viewhead h2{font-size:var(--cds-font-size-heading);margin:0;flex:1 1 auto;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.er-viewhead .er-btn,.er-viewhead .er-goto{flex:none}
+.er-viewbody{padding:16px}
+.er-viewer .er-replay{grid-template-columns:minmax(0,clamp(240px,42cqi,440px)) minmax(0,1fr)}
+.er-viewer .er-rcourt{max-width:min(440px,100%,max(240px,calc((100dvh - 330px)/1.3)))}
+html.pdf .er-backwrap,html.pdf dialog.er-viewer{display:none}
+@container (max-width:799.98px){
+  .er-backwrap{bottom:calc(52px + env(safe-area-inset-bottom,0px))}
+  .er-backbtn{bottom:12px}
+  .er-viewer .er-replay{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:640px){
+  dialog.er-viewer{width:100vw;max-height:100dvh;height:100dvh;margin:0;border:0;border-radius:0}
+  .er-viewhead{padding:8px 12px}
+  .er-viewbody{padding:12px}
+}
+
+/* The finder: what is in the area on screen, to jump to. In the bar on a wide screen; a button at the foot of a
+   phone, opposite the way back. */
+.er-finder{position:relative;margin-left:auto;flex:none}
+.er-finderbtn{display:inline-flex;align-items:center;gap:8px;min-height:32px;padding:5px 12px}
+.er-findermenu{position:absolute;right:0;top:calc(100% + 8px);z-index:8;display:grid;gap:1px;width:max-content;min-width:230px;max-width:min(340px,calc(100vw - 32px));max-height:min(70vh,560px);overflow:auto;overscroll-behavior:contain;padding:6px;background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:12px;box-shadow:0 18px 48px rgba(0,0,0,.4)}
+.er-findermenu button{font:inherit;text-align:left;color:var(--color-fg-muted);background:none;border:0;border-radius:7px;padding:7px 10px;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.er-findermenu button[data-lv="1"]{color:var(--color-fg);font-weight:var(--cds-font-weight-medium)}
+.er-findermenu button[data-lv="2"]{padding-left:22px}
+.er-findermenu button[data-lv="3"]{padding-left:36px;font-size:var(--cds-font-size-caption)}
+.er-findermenu button:hover,.er-findermenu button:focus-visible{background:var(--color-bg);color:var(--color-fg);outline:none}
+.er-findermenu button[aria-current]{color:var(--er-you)}
+.er-finderfloat{display:none}
+html.pdf .er-finder{display:none}
+/* the area on screen is marked by a line that slides from tab to tab */
+.er-areas{position:relative}
+.er-ink{position:absolute;left:0;bottom:-1px;height:2px;width:0;background:var(--er-you);pointer-events:none}
+.er-bot .er-ink{bottom:auto;top:-1px}
+.er-inked .er-areatab[aria-current=page],.er-inked .er-bottab[aria-current=page]{border-color:transparent}
+@container (max-width:799.98px){
+  .er-scope .er-finder{display:none}
+  .er-finderfloat{display:block;position:absolute;right:0;bottom:12px;margin:0}
+  .er-finderfloat .er-finderbtn{min-height:40px;padding:9px 16px;border-radius:999px;background:var(--color-panel);box-shadow:0 10px 28px rgba(0,0,0,.35)}
+  .er-finderfloat .er-findermenu{top:auto;bottom:calc(100% + 8px);max-height:min(62vh,520px)}
+}
+/* The dock on a phone steps aside on the way down the page and comes back on the way up (areas.js). A short view
+   is as tall as the screen, so the dock is at its foot there too. */
+@container (max-width:799.98px){
+  .er-area{min-height:calc(100vh - 150px);min-height:calc(100dvh - 150px);align-content:start}
+  .er-dockoff .er-bot{opacity:0;transform:translateY(14px);pointer-events:none}
+  .er-dockoff .er-backwrap{transform:translateY(calc(52px + env(safe-area-inset-bottom,0px)))}
+}
+/* Motion. Each move shows a change of state and is over in about a quarter of a second; none of it runs for a reader
+   who asked for less motion, or on a printed page. */
+@media (prefers-reduced-motion:no-preference){
+  @keyframes er-rise{from{opacity:0;transform:translateY(10px)}}
+  @keyframes er-drop{from{opacity:0;transform:translateY(-6px)}}
+  @keyframes er-pop{from{opacity:0;transform:translateY(10px) scale(.985)}}
+  @keyframes er-dim{from{opacity:0}}
+  @keyframes er-sweep{from{transform:scaleX(0)}}
+  html:not(.pdf) .er-area.er-enter>*{animation:er-rise .26s cubic-bezier(.2,.7,.2,1) backwards}
+  html:not(.pdf) .er-area.er-enter>:nth-child(2){animation-delay:.04s}
+  html:not(.pdf) .er-area.er-enter>:nth-child(3){animation-delay:.08s}
+  html:not(.pdf) .er-area.er-enter>:nth-child(n+4){animation-delay:.12s}
+  html:not(.pdf) .er-area.er-enter .er-fill{transform-origin:left center;animation:er-sweep .5s cubic-bezier(.2,.7,.2,1) .1s backwards}
+  html:not(.pdf) .er details[open]>:not(summary){animation:er-drop .18s ease-out}
+  .er-areatab,.er-bottab,.er-goto,.er-findermenu button{transition:color .18s ease-out,background-color .18s ease-out}
+  .er-bot,.er-backwrap{transition:opacity .2s ease-out,transform .22s cubic-bezier(.2,.7,.2,1)}
+  .er-inked .er-ink.on{transition:transform .26s cubic-bezier(.2,.7,.2,1),width .26s cubic-bezier(.2,.7,.2,1)}
+  .er-findermenu:not([hidden]){animation:er-drop .16s ease-out}
+  .er-finderfloat .er-findermenu:not([hidden]),.er-backbtn:not([hidden]){animation:er-rise .2s cubic-bezier(.2,.7,.2,1)}
+  dialog.er-viewer[open]{animation:er-pop .22s cubic-bezier(.2,.7,.2,1)}
+  dialog.er-viewer[open]::backdrop{animation:er-dim .22s ease-out}
+  .er-goto span,.er-backbtn{transition:transform .18s ease-out,background-color .18s ease-out}
+  .er-backbtn:active,.er-finderbtn:active{transform:scale(.97)}
+}
 </style>
 
-<div class="er-page er-dark" id="page"><div class="er-shell"><div class="er-ruler" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><b></b></div><div class="er-frame">
-<nav class="er-nav" id="section-menu" aria-label="Sections">
-  <button class="er-navbtn" type="button" id="section-toggle" aria-expanded="false" aria-controls="section-list">
-    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 3.5h10M2 7h10M2 10.5h6.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-    <span class="er-navnow"><span data-now="summary">Overview</span><span data-now="session" hidden>Session report</span><span data-now="plan" hidden>Training plan</span><span data-now="match" hidden>Match explorer</span><span data-now="shots" hidden>Shot explorer</span><span data-now="pick" hidden>Matches you pick</span><span data-now="progress" hidden>Progress by day</span><span data-now="form" hidden>Form and stamina</span><span data-now="findings" hidden>What decides points</span><span data-now="serve" hidden>Serves and returns</span><span data-now="by-level" hidden>By AI level</span><span data-now="notes" hidden>How it's worked out</span></span>
-    <svg class="er-navchev" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-  </button>
-  <ol id="section-list">
-    <li class="er-navgroup">Latest</li>
-    <li><a href="#summary">Overview</a></li>
-    <li><a href="#session">Session report</a></li>
-    <li><a href="#match">Match explorer</a>
-      <ol>
-        <li><a href="#match-replay">Point by point</a></li>
-        <li><a href="#match-serves">Services</a></li>
-        <li><a href="#match-shots">Rally shots by type</a></li>
-        <li><a href="#metrics-match">11hero metrics</a></li>
-      </ol></li>
-    <li><a href="#plan">Training plan</a></li>
-    <li class="er-navgroup">All-time analysis</li>
-    <li><a href="#works">What works for you</a></li>
-    <li><a href="#shots">Shot explorer</a>
-      <ol>
-        <li><a href="#shots-groups">Where misses pile up</a></li>
-        <li><a href="#shots-find">Find shots</a></li>
-      </ol></li>
-    <li><a href="#pick">Matches you pick</a></li>
-    <li><a href="#progress">Progress by day</a>
-      <ol>
-        <li><a href="#records">Personal records</a></li>
-        <li><a href="#journal">Training journal</a></li>
-      </ol></li>
-    <li><a href="#form">Form and stamina</a>
-      <ol>
-        <li><a href="#form-rolling">Rolling results</a></li>
-        <li><a href="#form-floor">Your floor</a></li>
-        <li><a href="#form-session">Through a session</a></li>
-      </ol></li>
-    <li><a href="#findings">What decides points</a></li>
-    <li><a href="#serve">Serves and returns</a>
-      <ol>
-        <li><a href="#recv">When the AI serves</a></li>
-        <li><a href="#own-serve">When you serve</a></li>
-        <li><a href="#patterns">Patterns that win points</a></li>
-      </ol></li>
-    <li><a href="#by-level">By AI level</a>
-      <ol>
-        <li><a href="#how-lost">How points end</a></li>
-        <li><a href="#rally-length">Length of point</a></li>
-        <li><a href="#won-vs-lost">Matches won and lost</a></li>
-        <li><a href="#serve-zones">Where serves land</a></li>
-        <li><a href="#shot-mix-level">Rally shots by type</a></li>
-        <li><a href="#metrics-level">11hero metrics</a></li>
-      </ol></li>
-    <li><a href="#notes">How it's worked out</a></li>
-  </ol>
-</nav>
+<div class="er-page er-dark" id="page" data-area="overview"><div class="er-shell"><div class="er-frame">
 <div class="er" id="report">
 
-<div class="er-top">
-<header class="er-mast" id="summary">
-  <div class="er-eyebrow"><i class="er-ball"></i><span>Eleven Table Tennis</span><span>Quest game logs</span><span><span data-draw="v" data-ds="summary" data-k="all" data-f="from" data-fmt="date">—</span> to <span data-draw="v" data-ds="summary" data-k="all" data-f="to" data-fmt="date">—</span></span></div>
-  <div class="er-side" id="side" hidden><div class="er-tabs" role="group" aria-label="Matches shown"><button class="er-tab" type="button" data-side="ai" aria-pressed="true">AI matches</button><button class="er-tab" type="button" data-side="people" aria-pressed="false">Online matches</button></div></div>
-  <h1>Eleven vs AI Report</h1>
-  <p class="er-lede">At <span data-draw="v" data-ds="findings" data-k="main" data-f="levelText">—</span> you have won <b data-draw="v" data-ds="summary" data-k="L{TOP}" data-f="wins" data-fmt="int">—</b> of <b data-draw="v" data-ds="summary" data-k="L{TOP}" data-f="matches" data-fmt="int">—</b> matches and <b data-draw="v" data-ds="summary" data-k="L{TOP}" data-f="pointRate" data-fmt="pct">—</b> of points. In your last session, on <span data-draw="v" data-ds="summary" data-k="last" data-f="from" data-fmt="date">—</span> at <span data-draw="v" data-ds="summary" data-k="last" data-f="start" data-fmt="time">—</span>, you won <b data-draw="v" data-ds="summary" data-k="last" data-f="wins" data-fmt="int">—</b> of <b data-draw="v" data-ds="summary" data-k="last" data-f="matches" data-fmt="int">—</b> matches and <b data-draw="v" data-ds="summary" data-k="last" data-f="pointRate" data-fmt="pct">—</b> of points.</p>
-  <div class="er-save" id="save">
-    <button class="er-btn" type="button" id="save-pdf" data-source="report_pdf" aria-describedby="save-note"><svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true"><path d="M6.5 1v7.2M3.4 5.6l3.1 3.1 3.1-3.1M1.5 11.5h10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Save as PDF</button>
+<header class="er-bar" id="bar">
+  <div class="er-barrow">
+    <button class="er-brand" type="button" data-go="overview"><i class="er-ball"></i><span>Eleven Dashboard</span></button>
+    <nav class="er-areas" id="areas" aria-label="Areas"><button class="er-areatab" type="button" data-go="overview" aria-current="page">Overview</button><button class="er-areatab" type="button" data-go="review">Match review</button><button class="er-areatab" type="button" data-go="progress">Progress</button><button class="er-areatab" type="button" data-go="tactics">Tactics</button><button class="er-areatab" type="button" data-go="shots">Shot analysis</button><button class="er-areatab" type="button" data-go="coaching">Coaching</button></nav>
     <div class="er-prefs" translate="no">
       <button class="er-btn er-ibtn" type="button" id="pref-theme"><svg class="er-sun" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="3"/><path d="M8 1.3v1.5M8 13.2v1.5M1.3 8h1.5M13.2 8h1.5M3.3 3.3l1 1M11.7 11.7l1 1M3.3 12.7l1-1M11.7 4.3l1-1"/></g></svg><svg class="er-moon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 10.2A5.8 5.8 0 0 1 5.8 2.5a5.8 5.8 0 1 0 7.7 7.7Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
       <button class="er-btn er-ibtn" type="button" id="pref-lang"><span data-l="en" lang="zh-Hant">中</span><span data-l="zh" lang="en">Eng</span></button>
     </div>
+  </div>
+  <div class="er-scope" id="scope">
+    <div class="er-side" id="side" hidden><div class="er-tabs" role="group" aria-label="Matches shown"><button class="er-tab" type="button" data-side="ai" aria-pressed="true">AI matches</button><button class="er-tab" type="button" data-side="people" aria-pressed="false">Online matches</button></div></div>
+    <div class="er-controls" data-v="ai"><span class="er-ctl" id="level-label">AI level</span><div class="er-tabs" id="level-select" role="group" aria-labelledby="level-label" data-draw="level-tabs"></div></div>
+    <p class="er-muted er-scopesum" data-v="ai"><span data-draw="v" data-ds="summary" data-k="L{L}" data-f="matches" data-fmt="int">—</span> matches and <span data-draw="v" data-ds="summary" data-k="L{L}" data-f="points" data-fmt="int">—</span> points at this level, <span data-draw="v" data-ds="summary" data-k="L{L}" data-f="from" data-fmt="date">—</span> to <span data-draw="v" data-ds="summary" data-k="L{L}" data-f="to" data-fmt="date">—</span></p>
+    <div class="er-finder" id="find"><button class="er-btn er-finderbtn" type="button" aria-expanded="false" aria-haspopup="true"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 3.5h10M2 7h10M2 10.5h6"/></g></svg><span>Jump to</span></button><nav class="er-findermenu" aria-label="In this area" hidden></nav></div>
+  </div>
+</header>
+
+<section class="er-area" id="area-overview" data-area="overview">
+<div class="er-top">
+<header class="er-mast" id="summary">
+  <div class="er-eyebrow"><i class="er-ball"></i><span>Eleven Table Tennis</span><span>Quest game logs</span><span><span data-draw="v" data-ds="summary" data-k="all" data-f="from" data-fmt="date">—</span> to <span data-draw="v" data-ds="summary" data-k="all" data-f="to" data-fmt="date">—</span></span></div>
+  <h1><span class="er-areaname">Overview</span><span class="er-areasay">Last session: <span data-draw="v" data-ds="summary" data-k="last" data-f="wins" data-fmt="int">—</span> of <span data-draw="v" data-ds="summary" data-k="last" data-f="matches" data-fmt="int">—</span> matches won</span></h1>
+  <p class="er-lede">Played on <span data-draw="v" data-ds="summary" data-k="last" data-f="from" data-fmt="date">—</span> at <span data-draw="v" data-ds="summary" data-k="last" data-f="start" data-fmt="time">—</span>, with <b data-draw="v" data-ds="summary" data-k="last" data-f="pointRate" data-fmt="pct">—</b> of points won. At <span data-draw="v" data-ds="findings" data-k="main" data-f="levelText">—</span> you have won <b data-draw="v" data-ds="summary" data-k="L{TOP}" data-f="wins" data-fmt="int">—</b> of <b data-draw="v" data-ds="summary" data-k="L{TOP}" data-f="matches" data-fmt="int">—</b> matches and <b data-draw="v" data-ds="summary" data-k="L{TOP}" data-f="pointRate" data-fmt="pct">—</b> of points.</p>
+  <div class="er-save" id="save">
+    <button class="er-btn" type="button" id="save-pdf" data-source="report_pdf" aria-describedby="save-note"><svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true"><path d="M6.5 1v7.2M3.4 5.6l3.1 3.1 3.1-3.1M1.5 11.5h10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Save as PDF</button>
     <span id="save-note">The whole report as a file you can send to anyone, as it stood at the last update.</span>
     <span id="save-busy" role="status" hidden>Getting the PDF ready…</span>
     <span id="save-done" role="status" hidden>Saved.</span>
@@ -709,9 +758,35 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
   </div>
 </div>
 <p class="er-muted" id="online-note">On the last day you played, <span data-draw="v" data-ds="summary" data-k="lastDay" data-f="from" data-fmt="date">—</span>, you won <span data-draw="v" data-ds="summary" data-k="lastDay" data-f="wins" data-fmt="int">—</span> of <span data-draw="v" data-ds="summary" data-k="lastDay" data-f="matches" data-fmt="int">—</span> matches in all.<span data-showif data-ds="summary" data-k="online" data-f="matches" hidden> Online matches are left out of these totals: <span data-draw="v" data-ds="summary" data-k="online" data-f="matches" data-fmt="int">—</span> in the logs, <span data-draw="v" data-ds="summary" data-k="online" data-f="wins" data-fmt="int">—</span> won. Switch to Online matches at the top of the page to see them.</span></p>
+<div class="er-ov">
+  <div class="er-card" id="ov-form" data-v="ai">
+    <div class="er-ovhead"><h3>Recent form</h3><button class="er-goto" type="button" data-jump="form-rolling">Rolling results →</button></div>
+    <p class="er-muted" data-draw="ov-form-note" data-source="form"></p>
+    <div class="er-chart er-ovform" data-draw="ov-form" data-source="form"></div>
+  </div>
+  <div class="er-card" id="ov-plan">
+    <div class="er-ovhead"><h3>Top of your training plan</h3><button class="er-goto" type="button" data-jump="plan">Training plan →</button></div>
+    <div class="er-ovplan" data-draw="ov-plan" data-source="plan"></div>
+  </div>
+</div>
 </div>
 
-<section class="er-section" id="session">
+<section class="er-section" id="ov-findings">
+  <div class="er-sechead">
+    <div><h2>What decides your points at <span data-draw="v" data-ds="findings" data-k="main" data-f="levelName">—</span></h2><p class="er-muted">The top three. Every finding, and what is behind it, is in Tactics.</p></div>
+    <button class="er-goto" type="button" data-jump="findings">All findings →</button>
+  </div>
+  <div class="er-keys er-ovkeys" data-draw="ov-findings" data-source="findings"></div>
+</section>
+</section>
+
+<section class="er-area er-off" id="area-review" data-area="review">
+<div class="er-areahead">
+  <h1><span class="er-areaname">Match review</span><span class="er-areasay">Your sessions and matches, down to every point.</span></h1>
+  <div class="er-parts"><span class="er-ctl" id="parts-review">Show</span><div class="er-tabs" role="group" aria-labelledby="parts-review"><button class="er-tab" type="button" data-part="" aria-pressed="true">All</button><button class="er-tab" type="button" data-part="sessions" aria-pressed="false">Sessions</button><button class="er-tab" type="button" data-part="matches" aria-pressed="false">Matches</button><button class="er-tab" type="button" data-part="replay" aria-pressed="false">Replay</button></div></div>
+</div>
+
+<section data-part="sessions" class="er-section" id="session">
   <div class="er-sechead">
     <div><h2>Session report</h2></div>
     <div class="er-controls">
@@ -778,7 +853,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
 </section>
 
 <section class="er-section" id="match">
-  <div class="er-sechead">
+  <div data-part="matches replay" class="er-sechead">
     <div><h2>Match explorer</h2><p class="er-muted">Every match in the logs, newest first.</p></div>
     <div class="er-controls">
       <label for="match-select">Match</label>
@@ -787,7 +862,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
       <button class="er-btn" type="button" data-step="1" id="match-next">Newer →</button>
     </div>
   </div>
-  <div class="er-card" id="match-head">
+  <div data-part="matches" class="er-card" id="match-head">
     <div class="er-match">
       <div class="er-result">
         <span data-draw="result"></span>
@@ -812,7 +887,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
       <p class="er-muted" data-note-where="none" hidden>Notes can't be kept in this view.</p>
     </div>
   </div>
-  <details class="er-card er-mcard" id="match-card">
+  <details data-part="matches" class="er-card er-mcard" id="match-card">
     <summary>Match card <span class="er-muted">A picture of this match to send or post.</span></summary>
     <div class="er-mcbody">
       <div class="er-mcprev" data-draw="match-card" data-nomorph data-source="points"></div>
@@ -827,7 +902,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
       </div>
     </div>
   </details>
-  <div class="er-card" id="match-replay">
+  <div data-part="replay" class="er-card" id="match-replay">
     <h3>Point by point</h3>
     <details class="er-how"><summary>How to read this</summary><p class="er-muted">One bar per point, in order: bars above the line are points you won, bars below are points you lost, and a longer bar is a longer point. Click a bar to watch that point from above, you at the bottom, drawn from every contact the game logged: bat, table, net and floor. Switch to 3D to see how the ball flew, and to replay the shot that ended the point in slow motion with its spin.</p></details>
     <div class="er-replay">
@@ -841,7 +916,6 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
           <button class="er-btn" type="button" id="replay-prev">← Previous point</button>
           <button class="er-btn" type="button" id="replay-next">Next point →</button>
         </div>
-        <div class="er-rbar"><button class="er-btn" type="button" id="replay-back" hidden>← Back to where you were</button></div>
         <div class="er-rbar"><span class="er-ctl" id="replay-view-label">View</span><div class="er-tabs" id="replay-view" role="group" aria-labelledby="replay-view-label"><button class="er-tab" type="button" data-view="2d" aria-pressed="true">2D</button><button class="er-tab" type="button" data-view="3d" aria-pressed="false">3D</button></div><button class="er-btn" type="button" id="replay-last" hidden>Deciding shot</button><button class="er-btn er-tog" type="button" id="replay-call" aria-pressed="false" hidden>Landing call</button></div>
         <div class="er-rbar"><span class="er-ctl" id="replay-rate-label">Speed</span><div class="er-tabs" id="replay-rate" role="group" aria-labelledby="replay-rate-label"><button class="er-tab" type="button" data-rate="1" aria-pressed="true">Full</button><button class="er-tab" type="button" data-rate="0.5" aria-pressed="false">Half</button><button class="er-tab" type="button" data-rate="0.25" aria-pressed="false">Quarter</button></div></div>
         <div class="er-legend court"><span><i class="er-sw ball"></i>Your shots</span><span><i class="er-sw ball ai"></i>Opponent's shots</span><span><i class="er-sw rx"></i>Shot that missed</span></div>
@@ -864,7 +938,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
       </div>
     </div>
   </div>
-  <div class="er-grid">
+  <div data-part="matches" class="er-grid">
     <div class="er-card" id="match-serves">
       <h3>Services</h3>
       <p class="er-muted">Where each serve first landed on the receiver's half, seen from your end.</p>
@@ -876,7 +950,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
       <div class="er-tablewrap"><table class="er-t"><thead><tr><th>Shot</th><th>Shots</th><th>Share</th><th>Landed</th><th>m/s</th><th>r/s</th><th>Winners</th></tr></thead><tbody data-draw="shots" data-scope="{M}"></tbody></table></div>
     </div>
   </div>
-  <details class="er-card er-fold" id="metrics-match">
+  <details data-part="matches" class="er-card er-fold" id="metrics-match">
     <summary><h3>11hero metrics for this match</h3><span class="er-muted">Level avg is your average over every match at the same AI level.</span></summary>
     <div class="er-foldbody">
     <div class="er-mgrid">
@@ -885,56 +959,286 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
     </div>
   </details>
 </section>
-
-<section class="er-section" id="plan">
-  <div class="er-sechead">
-    <div><h2>Training plan</h2><p class="er-muted">What to practise next, in order of how many points a match each item is worth.</p><details class="er-how"><summary>How to read this</summary><p class="er-muted">The plan is rebuilt from the logs at every update, so an item drops down the list as you close its gap. Each item also shows its number since the session that first put it on the plan.</p></details></div>
-    <div class="er-legend"><span><i class="er-sw dot"></i>Recent sessions, counted as now</span><span><i class="er-sw hollow"></i>Earlier sessions</span><span><i class="er-sw dash"></i>Target: the same number in matches you won</span><span><i class="er-sw vdot"></i>Joined the plan</span></div>
-  </div>
-  <div class="er-multi er-plead" data-draw="plan-lead" data-source="plan"></div>
-  <ol class="er-plan" id="plan-items" data-draw="plan-items" data-source="plan"></ol>
-  <div class="er-keephead"><h3>Already working</h3><p class="er-muted">At or close to the level of the matches you won. Nothing to drill here; keep doing it.</p></div>
-  <ul class="er-plan keep" id="plan-keep" data-draw="plan-keep" data-source="plan"></ul>
-  <div class="er-keephead" id="plan-history"><h3>Plan history</h3><p class="er-muted">When each item joined the plan, whether it left, and whether it came back.</p>
-    <div class="er-legend"><span><i class="er-sw"></i>On the plan</span><span><i class="er-sw ok"></i>Already working</span><span><i class="er-sw none"></i>No target yet</span></div>
-    <details class="er-how"><summary>How to read this</summary><p class="er-muted">One square is one of the sessions the plan is built from, the oldest on the left. The plan keeps no record of its own, so it is worked out again as it would have stood after each session, from the sessions up to that one only. An item is on the plan when its recent number is under its target (the same number in the matches you had won by then) and closing the gap is worth 0.15 points a match or more. Otherwise it is already working. Until you have won some of those matches there is no target. An item close to that line can go on and off the plan from one session to the next by chance: read one square lightly and a long run seriously.</p></details></div>
-  <div class="er-phist" data-draw="plan-history" data-source="plan_history"></div>
 </section>
 
-<section class="er-section" id="works">
+<section class="er-area er-off" id="area-progress" data-area="progress">
+<div class="er-areahead">
+  <h1><span class="er-areaname">Progress</span><span class="er-areasay">Your results over time: trends, consistency, comparisons and records.</span></h1>
+  <div class="er-parts"><span class="er-ctl" id="parts-progress">Show</span><div class="er-tabs" role="group" aria-labelledby="parts-progress"><button class="er-tab" type="button" data-part="" aria-pressed="true">All</button><button class="er-tab" type="button" data-part="results" aria-pressed="false">Results</button><button class="er-tab" type="button" data-part="compare" aria-pressed="false">Compare</button><button class="er-tab" type="button" data-part="consistency" aria-pressed="false">Consistency</button><button class="er-tab" type="button" data-part="records" aria-pressed="false">Records</button></div></div>
+</div>
+
+<section data-part="results" class="er-section" id="progress">
   <div class="er-sechead">
-    <div><h2>What works for you</h2><p class="er-muted">Your best serves, strokes and patterns so far: what to keep doing.</p><p class="er-muted" data-draw="wk-note" data-source="shots"></p><details class="er-how"><summary>How to read this</summary><p class="er-muted">The training plan says what to fix; this page says what already wins you points, and it is worked out again at every update. Each list is short on purpose and every line links to the card it comes from. Points won counts how the whole point ended, not only that shot. A serve or a pattern is listed from 30 points, a stroke from 20 shots, and a line is called clear only when its gap would come up by chance about one time in a hundred, because many things are compared at once. A stroke that wins more may also be the one you choose on the easier balls, so open the card and look before changing how you play.</p></details></div>
-    <div class="er-controls" data-v="ai"><span class="er-ctl" id="works-level-label">AI level</span><div class="er-tabs" id="works-level" role="group" aria-labelledby="works-level-label" data-draw="level-tabs"></div></div>
+    <div><h2>Progress by day</h2><p class="er-muted">Share of points and games you won on each day you played the AI. The strip along the top is the AI level.</p></div>
+    <div class="er-legend"><span><i class="er-sw line"></i>Points won</span><span><i class="er-sw line alt"></i>Games won</span></div>
   </div>
-  <div class="er-wkgrid">
-    <div class="er-card" id="works-serves">
-      <h3>Your best serves</h3>
-      <p class="er-muted">Serves that landed, by spin, depth and where they landed: the three that win you the most points.</p>
-      <ol class="er-wk" data-draw="wk-serves" data-source="shots"></ol>
-    </div>
-    <div class="er-card" id="works-strokes">
-      <h3>Your best stroke against each kind of ball</h3>
-      <p class="er-muted">Rally balls by spin and side, where one stroke wins clearly more points than your others. Returns of serve are in the patterns.</p>
-      <ol class="er-wk" data-draw="wk-strokes" data-source="shots"></ol>
-    </div>
-    <div class="er-card" id="works-patterns">
-      <h3>Your best patterns</h3>
-      <p class="er-muted">The first shots of a point taken together, where they win clearly more points than the rest.</p>
-      <ol class="er-wk" data-draw="wk-patterns" data-source="shots"></ol>
-    </div>
-    <div class="er-card" id="works-place">
-      <h3>Where and how hard</h3>
-      <p class="er-muted">Where your shots land, how you hit them and what attacking brings, over all your returns and rally shots.</p>
-      <ol class="er-wk" data-draw="wk-place" data-source="shots"></ol>
-    </div>
+  <div class="er-card"><div class="er-chart" id="chart-progress" data-draw="progress" data-source="days"></div></div>
+  <div class="er-multi">
+    <div id="mini-serve-points"><h3>Points won on your serve</h3><div class="er-mini" data-draw="mini" data-f="servePointRate" data-fmt="pct" data-source="days"></div></div>
+    <div id="mini-return-points"><h3>Points won on the AI's serve</h3><div class="er-mini" data-draw="mini" data-f="returnPointRate" data-fmt="pct" data-source="days"></div></div>
+    <div id="mini-returns"><h3>Your returns that landed</h3><div class="er-mini" data-draw="mini" data-f="returnsLanded" data-fmt="pct" data-source="days"></div></div>
+    <div id="mini-rally"><h3>Your rally shots that landed</h3><div class="er-mini" data-draw="mini" data-f="rallyLanded" data-fmt="pct" data-source="days"></div></div>
+    <div id="mini-speed"><h3>Your average rally speed (m/s)</h3><div class="er-mini" data-draw="mini" data-f="rallySpeed" data-fmt="n1" data-source="days"></div></div>
+    <div id="mini-length"><h3>Shots per point</h3><div class="er-mini" data-draw="mini" data-f="rallyLength" data-fmt="n1" data-source="days"></div></div>
   </div>
 </section>
+
+<section class="er-section" id="rating" data-part="results" data-v="people">
+  <div class="er-card" id="rating-run" data-v="people">
+    <h3>Your rating, match by match</h3>
+    <details class="er-how"><summary>How to read this</summary><p class="er-muted">The line is your rating after each online match in the logs, in the order played. A dot is that match's opponent, at their rating: filled when you won, hollow when you lost. A ranked match moves your rating, by more when the result was the less likely one; an unranked match leaves it where it was. A jump straight up or down between two matches is a change the logs do not hold.</p></details>
+    <div class="er-legend"><span><i class="er-sw line"></i>Your rating</span><span><i class="er-sw ai dot"></i>Opponent you beat</span><span><i class="er-sw aihollow"></i>Opponent you lost to</span></div>
+    <div class="er-chart" id="chart-rating" data-draw="rating-chart" data-source="rating_h"></div>
+    <ul class="er-notes" data-draw="rating-notes" data-source="rating_notes_h"></ul>
+  </div>
+  <div class="er-card" id="rating-bands" data-v="people">
+    <h3>Results by opponent rating</h3>
+    <p class="er-muted">Expected is the share of matches the two ratings alone say you win, added up over the matches in the row.</p>
+    <div class="er-tablewrap"><table class="er-t"><thead><tr><th>Opponents</th><th>Matches</th><th>Won</th><th>Expected</th><th>Wins against expected</th><th>Points won</th><th>On your serve</th><th>On their serve</th></tr></thead><tbody data-draw="rating-bands" data-source="rating_bands_h"></tbody></table></div>
+  </div>
+</section>
+
+<section class="er-section" id="form">
+  <div data-part="results consistency" class="er-sechead">
+    <div><h2>Form and stamina</h2><p class="er-muted">Your results over your latest matches at one AI level, and how your matches go from the first of a session to the last.</p></div>
+  </div>
+  <div data-part="results" class="er-card" id="form-rolling">
+    <h3>Rolling results</h3>
+    <details class="er-how"><summary>How to read this</summary><p class="er-muted">Each point on the line is the share over the matches up to that one. The band is where the share you would settle at over many matches most likely sits (9 times in 10). A short run of matches leaves a wide band, so a line that stays inside the band of a month ago has not really moved.</p></details>
+    <div class="er-controls"><span class="er-ctl" id="form-w-label">Over the last</span><div class="er-tabs" id="form-w" role="group" aria-labelledby="form-w-label"><button class="er-tab" type="button" data-w="10" aria-pressed="false">10 matches</button><button class="er-tab" type="button" data-w="20" aria-pressed="true">20 matches</button><button class="er-tab" type="button" data-w="50" aria-pressed="false">50 matches</button></div><div class="er-tabs" id="form-f" role="group" aria-label="What is counted"><button class="er-tab" type="button" data-f="m" aria-pressed="true">Matches won</button><button class="er-tab" type="button" data-f="p" aria-pressed="false">Points won</button></div></div>
+    <p class="er-pstat" data-draw="form-now" data-source="form" role="status"></p>
+    <div class="er-legend"><span><i class="er-sw line"></i>Share over the last matches</span><span><i class="er-sw band"></i>Likely range</span><span><i class="er-sw dash"></i>All your matches at this level</span></div>
+    <div class="er-chart" id="chart-form" data-draw="form-chart" data-source="form"></div>
+  </div>
+  <div data-part="consistency" class="er-card" id="form-floor">
+    <h3>Your floor</h3>
+    <p class="er-muted">Your weaker matches over time: whether your bad days are getting better.</p>
+    <details class="er-how"><summary>How to read this</summary><p class="er-muted">A match's result here is the share of points you won in it. Line up your last 20 matches from the worst to the best: the floor is where the lower quarter ends, so one match in four ended at or under it, and the middle match is the one halfway up. An average can rise because your best days got better; the floor rises only when your bad days did. The floor is called clearly up or down by counting how many of the latest matches, and how many of the same number before them, sit in the lower quarter of the two runs together, and asking whether chance would give that gap more than about one time in ten. A quarter of 20 matches is 5 matches, so a small move means little.</p></details>
+    <div class="er-controls"><span class="er-ctl" id="floor-w-label">Over the last</span><div class="er-tabs" id="floor-w" role="group" aria-labelledby="floor-w-label"><button class="er-tab" type="button" data-fw="20" aria-pressed="true">20 matches</button><button class="er-tab" type="button" data-fw="50" aria-pressed="false">50 matches</button></div></div>
+    <p class="er-pstat" data-draw="floor-now" data-source="matches" role="status"></p>
+    <div class="er-legend"><span><i class="er-sw line"></i>Your floor: where the lower quarter ends</span><span><i class="er-sw dash"></i>The middle match</span><span><i class="er-sw mute"></i>One match</span></div>
+    <div class="er-chart" id="chart-floor" data-draw="floor-chart" data-source="matches"></div>
+  </div>
+  <div data-part="consistency" class="er-card" id="form-session">
+    <h3>From the first match of a session to the last</h3>
+    <details class="er-how"><summary>How to read this</summary><p class="er-muted">Points won in each match, set against the other matches of the same session at the same level, and added up by the place of the match in its session. Above the line you play better than in the rest of the session, below it worse.</p></details>
+    <div class="er-legend"><span><i class="er-sw"></i>Clearly better</span><span><i class="er-sw ai"></i>Clearly worse</span><span><i class="er-sw mute"></i>Within chance</span><span><i class="er-sw ref"></i>Likely range</span></div>
+    <div class="er-chart" id="chart-shape" data-draw="form-shape" data-source="session_shape"></div>
+    <ul class="er-notes" data-draw="form-notes" data-source="form_notes"></ul>
+  </div>
+</section>
+
+<section class="er-section" id="won-lost" data-part="compare">
+  <div class="er-sechead">
+    <div><h2>Matches won and lost</h2><p class="er-muted">Over <span data-draw="v" data-ds="levels" data-k="{L}" data-f="matches" data-fmt="int">—</span> matches at this level.</p></div>
+  </div>
+      <div class="er-card" id="won-vs-lost">
+        <h3>Your numbers in matches won and lost</h3>
+        <div class="er-tablewrap"><table class="er-t"><thead><tr><th>At this level</th><th>Won</th><th>Lost</th></tr></thead><tbody>
+{{WVL_ROWS}}
+        </tbody></table></div>
+      </div>
+</section>
+
+<section data-part="compare" class="er-section" id="pick">
+  <div class="er-sechead">
+    <div><h2>Matches you pick</h2><p class="er-muted">Your numbers over any of your AI matches: whole sessions, single matches or a mix.</p></div>
+  </div>
+  <div class="er-grid">
+    <div class="er-card" id="pick-choose">
+      <div class="er-ptop">
+        <div class="er-tabs" id="pick-quick" role="group" aria-label="Quick picks" data-draw="pick-quick" data-source="matches"></div>
+        <p class="er-pstat" data-draw="pick-now" data-source="matches" role="status"></p>
+      </div>
+      <div class="er-plist" id="pick-list" data-draw="pick-list" data-source="matches"></div>
+      <p class="er-muted" id="pick-hint">Click a session to pick or drop all its matches, or a match to pick or drop just that one.</p>
+    </div>
+    <div class="er-card" id="pick-sum">
+      <div class="er-label" data-draw="pick-label" data-source="matches"></div>
+      <div class="er-shead">
+        <div class="er-score" data-draw="pick-score" data-source="matches"></div>
+        <div class="er-rows" data-draw="pick-meters" data-source="matches"></div>
+      </div>
+      <h3>Against your other matches</h3>
+      <p class="er-muted" data-draw="pick-base" data-source="matches"></p>
+      <div class="er-legend"><span><i class="er-sw"></i>Matches picked</span><span><i class="er-sw ref"></i>Your other matches</span></div>
+      <div class="er-cmprows" data-draw="pick-compare" data-source="match_sums" data-fetchpriority="low"></div>
+      <h3>How the points ended</h3>
+      <div class="er-cmprows" data-draw="pick-ends" data-source="match_sums" data-fetchpriority="low"></div>
+      <p class="er-muted" data-draw="pick-more" data-source="match_sums"></p>
+      <details class="er-how"><summary>How to read this</summary><p class="er-muted">Each bar's tick is your other AI matches at the same levels, so you can see what was different about the ones you picked. The last column is the gap in percentage points. It is coloured when the gap is bigger than chance gives about one time in ten with this many points.</p></details>
+    </div>
+  </div>
+  <div class="er-card" id="pick-then">
+    <h3>Then and now</h3>
+    <p class="er-muted">The matches you picked against an earlier stretch of your matches, to see what moved.</p>
+    <div class="er-rbar"><label class="er-ctl" for="then-mode">Then</label><select class="dash-select" id="then-mode" data-draw="then-mode" data-source="matches"></select></div>
+    <p class="er-pstat" data-draw="then-head" data-source="match_sums" role="status"></p>
+    <div class="er-tablewrap" id="then-table"><table class="er-t er-then"><thead><tr><th>Measure</th><th>Then</th><th>Now</th><th>Change</th><th>Against the same balls</th></tr></thead><tbody data-draw="then-rows" data-source="match_sums"></tbody></table></div>
+    <p class="er-muted" data-draw="then-mix" data-source="shots"></p>
+    <details class="er-how"><summary>How to read this</summary><p class="er-muted">Now is the matches you picked above; Then is an earlier stretch of your matches. Only matches at the same AI level as the ones you picked are used. The rows are in order of how far each measure moved, the surest moves first, and the change is in percentage points. A change is coloured when it is bigger than chance gives about one time in ten with this many points or shots. Against the same balls holds the mix of balls you faced the same: the share you landed then is worked out again as if each kind of ball (by its spin, side, depth and speed, returns apart from rally shots) had come as often as it does now, so a change in what was sent to you does not pass for a change in you. It is empty for measures that are not about one shot, and it says so when fewer than four in five of the balls you face now are of a kind you also faced then.</p></details>
+  </div>
+  <details class="er-card er-fold" id="metrics-pick">
+    <summary><h3>11hero metrics over the matches you picked</h3><span class="er-muted">Your other matches are your other AI matches at the same levels.</span></summary>
+    <div class="er-foldbody">
+    <div class="er-mgrid">
+{{METRICS_PICK}}
+    </div>
+    </div>
+  </details>
+</section>
+
+<section class="er-section" id="records-part" data-part="records">
+  <div class="er-card" id="records">
+    <h3>Personal records</h3>
+    <div class="er-multi er-records" data-draw="records" data-source="matches"></div>
+    <details class="er-how"><summary>How to read this</summary><p class="er-muted">Your bests so far, counted again at every update. A rally is counted in shots by both players, and only points you won count. The fastest shot is one that landed on the table. A run is matches won one after another, in one session or across several. The best session is the one with the highest share of points won, among sessions of three matches or more. A record set in your latest session is marked.</p></details>
+  </div>
+</section>
+
+</section>
+
+<section class="er-area er-off" id="area-tactics" data-area="tactics">
+<div class="er-areahead">
+  <h1><span class="er-areaname">Tactics</span><span class="er-areasay">How your points are won and lost: how they end, serves and returns, and patterns.</span></h1>
+  <div class="er-parts"><span class="er-ctl" id="parts-tactics">Show</span><div class="er-tabs" role="group" aria-labelledby="parts-tactics"><button class="er-tab" type="button" data-part="" aria-pressed="true">All</button><button class="er-tab" type="button" data-part="points" aria-pressed="false">How points end</button><button class="er-tab" type="button" data-part="serves" aria-pressed="false">Serves and returns</button><button class="er-tab" type="button" data-part="patterns" aria-pressed="false">Patterns</button></div></div>
+</div>
+
+<section data-part="points" class="er-section" id="findings">
+  <div class="er-sechead"><div><h2>What decides your points at <span data-draw="v" data-ds="findings" data-k="main" data-f="levelName">—</span></h2><p class="er-muted">From all <span data-draw="v" data-ds="findings" data-k="main" data-f="matches" data-fmt="int">—</span> level-<span data-draw="v" data-ds="findings" data-k="main" data-f="level">—</span> matches, <span data-draw="v" data-ds="findings" data-k="main" data-f="from" data-fmt="date">—</span> to <span data-draw="v" data-ds="findings" data-k="main" data-f="to" data-fmt="date">—</span>.</p></div></div>
+  <div class="er-keys" data-draw="findings"></div>
+</section>
+
+<section class="er-section" id="points-end" data-part="points">
+  <div class="er-sechead">
+    <div><h2>How points end</h2><p class="er-muted">Over <span data-draw="v" data-ds="levels" data-k="{L}" data-f="matches" data-fmt="int">—</span> matches at this level.</p></div>
+  </div>
+  <div class="er-grid">
+    <div class="er-card" id="how-lost">
+      <h3>How you lose points</h3>
+      <p class="er-muted">Share of the points you lost, and how many</p>
+      <div class="er-bars">
+        <div class="er-row"><span>Your rally shot missed</span><div class="er-meter" data-tone="ai" data-draw="meter" data-ds="insights" data-k="{L}|lost|rallyMiss" data-f="share" data-n="n"></div></div>
+        <div class="er-row"><span>Your return missed</span><div class="er-meter" data-tone="ai" data-draw="meter" data-ds="insights" data-k="{L}|lost|returnMiss" data-f="share" data-n="n"></div></div>
+        <div class="er-row"><span>Your serve missed</span><div class="er-meter" data-tone="ai" data-draw="meter" data-ds="insights" data-k="{L}|lost|serveMiss" data-f="share" data-n="n"></div></div>
+        <div class="er-row"><span>AI shot you couldn't return</span><div class="er-meter" data-tone="ai" data-draw="meter" data-ds="insights" data-k="{L}|lost|aiWinner" data-f="share" data-n="n"></div></div>
+        <div class="er-row"><span>AI serve you couldn't return</span><div class="er-meter" data-tone="ai" data-draw="meter" data-ds="insights" data-k="{L}|lost|aiAce" data-f="share" data-n="n"></div></div>
+      </div>
+    </div>
+    <div class="er-card" id="how-won">
+      <h3>How you win points</h3>
+      <p class="er-muted">Share of the points you won, and how many</p>
+      <div class="er-bars">
+        <div class="er-row"><span>Your shot the AI couldn't return</span><div class="er-meter" data-draw="meter" data-ds="insights" data-k="{L}|won|winner" data-f="share" data-n="n"></div></div>
+        <div class="er-row"><span>AI rally shot missed</span><div class="er-meter" data-draw="meter" data-ds="insights" data-k="{L}|won|aiMiss" data-f="share" data-n="n"></div></div>
+        <div class="er-row"><span>AI return missed</span><div class="er-meter" data-draw="meter" data-ds="insights" data-k="{L}|won|aiReturnMiss" data-f="share" data-n="n"></div></div>
+        <div class="er-row"><span>AI serve missed</span><div class="er-meter" data-draw="meter" data-ds="insights" data-k="{L}|won|aiServeMiss" data-f="share" data-n="n"></div></div>
+        <div class="er-row"><span>Your serve not returned</span><div class="er-meter" data-draw="meter" data-ds="insights" data-k="{L}|won|ace" data-f="share" data-n="n"></div></div>
+        <div class="er-row"><span>Other (ball touched something else)</span><div class="er-meter" data-draw="meter" data-ds="insights" data-k="{L}|won|other" data-f="share" data-n="n"></div></div>
+      </div>
+    </div>
+  </div>
+      <div class="er-card" id="rally-length">
+        <h3>Points won by length of point</h3>
+        <details class="er-how"><summary>How to read this</summary><p class="er-muted">Top: the share of points you won, by the number of shots in the point, serve included. The line is your average for the level. Bottom: how many of all points end at each length.</p></details>
+        <div class="er-chart" id="chart-rally" data-draw="rally" data-source="insights levels"></div>
+      </div>
+</section>
+
+<section class="er-section" id="serve">
+  <div data-part="serves" class="er-sechead">
+    <div><h2>Serves and returns</h2><p class="er-muted">Over <span data-draw="v" data-ds="levels" data-k="{L}" data-f="matches" data-fmt="int">—</span> matches at this level.</p></div>
+  </div>
+
+  <h3 data-part="serves" class="er-subhead" id="recv">When the AI serves</h3>
+  <div data-part="serves" class="er-keys" id="recv-notes" data-draw="sr-notes" data-who="recv" data-source="serve_notes"></div>
+  <div data-part="serves" class="er-card" id="recv-flow">
+    <h3>How points on the AI's serve end</h3>
+    <details class="er-how"><summary>How to read this</summary><p class="er-muted">Each bar is all the AI's serves of one kind, split by where the point ended. Orange is lost, blue is won, and the dark ends are points settled by your return. The line marks where lost turns to won.</p></details>
+    <div class="er-legend"><span><i class="er-sw s0"></i>Return missed, or serve not touched</span><span><i class="er-sw s1"></i>Lost to the AI's next shot</span><span><i class="er-sw s2"></i>Lost later</span><span><i class="er-sw s3"></i>Won later</span><span><i class="er-sw s4"></i>Won by the return</span></div>
+    <div class="er-flow" data-draw="sr-flow" data-who="recv" data-source="serve_flow"></div>
+  </div>
+  <details data-part="serves" class="er-card er-fold" id="recv-types">
+    <summary><h3>The AI's serves, type by type</h3><span class="er-muted">Side, spin and depth together, easiest first.</span></summary>
+    <div class="er-foldbody">
+    <div class="er-tablewrap"><table class="er-t types"><thead><tr><th>Serve</th><th>Points won</th><th>Serves</th><th>Share</th><th>m/s</th><th>Returns landed</th><th>Your return m/s</th></tr></thead><tbody data-draw="sr-types" data-who="recv" data-source="serve_types"></tbody></table></div>
+    <p class="er-muted">Only types with 30 serves or more.</p>
+    </div>
+  </details>
+  <details data-part="serves" class="er-card er-fold" id="recv-next">
+    <summary><h3>Your return</h3><span class="er-muted">By its pace and by where it lands.</span></summary>
+    <div class="er-foldbody">
+    <div class="er-mgrid">
+      <div class="er-tablewrap"><table class="er-t"><thead><tr><th>By its pace</th><th>Returns</th><th>Share</th><th>Landed</th><th>Points won</th></tr></thead><tbody data-draw="sr-next" data-who="recv" data-kinds="pace" data-source="serve_next"></tbody></table></div>
+      <div class="er-tablewrap"><table class="er-t"><thead><tr><th>By where it lands</th><th>Returns</th><th>Share</th><th>Points won</th></tr></thead><tbody data-draw="sr-next" data-who="recv" data-kinds="land-depth,land-side" data-source="serve_next"></tbody></table></div>
+    </div>
+    </div>
+  </details>
+
+  <h3 data-part="serves" class="er-subhead" id="own-serve">When you serve</h3>
+  <div data-part="serves" class="er-keys" id="own-serve-notes" data-draw="sr-notes" data-who="serve" data-source="serve_notes"></div>
+  <div data-part="serves" class="er-card" id="own-serve-flow">
+    <h3>How points on your serve end</h3>
+    <details class="er-how"><summary>How to read this</summary><p class="er-muted">Each bar is all your serves of one kind, split by where the point ended. Rows by side and depth count only serves that landed, since a missed serve has neither.</p></details>
+    <div class="er-legend"><span><i class="er-sw s0"></i>Serve missed</span><span><i class="er-sw s1"></i>Lost on your third ball</span><span><i class="er-sw s2"></i>Lost later</span><span><i class="er-sw s3"></i>Won later</span><span><i class="er-sw s4"></i>Won by the serve or the third ball</span></div>
+    <div class="er-flow" data-draw="sr-flow" data-who="serve" data-source="serve_flow"></div>
+  </div>
+  <details data-part="serves" class="er-card er-fold" id="own-serve-types">
+    <summary><h3>Your serves, type by type</h3><span class="er-muted">Where it lands, spin and depth together, best first.</span></summary>
+    <div class="er-foldbody">
+    <div class="er-tablewrap"><table class="er-t types"><thead><tr><th>Serve</th><th>Points won</th><th>Serves</th><th>Share</th><th>m/s</th><th>AI return m/s</th><th>Third balls landed</th></tr></thead><tbody data-draw="sr-types" data-who="serve" data-source="serve_types"></tbody></table></div>
+    <p class="er-muted">Only types with 30 serves or more.</p>
+    </div>
+  </details>
+  <details data-part="serves" class="er-card er-fold" id="own-serve-next">
+    <summary><h3>The AI's return, and your third ball</h3><span class="er-muted">By its pace and by where it lands on your half.</span></summary>
+    <div class="er-foldbody">
+    <div class="er-mgrid">
+      <div class="er-tablewrap"><table class="er-t"><thead><tr><th>By its pace</th><th>Returns</th><th>Share</th><th>Third balls landed</th><th>Points won</th></tr></thead><tbody data-draw="sr-next" data-who="serve" data-kinds="pace" data-source="serve_next"></tbody></table></div>
+      <div class="er-tablewrap"><table class="er-t"><thead><tr><th>By where it lands on your half</th><th>Returns</th><th>Share</th><th>Third balls landed</th><th>Points won</th></tr></thead><tbody data-draw="sr-next" data-who="serve" data-kinds="zone" data-source="serve_next"></tbody></table></div>
+    </div>
+    </div>
+  </details>
+      <div data-part="serves" class="er-card" id="serve-zones">
+        <h3>Where serves land</h3>
+        <details class="er-how"><summary>How to read this</summary><p class="er-muted">Share of points you won when a serve first landed in each zone, with the number of serves under it. Your serves land on the AI's half, its serves on yours. Stronger blue means you won more; zones with fewer than 30 serves stay grey. Seen from your end.</p></details>
+        <div class="er-chart" id="chart-zones" data-draw="zones" data-source="zones"></div>
+      </div>
+
+  <h3 data-part="patterns" class="er-subhead" id="patterns">Patterns that win points</h3>
+  <div data-part="patterns" class="er-card" id="patterns-card">
+    <h3>The first shots of a point, taken together</h3>
+    <div class="er-patctl">
+      <div class="er-rbar"><span class="er-ctl" id="pat-who-label">Points</span><div class="er-tabs" id="pat-who" role="group" aria-labelledby="pat-who-label"><button class="er-tab" type="button" data-who="serve" aria-pressed="true">On your serve</button><button class="er-tab" type="button" data-who="recv" aria-pressed="false">On the AI's serve</button></div></div>
+      <div class="er-rbar"><span class="er-ctl" id="pat-steps-label">Shots in a pattern</span><div class="er-tabs" id="pat-steps" role="group" aria-labelledby="pat-steps-label"><button class="er-tab" type="button" data-steps="2" aria-pressed="false">2</button><button class="er-tab" type="button" data-steps="3" aria-pressed="true">3</button><button class="er-tab" type="button" data-steps="4" aria-pressed="false" hidden>4</button></div></div>
+      <div class="er-rbar"><span class="er-ctl" id="pat-sort-label">Order</span><div class="er-tabs" id="pat-sort" role="group" aria-labelledby="pat-sort-label"><button class="er-tab" type="button" data-sort="n" aria-pressed="true">Most common</button><button class="er-tab" type="button" data-sort="best" aria-pressed="false">Wins most</button><button class="er-tab" type="button" data-sort="worst" aria-pressed="false">Loses most</button></div></div>
+    </div>
+    <p class="er-muted" data-draw="pat-note" data-source="shots"></p>
+    <p class="er-pstat" data-draw="pat-head" data-source="shots" role="status"></p>
+    <div class="er-tablewrap" id="pat-table"><table class="er-t er-sxst er-pat"><thead><tr><th>Pattern</th><th>Points</th><th>Share</th><th colspan="2">Points won</th></tr></thead><tbody data-draw="pat-rows" data-source="shots"></tbody></table></div>
+    <div class="er-rbar"><button class="er-btn" type="button" id="pat-more" hidden>Show every pattern</button><span class="er-muted" data-draw="pat-count" data-source="shots"></span></div>
+    <div class="er-patpoints" id="pat-points-wrap" hidden>
+      <div class="er-rbar"><span class="er-pstat" data-draw="pat-open" data-source="shots" role="status"></span><button class="er-btn" type="button" id="pat-close">Close the list</button></div>
+      <div class="er-tablewrap"><table class="er-t er-sxlist"><thead><tr><th>Point</th><th>Shots</th><th>How it ended</th><th>Result</th><th>Open</th></tr></thead><tbody data-draw="pat-points" data-source="shots"></tbody></table></div>
+      <div class="er-rbar"><button class="er-btn" type="button" id="pat-points-more" hidden>Show more</button><span class="er-muted" data-draw="pat-points-count" data-source="shots"></span></div>
+    </div>
+    <details class="er-how"><summary>How to read this</summary><p class="er-muted">A pattern is the first shots of a point taken together. On your serve: your serve (its spin, its depth and where it lands), the ball that came back (its spin and the side it came to) and the stroke you played third. On the AI's serve: its serve, the stroke you returned it with, the ball that came next and the stroke you played fourth. A point is counted when it got as far as the last shot of the pattern, and a ball you did not reach counts as that shot. Only patterns with 30 points or more are ranked and can carry an arrow; one with 10 to 29 is listed below them in grey. The mark on each bar is your share of points won over all the points that got as far. An arrow marks a pattern that wins clearly more or fewer points than the rest of them: a gap that would come up by chance about one time in a hundred, which is stricter than elsewhere on the page because many patterns are compared at once. The range is where the true share sits nine times in ten. Spin and depth are as in the rest of this section. Click a pattern to list its points, each with its replay.</p></details>
+  </div>
+</section>
+
+</section>
+
+<section class="er-area er-off" id="area-shots" data-area="shots">
+<div class="er-areahead">
+  <h1><span class="er-areaname">Shot analysis</span><span class="er-areasay">How well you hit the ball: where you miss, every shot you played, and your strokes.</span></h1>
+  <div class="er-parts"><span class="er-ctl" id="parts-shots">Show</span><div class="er-tabs" role="group" aria-labelledby="parts-shots"><button class="er-tab" type="button" data-part="" aria-pressed="true">All</button><button class="er-tab" type="button" data-part="misses" aria-pressed="false">Misses</button><button class="er-tab" type="button" data-part="explorer" aria-pressed="false">Find shots</button><button class="er-tab" type="button" data-part="strokes" aria-pressed="false">Strokes</button></div></div>
+</div>
 
 <section class="er-section" id="shots">
-  <div class="er-sechead">
+  <div data-part="misses explorer" class="er-sechead">
     <div><h2>Shot explorer</h2><p class="er-muted">Every shot you played and every ball you did not reach, by the ball that came at you.</p><details class="er-how"><summary>How to read this</summary><p class="er-muted">Start from a kind of ball that costs you points, or set the filters yourself. Each shot opens its point in the replay.</p></details></div>
   </div>
-  <div class="er-card" id="shots-groups">
+  <div data-part="misses" class="er-card" id="shots-groups">
     <h3>Where your misses pile up</h3>
     <p class="er-muted" data-draw="sx-groups-note" data-source="shot_groups"></p>
     <div class="er-rbar"><span class="er-ctl" id="sx-scope-label">Matches</span><div class="er-tabs" id="sx-scope" role="group" aria-labelledby="sx-scope-label"><button class="er-tab" type="button" data-scope="recent" aria-pressed="true">Recent sessions</button><button class="er-tab" type="button" data-scope="all" aria-pressed="false">All at this level</button></div></div>
@@ -942,7 +1246,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
     <ol class="er-sxgroups" data-draw="sx-groups" data-source="shot_groups"></ol>
     <details class="er-how"><summary>How to read this</summary><p class="er-muted">A kind of ball is listed when you had 30 or more of it and missed or did not reach it more often than your usual for returns of serve, or for rally shots. The order is by the points a match it costs you beyond that usual rate.</p></details>
   </div>
-  <div class="er-card" id="shots-find">
+  <div data-part="explorer" class="er-card" id="shots-find">
     <h3>Find shots</h3>
     <div class="er-sxfilters">
       <div><label for="sx-role">Kind of shot</label><select class="dash-select" id="sx-role" data-draw="sx-filter" data-f="role"></select></div>
@@ -1042,74 +1346,76 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
   </div>
 </section>
 
-<section class="er-section" id="pick">
+<section class="er-section" id="strokes" data-part="strokes">
   <div class="er-sechead">
-    <div><h2>Matches you pick</h2><p class="er-muted">Your numbers over any of your AI matches: whole sessions, single matches or a mix.</p></div>
+    <div><h2>Your strokes</h2><p class="er-muted">Over <span data-draw="v" data-ds="levels" data-k="{L}" data-f="matches" data-fmt="int">—</span> matches at this level.</p></div>
   </div>
-  <div class="er-grid">
-    <div class="er-card" id="pick-choose">
-      <div class="er-ptop">
-        <div class="er-tabs" id="pick-quick" role="group" aria-label="Quick picks" data-draw="pick-quick" data-source="matches"></div>
-        <p class="er-pstat" data-draw="pick-now" data-source="matches" role="status"></p>
+      <div class="er-card" id="shot-mix-level">
+        <h3>Rally shots by type</h3>
+        <div class="er-tablewrap"><table class="er-t"><thead><tr><th>Shot</th><th>Shots</th><th>Share</th><th>Landed</th><th>m/s</th><th>r/s</th><th>Winners</th></tr></thead><tbody data-draw="shots" data-scope="L{L}"></tbody></table></div>
       </div>
-      <div class="er-plist" id="pick-list" data-draw="pick-list" data-source="matches"></div>
-      <p class="er-muted" id="pick-hint">Click a session to pick or drop all its matches, or a match to pick or drop just that one.</p>
-    </div>
-    <div class="er-card" id="pick-sum">
-      <div class="er-label" data-draw="pick-label" data-source="matches"></div>
-      <div class="er-shead">
-        <div class="er-score" data-draw="pick-score" data-source="matches"></div>
-        <div class="er-rows" data-draw="pick-meters" data-source="matches"></div>
-      </div>
-      <h3>Against your other matches</h3>
-      <p class="er-muted" data-draw="pick-base" data-source="matches"></p>
-      <div class="er-legend"><span><i class="er-sw"></i>Matches picked</span><span><i class="er-sw ref"></i>Your other matches</span></div>
-      <div class="er-cmprows" data-draw="pick-compare" data-source="match_sums" data-fetchpriority="low"></div>
-      <h3>How the points ended</h3>
-      <div class="er-cmprows" data-draw="pick-ends" data-source="match_sums" data-fetchpriority="low"></div>
-      <p class="er-muted" data-draw="pick-more" data-source="match_sums"></p>
-      <details class="er-how"><summary>How to read this</summary><p class="er-muted">Each bar's tick is your other AI matches at the same levels, so you can see what was different about the ones you picked. The last column is the gap in percentage points. It is coloured when the gap is bigger than chance gives about one time in ten with this many points.</p></details>
-    </div>
-  </div>
-  <div class="er-card" id="pick-then">
-    <h3>Then and now</h3>
-    <p class="er-muted">The matches you picked against an earlier stretch of your matches, to see what moved.</p>
-    <div class="er-rbar"><label class="er-ctl" for="then-mode">Then</label><select class="dash-select" id="then-mode" data-draw="then-mode" data-source="matches"></select></div>
-    <p class="er-pstat" data-draw="then-head" data-source="match_sums" role="status"></p>
-    <div class="er-tablewrap" id="then-table"><table class="er-t er-then"><thead><tr><th>Measure</th><th>Then</th><th>Now</th><th>Change</th><th>Against the same balls</th></tr></thead><tbody data-draw="then-rows" data-source="match_sums"></tbody></table></div>
-    <p class="er-muted" data-draw="then-mix" data-source="shots"></p>
-    <details class="er-how"><summary>How to read this</summary><p class="er-muted">Now is the matches you picked above; Then is an earlier stretch of your matches. Only matches at the same AI level as the ones you picked are used. The rows are in order of how far each measure moved, the surest moves first, and the change is in percentage points. A change is coloured when it is bigger than chance gives about one time in ten with this many points or shots. Against the same balls holds the mix of balls you faced the same: the share you landed then is worked out again as if each kind of ball (by its spin, side, depth and speed, returns apart from rally shots) had come as often as it does now, so a change in what was sent to you does not pass for a change in you. It is empty for measures that are not about one shot, and it says so when fewer than four in five of the balls you face now are of a kind you also faced then.</p></details>
-  </div>
-  <details class="er-card er-fold" id="metrics-pick">
-    <summary><h3>11hero metrics over the matches you picked</h3><span class="er-muted">Your other matches are your other AI matches at the same levels.</span></summary>
+  <details class="er-card er-fold" id="metrics-level">
+    <summary><h3>11hero metrics at this level</h3><span class="er-muted">Same definitions as the Metrics tab of an 11hero.com match page, over every point at this level.</span></summary>
     <div class="er-foldbody">
     <div class="er-mgrid">
-{{METRICS_PICK}}
+{{METRICS_LEVEL}}
     </div>
     </div>
   </details>
 </section>
 
-<section class="er-section" id="progress">
+</section>
+
+<section class="er-area er-off" id="area-coaching" data-area="coaching">
+<div class="er-areahead">
+  <h1><span class="er-areaname">Coaching</span><span class="er-areasay">What to practise next, what already works, and your journal.</span></h1>
+  <div class="er-parts"><span class="er-ctl" id="parts-coaching">Show</span><div class="er-tabs" role="group" aria-labelledby="parts-coaching"><button class="er-tab" type="button" data-part="" aria-pressed="true">All</button><button class="er-tab" type="button" data-part="plan" aria-pressed="false">Training plan</button><button class="er-tab" type="button" data-part="strengths" aria-pressed="false">What works</button><button class="er-tab" type="button" data-part="journal" aria-pressed="false">Journal</button></div></div>
+</div>
+
+<section data-part="plan" class="er-section" id="plan">
   <div class="er-sechead">
-    <div><h2>Progress by day</h2><p class="er-muted">Share of points and games you won on each day you played the AI. The strip along the top is the AI level.</p></div>
-    <div class="er-legend"><span><i class="er-sw line"></i>Points won</span><span><i class="er-sw line alt"></i>Games won</span></div>
+    <div><h2>Training plan</h2><p class="er-muted">What to practise next, in order of how many points a match each item is worth.</p><details class="er-how"><summary>How to read this</summary><p class="er-muted">The plan is rebuilt from the logs at every update, so an item drops down the list as you close its gap. Each item also shows its number since the session that first put it on the plan.</p></details></div>
+    <div class="er-legend"><span><i class="er-sw dot"></i>Recent sessions, counted as now</span><span><i class="er-sw hollow"></i>Earlier sessions</span><span><i class="er-sw dash"></i>Target: the same number in matches you won</span><span><i class="er-sw vdot"></i>Joined the plan</span></div>
   </div>
-  <div class="er-card"><div class="er-chart" id="chart-progress" data-draw="progress" data-source="days"></div></div>
-  <div class="er-multi">
-    <div id="mini-serve-points"><h3>Points won on your serve</h3><div class="er-mini" data-draw="mini" data-f="servePointRate" data-fmt="pct" data-source="days"></div></div>
-    <div id="mini-return-points"><h3>Points won on the AI's serve</h3><div class="er-mini" data-draw="mini" data-f="returnPointRate" data-fmt="pct" data-source="days"></div></div>
-    <div id="mini-returns"><h3>Your returns that landed</h3><div class="er-mini" data-draw="mini" data-f="returnsLanded" data-fmt="pct" data-source="days"></div></div>
-    <div id="mini-rally"><h3>Your rally shots that landed</h3><div class="er-mini" data-draw="mini" data-f="rallyLanded" data-fmt="pct" data-source="days"></div></div>
-    <div id="mini-speed"><h3>Your average rally speed (m/s)</h3><div class="er-mini" data-draw="mini" data-f="rallySpeed" data-fmt="n1" data-source="days"></div></div>
-    <div id="mini-length"><h3>Shots per point</h3><div class="er-mini" data-draw="mini" data-f="rallyLength" data-fmt="n1" data-source="days"></div></div>
+  <div class="er-multi er-plead" data-draw="plan-lead" data-source="plan"></div>
+  <ol class="er-plan" id="plan-items" data-draw="plan-items" data-source="plan"></ol>
+  <div class="er-keephead"><h3>Already working</h3><p class="er-muted">At or close to the level of the matches you won. Nothing to drill here; keep doing it.</p></div>
+  <ul class="er-plan keep" id="plan-keep" data-draw="plan-keep" data-source="plan"></ul>
+  <div class="er-keephead" id="plan-history"><h3>Plan history</h3><p class="er-muted">When each item joined the plan, whether it left, and whether it came back.</p>
+    <div class="er-legend"><span><i class="er-sw"></i>On the plan</span><span><i class="er-sw ok"></i>Already working</span><span><i class="er-sw none"></i>No target yet</span></div>
+    <details class="er-how"><summary>How to read this</summary><p class="er-muted">One square is one of the sessions the plan is built from, the oldest on the left. The plan keeps no record of its own, so it is worked out again as it would have stood after each session, from the sessions up to that one only. An item is on the plan when its recent number is under its target (the same number in the matches you had won by then) and closing the gap is worth 0.15 points a match or more. Otherwise it is already working. Until you have won some of those matches there is no target. An item close to that line can go on and off the plan from one session to the next by chance: read one square lightly and a long run seriously.</p></details></div>
+  <div class="er-phist" data-draw="plan-history" data-source="plan_history"></div>
+</section>
+
+<section data-part="strengths" class="er-section" id="works">
+  <div class="er-sechead">
+    <div><h2>What works for you</h2><p class="er-muted">Your best serves, strokes and patterns so far: what to keep doing.</p><p class="er-muted" data-draw="wk-note" data-source="shots"></p><details class="er-how"><summary>How to read this</summary><p class="er-muted">The training plan says what to fix; this page says what already wins you points, and it is worked out again at every update. Each list is short on purpose and every line links to the card it comes from. Points won counts how the whole point ended, not only that shot. A serve or a pattern is listed from 30 points, a stroke from 20 shots, and a line is called clear only when its gap would come up by chance about one time in a hundred, because many things are compared at once. A stroke that wins more may also be the one you choose on the easier balls, so open the card and look before changing how you play.</p></details></div>
   </div>
-  <div class="er-card" id="records">
-    <h3>Personal records</h3>
-    <div class="er-controls" data-v="ai"><span class="er-ctl" id="records-level-label">AI level</span><div class="er-tabs" id="records-level" role="group" aria-labelledby="records-level-label" data-draw="level-tabs"></div></div>
-    <div class="er-multi er-records" data-draw="records" data-source="matches"></div>
-    <details class="er-how"><summary>How to read this</summary><p class="er-muted">Your bests so far, counted again at every update. A rally is counted in shots by both players, and only points you won count. The fastest shot is one that landed on the table. A run is matches won one after another, in one session or across several. The best session is the one with the highest share of points won, among sessions of three matches or more. A record set in your latest session is marked.</p></details>
+  <div class="er-wkgrid">
+    <div class="er-card" id="works-serves">
+      <h3>Your best serves</h3>
+      <p class="er-muted">Serves that landed, by spin, depth and where they landed: the three that win you the most points.</p>
+      <ol class="er-wk" data-draw="wk-serves" data-source="shots"></ol>
+    </div>
+    <div class="er-card" id="works-strokes">
+      <h3>Your best stroke against each kind of ball</h3>
+      <p class="er-muted">Rally balls by spin and side, where one stroke wins clearly more points than your others. Returns of serve are in the patterns.</p>
+      <ol class="er-wk" data-draw="wk-strokes" data-source="shots"></ol>
+    </div>
+    <div class="er-card" id="works-patterns">
+      <h3>Your best patterns</h3>
+      <p class="er-muted">The first shots of a point taken together, where they win clearly more points than the rest.</p>
+      <ol class="er-wk" data-draw="wk-patterns" data-source="shots"></ol>
+    </div>
+    <div class="er-card" id="works-place">
+      <h3>Where and how hard</h3>
+      <p class="er-muted">Where your shots land, how you hit them and what attacking brings, over all your returns and rally shots.</p>
+      <ol class="er-wk" data-draw="wk-place" data-source="shots"></ol>
+    </div>
   </div>
+</section>
+
+<section class="er-section" id="journal-part" data-part="journal">
   <div class="er-card" id="journal">
     <h3>Training journal</h3>
     <p class="er-muted">What the logs cannot know: a drill, a game setting, new equipment, a change of technique. Each entry is marked with a diamond on the chart above and on Rolling results.</p>
@@ -1124,7 +1430,6 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
     <div class="er-jeffect" id="journal-effect" hidden>
       <div class="er-jbar">
         <h4>Before and since</h4>
-        <div class="er-controls" data-v="ai"><span class="er-ctl" id="journal-level-label">AI level</span><div class="er-tabs" id="journal-level" role="group" aria-labelledby="journal-level-label" data-draw="level-tabs"></div></div>
         <button class="er-btn" type="button" id="journal-effect-close">Close</button>
       </div>
       <p class="er-pstat" data-draw="journal-effect-head" data-source="match_sums" role="status"></p>
@@ -1134,196 +1439,6 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
   </div>
 </section>
 
-<section class="er-section" id="form">
-  <div class="er-sechead">
-    <div><h2>Form and stamina</h2><p class="er-muted">Your results over your latest matches at one AI level, and how your matches go from the first of a session to the last.</p></div>
-  </div>
-  <div class="er-card" id="form-rolling">
-    <h3>Rolling results</h3>
-    <details class="er-how"><summary>How to read this</summary><p class="er-muted">Each point on the line is the share over the matches up to that one. The band is where the share you would settle at over many matches most likely sits (9 times in 10). A short run of matches leaves a wide band, so a line that stays inside the band of a month ago has not really moved.</p></details>
-    <div class="er-controls" data-v="ai"><span class="er-ctl" id="form-level-label">AI level</span><div class="er-tabs" id="form-level" role="group" aria-labelledby="form-level-label" data-draw="level-tabs"></div></div>
-    <div class="er-controls"><span class="er-ctl" id="form-w-label">Over the last</span><div class="er-tabs" id="form-w" role="group" aria-labelledby="form-w-label"><button class="er-tab" type="button" data-w="10" aria-pressed="false">10 matches</button><button class="er-tab" type="button" data-w="20" aria-pressed="true">20 matches</button><button class="er-tab" type="button" data-w="50" aria-pressed="false">50 matches</button></div><div class="er-tabs" id="form-f" role="group" aria-label="What is counted"><button class="er-tab" type="button" data-f="m" aria-pressed="true">Matches won</button><button class="er-tab" type="button" data-f="p" aria-pressed="false">Points won</button></div></div>
-    <p class="er-pstat" data-draw="form-now" data-source="form" role="status"></p>
-    <div class="er-legend"><span><i class="er-sw line"></i>Share over the last matches</span><span><i class="er-sw band"></i>Likely range</span><span><i class="er-sw dash"></i>All your matches at this level</span></div>
-    <div class="er-chart" id="chart-form" data-draw="form-chart" data-source="form"></div>
-  </div>
-  <div class="er-card" id="form-floor">
-    <h3>Your floor</h3>
-    <p class="er-muted">Your weaker matches over time: whether your bad days are getting better.</p>
-    <details class="er-how"><summary>How to read this</summary><p class="er-muted">A match's result here is the share of points you won in it. Line up your last 20 matches from the worst to the best: the floor is where the lower quarter ends, so one match in four ended at or under it, and the middle match is the one halfway up. An average can rise because your best days got better; the floor rises only when your bad days did. The floor is called clearly up or down by counting how many of the latest matches, and how many of the same number before them, sit in the lower quarter of the two runs together, and asking whether chance would give that gap more than about one time in ten. A quarter of 20 matches is 5 matches, so a small move means little.</p></details>
-    <div class="er-controls" data-v="ai"><span class="er-ctl" id="floor-level-label">AI level</span><div class="er-tabs" id="floor-level" role="group" aria-labelledby="floor-level-label" data-draw="level-tabs"></div></div>
-    <div class="er-controls"><span class="er-ctl" id="floor-w-label">Over the last</span><div class="er-tabs" id="floor-w" role="group" aria-labelledby="floor-w-label"><button class="er-tab" type="button" data-fw="20" aria-pressed="true">20 matches</button><button class="er-tab" type="button" data-fw="50" aria-pressed="false">50 matches</button></div></div>
-    <p class="er-pstat" data-draw="floor-now" data-source="matches" role="status"></p>
-    <div class="er-legend"><span><i class="er-sw line"></i>Your floor: where the lower quarter ends</span><span><i class="er-sw dash"></i>The middle match</span><span><i class="er-sw mute"></i>One match</span></div>
-    <div class="er-chart" id="chart-floor" data-draw="floor-chart" data-source="matches"></div>
-  </div>
-  <div class="er-card" id="form-session">
-    <h3>From the first match of a session to the last</h3>
-    <details class="er-how"><summary>How to read this</summary><p class="er-muted">Points won in each match, set against the other matches of the same session at the same level, and added up by the place of the match in its session. Above the line you play better than in the rest of the session, below it worse.</p></details>
-    <div class="er-legend"><span><i class="er-sw"></i>Clearly better</span><span><i class="er-sw ai"></i>Clearly worse</span><span><i class="er-sw mute"></i>Within chance</span><span><i class="er-sw ref"></i>Likely range</span></div>
-    <div class="er-chart" id="chart-shape" data-draw="form-shape" data-source="session_shape"></div>
-    <ul class="er-notes" data-draw="form-notes" data-source="form_notes"></ul>
-  </div>
-</section>
-
-<section class="er-section" id="findings">
-  <div class="er-sechead"><div><h2>What decides your points at <span data-draw="v" data-ds="findings" data-k="main" data-f="levelName">—</span></h2><p class="er-muted">From all <span data-draw="v" data-ds="findings" data-k="main" data-f="matches" data-fmt="int">—</span> level-<span data-draw="v" data-ds="findings" data-k="main" data-f="level">—</span> matches, <span data-draw="v" data-ds="findings" data-k="main" data-f="from" data-fmt="date">—</span> to <span data-draw="v" data-ds="findings" data-k="main" data-f="to" data-fmt="date">—</span>.</p></div></div>
-  <div class="er-keys" data-draw="findings"></div>
-</section>
-
-<section class="er-section" id="serve">
-  <div class="er-sechead">
-    <div><h2>Serves and returns</h2><p class="er-muted">Over <span data-draw="v" data-ds="levels" data-k="{L}" data-f="matches" data-fmt="int">—</span> matches at this level.</p></div>
-    <div class="er-controls" data-v="ai"><span class="er-ctl" id="serve-level-label">AI level</span><div class="er-tabs" id="serve-level" role="group" aria-labelledby="serve-level-label" data-draw="level-tabs"></div></div>
-  </div>
-
-  <h3 class="er-subhead" id="recv">When the AI serves</h3>
-  <div class="er-keys" id="recv-notes" data-draw="sr-notes" data-who="recv" data-source="serve_notes"></div>
-  <div class="er-card" id="recv-flow">
-    <h3>How points on the AI's serve end</h3>
-    <details class="er-how"><summary>How to read this</summary><p class="er-muted">Each bar is all the AI's serves of one kind, split by where the point ended. Orange is lost, blue is won, and the dark ends are points settled by your return. The line marks where lost turns to won.</p></details>
-    <div class="er-legend"><span><i class="er-sw s0"></i>Return missed, or serve not touched</span><span><i class="er-sw s1"></i>Lost to the AI's next shot</span><span><i class="er-sw s2"></i>Lost later</span><span><i class="er-sw s3"></i>Won later</span><span><i class="er-sw s4"></i>Won by the return</span></div>
-    <div class="er-flow" data-draw="sr-flow" data-who="recv" data-source="serve_flow"></div>
-  </div>
-  <details class="er-card er-fold" id="recv-types">
-    <summary><h3>The AI's serves, type by type</h3><span class="er-muted">Side, spin and depth together, easiest first.</span></summary>
-    <div class="er-foldbody">
-    <div class="er-tablewrap"><table class="er-t types"><thead><tr><th>Serve</th><th>Points won</th><th>Serves</th><th>Share</th><th>m/s</th><th>Returns landed</th><th>Your return m/s</th></tr></thead><tbody data-draw="sr-types" data-who="recv" data-source="serve_types"></tbody></table></div>
-    <p class="er-muted">Only types with 30 serves or more.</p>
-    </div>
-  </details>
-  <details class="er-card er-fold" id="recv-next">
-    <summary><h3>Your return</h3><span class="er-muted">By its pace and by where it lands.</span></summary>
-    <div class="er-foldbody">
-    <div class="er-mgrid">
-      <div class="er-tablewrap"><table class="er-t"><thead><tr><th>By its pace</th><th>Returns</th><th>Share</th><th>Landed</th><th>Points won</th></tr></thead><tbody data-draw="sr-next" data-who="recv" data-kinds="pace" data-source="serve_next"></tbody></table></div>
-      <div class="er-tablewrap"><table class="er-t"><thead><tr><th>By where it lands</th><th>Returns</th><th>Share</th><th>Points won</th></tr></thead><tbody data-draw="sr-next" data-who="recv" data-kinds="land-depth,land-side" data-source="serve_next"></tbody></table></div>
-    </div>
-    </div>
-  </details>
-
-  <h3 class="er-subhead" id="own-serve">When you serve</h3>
-  <div class="er-keys" id="own-serve-notes" data-draw="sr-notes" data-who="serve" data-source="serve_notes"></div>
-  <div class="er-card" id="own-serve-flow">
-    <h3>How points on your serve end</h3>
-    <details class="er-how"><summary>How to read this</summary><p class="er-muted">Each bar is all your serves of one kind, split by where the point ended. Rows by side and depth count only serves that landed, since a missed serve has neither.</p></details>
-    <div class="er-legend"><span><i class="er-sw s0"></i>Serve missed</span><span><i class="er-sw s1"></i>Lost on your third ball</span><span><i class="er-sw s2"></i>Lost later</span><span><i class="er-sw s3"></i>Won later</span><span><i class="er-sw s4"></i>Won by the serve or the third ball</span></div>
-    <div class="er-flow" data-draw="sr-flow" data-who="serve" data-source="serve_flow"></div>
-  </div>
-  <details class="er-card er-fold" id="own-serve-types">
-    <summary><h3>Your serves, type by type</h3><span class="er-muted">Where it lands, spin and depth together, best first.</span></summary>
-    <div class="er-foldbody">
-    <div class="er-tablewrap"><table class="er-t types"><thead><tr><th>Serve</th><th>Points won</th><th>Serves</th><th>Share</th><th>m/s</th><th>AI return m/s</th><th>Third balls landed</th></tr></thead><tbody data-draw="sr-types" data-who="serve" data-source="serve_types"></tbody></table></div>
-    <p class="er-muted">Only types with 30 serves or more.</p>
-    </div>
-  </details>
-  <details class="er-card er-fold" id="own-serve-next">
-    <summary><h3>The AI's return, and your third ball</h3><span class="er-muted">By its pace and by where it lands on your half.</span></summary>
-    <div class="er-foldbody">
-    <div class="er-mgrid">
-      <div class="er-tablewrap"><table class="er-t"><thead><tr><th>By its pace</th><th>Returns</th><th>Share</th><th>Third balls landed</th><th>Points won</th></tr></thead><tbody data-draw="sr-next" data-who="serve" data-kinds="pace" data-source="serve_next"></tbody></table></div>
-      <div class="er-tablewrap"><table class="er-t"><thead><tr><th>By where it lands on your half</th><th>Returns</th><th>Share</th><th>Third balls landed</th><th>Points won</th></tr></thead><tbody data-draw="sr-next" data-who="serve" data-kinds="zone" data-source="serve_next"></tbody></table></div>
-    </div>
-    </div>
-  </details>
-
-  <h3 class="er-subhead" id="patterns">Patterns that win points</h3>
-  <div class="er-card" id="patterns-card">
-    <h3>The first shots of a point, taken together</h3>
-    <div class="er-patctl">
-      <div class="er-rbar"><span class="er-ctl" id="pat-who-label">Points</span><div class="er-tabs" id="pat-who" role="group" aria-labelledby="pat-who-label"><button class="er-tab" type="button" data-who="serve" aria-pressed="true">On your serve</button><button class="er-tab" type="button" data-who="recv" aria-pressed="false">On the AI's serve</button></div></div>
-      <div class="er-rbar"><span class="er-ctl" id="pat-steps-label">Shots in a pattern</span><div class="er-tabs" id="pat-steps" role="group" aria-labelledby="pat-steps-label"><button class="er-tab" type="button" data-steps="2" aria-pressed="false">2</button><button class="er-tab" type="button" data-steps="3" aria-pressed="true">3</button><button class="er-tab" type="button" data-steps="4" aria-pressed="false" hidden>4</button></div></div>
-      <div class="er-rbar"><span class="er-ctl" id="pat-sort-label">Order</span><div class="er-tabs" id="pat-sort" role="group" aria-labelledby="pat-sort-label"><button class="er-tab" type="button" data-sort="n" aria-pressed="true">Most common</button><button class="er-tab" type="button" data-sort="best" aria-pressed="false">Wins most</button><button class="er-tab" type="button" data-sort="worst" aria-pressed="false">Loses most</button></div></div>
-    </div>
-    <p class="er-muted" data-draw="pat-note" data-source="shots"></p>
-    <p class="er-pstat" data-draw="pat-head" data-source="shots" role="status"></p>
-    <div class="er-tablewrap" id="pat-table"><table class="er-t er-sxst er-pat"><thead><tr><th>Pattern</th><th>Points</th><th>Share</th><th colspan="2">Points won</th></tr></thead><tbody data-draw="pat-rows" data-source="shots"></tbody></table></div>
-    <div class="er-rbar"><button class="er-btn" type="button" id="pat-more" hidden>Show every pattern</button><span class="er-muted" data-draw="pat-count" data-source="shots"></span></div>
-    <div class="er-patpoints" id="pat-points-wrap" hidden>
-      <div class="er-rbar"><span class="er-pstat" data-draw="pat-open" data-source="shots" role="status"></span><button class="er-btn" type="button" id="pat-close">Close the list</button></div>
-      <div class="er-tablewrap"><table class="er-t er-sxlist"><thead><tr><th>Point</th><th>Shots</th><th>How it ended</th><th>Result</th><th>Open</th></tr></thead><tbody data-draw="pat-points" data-source="shots"></tbody></table></div>
-      <div class="er-rbar"><button class="er-btn" type="button" id="pat-points-more" hidden>Show more</button><span class="er-muted" data-draw="pat-points-count" data-source="shots"></span></div>
-    </div>
-    <details class="er-how"><summary>How to read this</summary><p class="er-muted">A pattern is the first shots of a point taken together. On your serve: your serve (its spin, its depth and where it lands), the ball that came back (its spin and the side it came to) and the stroke you played third. On the AI's serve: its serve, the stroke you returned it with, the ball that came next and the stroke you played fourth. A point is counted when it got as far as the last shot of the pattern, and a ball you did not reach counts as that shot. Only patterns with 30 points or more are ranked and can carry an arrow; one with 10 to 29 is listed below them in grey. The mark on each bar is your share of points won over all the points that got as far. An arrow marks a pattern that wins clearly more or fewer points than the rest of them: a gap that would come up by chance about one time in a hundred, which is stricter than elsewhere on the page because many patterns are compared at once. The range is where the true share sits nine times in ten. Spin and depth are as in the rest of this section. Click a pattern to list its points, each with its replay.</p></details>
-  </div>
-</section>
-
-<section class="er-section" id="by-level">
-  <div class="er-sechead">
-    <div><h2>Breakdown by AI level</h2><p class="er-muted">Over <span data-draw="v" data-ds="levels" data-k="{L}" data-f="matches" data-fmt="int">—</span> matches at this level.</p></div>
-    <div class="er-controls" data-v="ai"><span class="er-ctl" id="level-label">AI level</span><div class="er-tabs" id="level-select" role="group" aria-labelledby="level-label" data-draw="level-tabs"></div></div>
-  </div>
-  <div class="er-card" id="rating-run" data-v="people">
-    <h3>Your rating, match by match</h3>
-    <details class="er-how"><summary>How to read this</summary><p class="er-muted">The line is your rating after each online match in the logs, in the order played. A dot is that match's opponent, at their rating: filled when you won, hollow when you lost. A ranked match moves your rating, by more when the result was the less likely one; an unranked match leaves it where it was. A jump straight up or down between two matches is a change the logs do not hold.</p></details>
-    <div class="er-legend"><span><i class="er-sw line"></i>Your rating</span><span><i class="er-sw ai dot"></i>Opponent you beat</span><span><i class="er-sw aihollow"></i>Opponent you lost to</span></div>
-    <div class="er-chart" id="chart-rating" data-draw="rating-chart" data-source="rating_h"></div>
-    <ul class="er-notes" data-draw="rating-notes" data-source="rating_notes_h"></ul>
-  </div>
-  <div class="er-card" id="rating-bands" data-v="people">
-    <h3>Results by opponent rating</h3>
-    <p class="er-muted">Expected is the share of matches the two ratings alone say you win, added up over the matches in the row.</p>
-    <div class="er-tablewrap"><table class="er-t"><thead><tr><th>Opponents</th><th>Matches</th><th>Won</th><th>Expected</th><th>Wins against expected</th><th>Points won</th><th>On your serve</th><th>On their serve</th></tr></thead><tbody data-draw="rating-bands" data-source="rating_bands_h"></tbody></table></div>
-  </div>
-  <div class="er-grid">
-    <div class="er-card" id="how-lost">
-      <h3>How you lose points</h3>
-      <p class="er-muted">Share of the points you lost, and how many</p>
-      <div class="er-bars">
-        <div class="er-row"><span>Your rally shot missed</span><div class="er-meter" data-tone="ai" data-draw="meter" data-ds="insights" data-k="{L}|lost|rallyMiss" data-f="share" data-n="n"></div></div>
-        <div class="er-row"><span>Your return missed</span><div class="er-meter" data-tone="ai" data-draw="meter" data-ds="insights" data-k="{L}|lost|returnMiss" data-f="share" data-n="n"></div></div>
-        <div class="er-row"><span>Your serve missed</span><div class="er-meter" data-tone="ai" data-draw="meter" data-ds="insights" data-k="{L}|lost|serveMiss" data-f="share" data-n="n"></div></div>
-        <div class="er-row"><span>AI shot you couldn't return</span><div class="er-meter" data-tone="ai" data-draw="meter" data-ds="insights" data-k="{L}|lost|aiWinner" data-f="share" data-n="n"></div></div>
-        <div class="er-row"><span>AI serve you couldn't return</span><div class="er-meter" data-tone="ai" data-draw="meter" data-ds="insights" data-k="{L}|lost|aiAce" data-f="share" data-n="n"></div></div>
-      </div>
-    </div>
-    <div class="er-card" id="how-won">
-      <h3>How you win points</h3>
-      <p class="er-muted">Share of the points you won, and how many</p>
-      <div class="er-bars">
-        <div class="er-row"><span>Your shot the AI couldn't return</span><div class="er-meter" data-draw="meter" data-ds="insights" data-k="{L}|won|winner" data-f="share" data-n="n"></div></div>
-        <div class="er-row"><span>AI rally shot missed</span><div class="er-meter" data-draw="meter" data-ds="insights" data-k="{L}|won|aiMiss" data-f="share" data-n="n"></div></div>
-        <div class="er-row"><span>AI return missed</span><div class="er-meter" data-draw="meter" data-ds="insights" data-k="{L}|won|aiReturnMiss" data-f="share" data-n="n"></div></div>
-        <div class="er-row"><span>AI serve missed</span><div class="er-meter" data-draw="meter" data-ds="insights" data-k="{L}|won|aiServeMiss" data-f="share" data-n="n"></div></div>
-        <div class="er-row"><span>Your serve not returned</span><div class="er-meter" data-draw="meter" data-ds="insights" data-k="{L}|won|ace" data-f="share" data-n="n"></div></div>
-        <div class="er-row"><span>Other (ball touched something else)</span><div class="er-meter" data-draw="meter" data-ds="insights" data-k="{L}|won|other" data-f="share" data-n="n"></div></div>
-      </div>
-    </div>
-  </div>
-  <div class="er-grid">
-    <div class="er-col">
-      <div class="er-card" id="rally-length">
-        <h3>Points won by length of point</h3>
-        <details class="er-how"><summary>How to read this</summary><p class="er-muted">Top: the share of points you won, by the number of shots in the point, serve included. The line is your average for the level. Bottom: how many of all points end at each length.</p></details>
-        <div class="er-chart" id="chart-rally" data-draw="rally" data-source="insights levels"></div>
-      </div>
-      <div class="er-card" id="won-vs-lost">
-        <h3>Your numbers in matches won and lost</h3>
-        <div class="er-tablewrap"><table class="er-t"><thead><tr><th>At this level</th><th>Won</th><th>Lost</th></tr></thead><tbody>
-{{WVL_ROWS}}
-        </tbody></table></div>
-      </div>
-    </div>
-    <div class="er-col">
-      <div class="er-card" id="serve-zones">
-        <h3>Where serves land</h3>
-        <details class="er-how"><summary>How to read this</summary><p class="er-muted">Share of points you won when a serve first landed in each zone, with the number of serves under it. Your serves land on the AI's half, its serves on yours. Stronger blue means you won more; zones with fewer than 30 serves stay grey. Seen from your end.</p></details>
-        <div class="er-chart" id="chart-zones" data-draw="zones" data-source="zones"></div>
-      </div>
-      <div class="er-card" id="shot-mix-level">
-        <h3>Rally shots by type</h3>
-        <div class="er-tablewrap"><table class="er-t"><thead><tr><th>Shot</th><th>Shots</th><th>Share</th><th>Landed</th><th>m/s</th><th>r/s</th><th>Winners</th></tr></thead><tbody data-draw="shots" data-scope="L{L}"></tbody></table></div>
-      </div>
-    </div>
-  </div>
-  <details class="er-card er-fold" id="metrics-level">
-    <summary><h3>11hero metrics at this level</h3><span class="er-muted">Same definitions as the Metrics tab of an 11hero.com match page, over every point at this level.</span></summary>
-    <div class="er-foldbody">
-    <div class="er-mgrid">
-{{METRICS_LEVEL}}
-    </div>
-    </div>
-  </details>
 </section>
 
 <details id="notes">
@@ -1351,6 +1466,18 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
     <li>Small groups swing a lot. The zone map and the rally-length chart show how many serves or points each number covers, and the zone map colours only zones with 30 serves or more.</li>
   </ul>
 </details>
+
+<div class="er-backwrap" id="backwrap"><button class="er-backbtn" type="button" id="back-btn" hidden></button><div class="er-finder er-finderfloat" id="find-foot"><button class="er-btn er-finderbtn" type="button" aria-expanded="false" aria-haspopup="true"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 3.5h10M2 7h10M2 10.5h6"/></g></svg><span>Jump to</span></button><nav class="er-findermenu" aria-label="In this area" hidden></nav></div></div>
+<dialog class="er-viewer" id="viewer" aria-labelledby="viewer-title">
+  <div class="er-viewhead">
+    <button class="er-btn" type="button" id="viewer-close">← Back to the list</button>
+    <h2 id="viewer-title">Replay</h2>
+    <button class="er-goto" type="button" id="viewer-home">Open in Match review →</button>
+  </div>
+  <div class="er-viewbody" id="viewer-body"></div>
+</dialog>
+
+<nav class="er-bot" id="bot" aria-label="Areas"><button class="er-bottab" type="button" data-go="overview" aria-current="page">Overview</button><button class="er-bottab" type="button" data-go="review">Review</button><button class="er-bottab" type="button" data-go="progress">Progress</button><button class="er-bottab" type="button" data-go="tactics">Tactics</button><button class="er-bottab" type="button" data-go="shots">Shots</button><button class="er-bottab" type="button" data-go="coaching">Coaching</button></nav>
 
 </div>
 </div></div></div>
@@ -1730,7 +1857,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
       const v = viewOf(sc);
       page.querySelectorAll('[data-draw]').forEach((d) => {
         const r = d.getBoundingClientRect();
-        if (r.bottom > v.top && r.top < v.bottom && (r.width > 0 || r.height > 0)) before.set(d, {html: d.innerHTML, old: snap(d)});
+        if (r.bottom > v.top && r.top < v.bottom && (r.width > 0 || r.height > 0) && !d.closest('.er-off')) before.set(d, {html: d.innerHTML, old: snap(d)});
       });
     }
     settle();
@@ -2648,7 +2775,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       b.addEventListener('click', () => {
         ER.set({match: r.key}, null, () => {
           const target = document.getElementById('match');
-          if (target && target.scrollIntoView) target.scrollIntoView({behavior: 'smooth', block: 'start'});
+          ER.goto(target);
         });
       });
       return b;
@@ -3617,6 +3744,25 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   };
   dash.draw('plan-items', list(false));
   dash.draw('plan-keep', list(true));
+
+  // Overview: the item at the top of the plan, in short. The plan itself is in Coaching.
+  dash.draw('ov-plan', (el) => {
+    const rows = ranked();
+    if (!rows) return ER.wait(el, ['plan']);
+    const r = rows.find((x) => !isKeep(x));
+    if (!r) {
+      el.replaceChildren(ER.el('p', 'er-muted', ER.tr('Every item is at the level of the matches you won. Time to move the targets.')));
+      return;
+    }
+    const h = ER.el('h4');
+    h.appendChild(ER.span(ER.tx(r, 'title'), 'plan', 'title', r.key));
+    const why = ER.el('p', 'er-muted');
+    why.appendChild(ER.span(ER.tx(r, 'why'), 'plan', 'why', r.key));
+    if (r.gain == null) return el.replaceChildren(h, why);
+    const num = ER.el('div', 'er-pnum');
+    num.append(ER.span('+' + ER.fmt1(r.gain), 'plan', 'gain', r.key), ER.el('small', null, ER.tr('points a match')));
+    el.replaceChildren(h, num, why);
+  });
 
   // Plan history. plan_history holds the state of every item after each session at the plan's level (1 on the plan,
   // 0 already working, - no target yet). Drawn as one square a session, with in words when the item joined, whether
@@ -5304,9 +5450,10 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     });
     mark();
   };
-  // Put a point on the table and play it. The page moves only if the court is not already on screen. With n, the
-  // point starts just before the shot that led to its shot n; back says whether the way back shows: true for the shot
-  // explorer's list, or the id of the card the point was opened from.
+  // Put a point on the table and play it. With n, the point starts just before the shot that led to its shot n.
+  // With back (true, or the id of the card it was asked from) the point was opened from a list somewhere else on the
+  // page: the replay then opens over the area you are in (ER.viewer), and closing it leaves you at that list. From
+  // its own card it stays where it is, and the page moves only if the court is not already on screen.
   let pending = null;       // a point asked for while its month of replays was still loading
   const show = (key, n, back) => {
     if (!track(key)) {
@@ -5317,13 +5464,10 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     load(key, !calm());
     const lead = n > 1 ? st.hits[n - 2] : null;
     if (lead) st.t = calm() ? st.end : Math.max(0, lead.t - 0.15);
-    if (back != null && $('replay-back')) {
-      $('replay-back').hidden = !back;
-      st.backTo = back === true ? 'sx-list-wrap' : back || '';
-    }
+    const over = !!back && !!ER.viewer && ER.viewer.open();
     redraw();
     const court = $('chart-replay');
-    if (court) court.scrollIntoView({behavior: calm() ? 'auto' : 'smooth', block: 'nearest'});
+    if (court && !over) ER.goto(court, {block: 'nearest'});
     if (!calm()) play();
   };
   const step = (d) => {
@@ -5332,7 +5476,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     const n = pts[i + d];
     if (n) show(n.key);
   };
-  ER.replay = {show, mark, camera: () => st.chase};
+  ER.replay = {show, mark, stop: () => stop(), camera: () => st.chase};
 
   // ---- Side by side: a shot you landed and one you missed against a similar ball, each on its own table in 3D ----
   // A side is a small copy of what the replay keeps about a point (SWAP), cut down to the ball coming at you and your
@@ -5562,7 +5706,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       el.appendChild(ER.el('p', 'er-muted', ER.tr('No replay for this match: its points have no logged shots.')));
       return;
     }
-    const W = Math.max(200, Math.min(300, cw || 300)), H = Math.round(W * Z / X);
+    const W = Math.max(200, Math.min(440, cw || 300)), H = Math.round(W * Z / X);
     if (st.view === '3d') {       // a squarer frame: seen from behind your end, the table is about as wide as it is deep
       draw3(el, W, Math.round(W * 1.3));
       paint();
@@ -5707,11 +5851,6 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     if (st.playing) return stop();
     whole();
     play();
-  });
-  on('replay-back', 'click', () => {
-    $('replay-back').hidden = true;
-    const list = $(st.backTo || 'sx-list-wrap');
-    if (list) list.scrollIntoView({behavior: calm() ? 'auto' : 'smooth', block: 'center'});
   });
   on('replay-prev', 'click', () => step(-1));
   on('replay-next', 'click', () => step(1));
@@ -6319,7 +6458,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     st.only = '';
     redraw(['sx-filter', ...OUT]);
     const card = $('shots-find');
-    if (card) card.scrollIntoView({behavior: calm() ? 'auto' : 'smooth', block: 'start'});
+    if (card) ER.goto(card, {block: 'start'});
   };
   const groups = () => {
     const rows = ER.rows('shot_groups');
@@ -6549,7 +6688,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
         pst.limit = PAGE;
         redraw(['pat-rows', 'pat-open', 'pat-points', 'pat-points-count']);
         const list = $('pat-points-wrap');
-        if (pst.open && list) list.scrollIntoView({behavior: calm() ? 'auto' : 'smooth', block: 'nearest'});
+        if (pst.open && list) ER.goto(list, {block: 'nearest'});
       });
       return tr;
     }));
@@ -7056,7 +7195,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   };
   const wkJump = (id) => {
     const el = $(id);
-    if (el) el.scrollIntoView({behavior: calm() ? 'auto' : 'smooth', block: 'start'});
+    if (el) ER.goto(el, {block: 'start'});
   };
   // the shot explorer with only the level set, a card's line listed when one is given, and the page moved there
   const wkShots = (set, only, id) => {
@@ -7871,7 +8010,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
 
   const scroll = (id) => () => {
     const t = document.getElementById(id);
-    if (t && t.scrollIntoView) t.scrollIntoView({behavior: 'smooth', block: 'start'});
+    ER.goto(t);
   };
   const replay = (m, key, n) => () => {
     const go = () => ER.replay && ER.replay.show(key, n, 'records');
@@ -7919,155 +8058,345 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
 </script>
 
 <script>
-// Section menu. Its text is fixed in the page; this only marks where you are and scrolls to a section on a click.
-// Beside the report it is a rail; where there is no room it is one button that opens the list.
-// The page may scroll itself, or sit in a frame as tall as its content that the host scrolls. In the second case no
-// scroll event arrives and sticky does nothing, so the visible part of the report is read from an IntersectionObserver:
-// `view` is the top of what is on screen, in this page's own coordinates (0 when the page scrolls itself).
+// Areas. The page is six areas, one on screen at a time, picked in the bar (along the foot of a phone); the parts of
+// an area are a filter on it. Both are parameters, so they sit in the address and the browser's Back returns to where
+// you were. What is off stays laid out at its own width (.er-off), so every drawing is still drawn at the right size,
+// and a printed page shows it all. This script only marks what is on: the names are fixed in the page.
 (() => {
-  const nav = document.getElementById('section-menu');
-  if (!nav) return;
-  const shell = nav.closest('.er-shell');
-  const list = nav.querySelector('ol');
-  const items = [...nav.querySelectorAll('a[href^="#"]')].map((a) => ({
-    a, li: a.parentElement, el: document.getElementById(a.getAttribute('href').slice(1)), top: a.parentElement.parentElement === list,
-  })).filter((x) => x.el);
-  if (!items.length) return;
-  const tops = items.filter((x) => x.top);
-  const owner = (x) => (x.top ? x : items.find((i) => i.top && i.li.contains(x.li)) || x);
-  const btn = document.getElementById('section-toggle');
-  const nows = [...nav.querySelectorAll('[data-now]')];
-  const low = new Map();
-  let now = null, raf = 0, view = 0, atEnd = false, hold = 0, shift = 0;
-
-  const set = (sec, sub) => {
-    const cur = sub || sec;
-    if (cur === now) return;
-    now = cur;
-    items.forEach((x) => {
-      x.li.classList.toggle('on', x === sec || x === sub);
-      if (x === cur) x.a.setAttribute('aria-current', 'true');
-      else x.a.removeAttribute('aria-current');
-    });
-    // The button carries one name per section; show the one you are in.
-    nows.forEach((n) => {
-      n.hidden = n.getAttribute('data-now') !== sec.el.id;
-    });
+  const ER = window.ER;
+  const page = document.getElementById('page');
+  const areas = [...document.querySelectorAll('.er-area')];
+  if (!page || !areas.length) return;
+  const names = areas.map((a) => a.dataset.area);
+  const calm = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const partsOf = (sec) => [...sec.querySelectorAll('[data-part]:not(button)')];
+  const has = (el, p) => el.dataset.part.split(' ').includes(p);
+  // the area and the part the address asks for; a part the area does not have is all of the area
+  const want = () => {
+    const q = dash.params();
+    const area = names.includes(q.area) ? q.area : names[0];
+    const sec = areas.find((a) => a.dataset.area === area);
+    const part = String(q.part || '');
+    return {area, sec, part: part && partsOf(sec).some((el) => has(el, part)) ? part : ''};
   };
-  // The list under the button: no taller than what is left of the screen below it.
-  const open = (yes) => {
-    if (yes) {
-      const foot = low.size ? Math.max(...low.values()) : window.innerHeight;
-      nav.style.setProperty('--er-room', Math.max(170, Math.round(foot - nav.getBoundingClientRect().bottom - 18)) + 'px');
+  let shown = '', drawn = false;
+  const apply = () => {
+    const {area, sec, part} = want();
+    if (shown === area + '|' + part) return;
+    if (drawn && !calm()) {
+      sec.classList.remove('er-enter');
+      void sec.offsetWidth;
+      sec.classList.add('er-enter');
     }
-    nav.classList.toggle('open', yes);
-    if (btn) btn.setAttribute('aria-expanded', String(yes));
-  };
-  if (btn) {
-    btn.addEventListener('click', () => open(!nav.classList.contains('open')));
-    document.addEventListener('pointerdown', (ev) => {
-      if (!nav.contains(ev.target)) open(false);
+    drawn = true;
+    shown = area + '|' + part;
+    page.dataset.area = area;
+    document.querySelectorAll('.er-areatab,.er-bottab').forEach((b) => {
+      if (b.dataset.go === area) b.setAttribute('aria-current', 'page');
+      else b.removeAttribute('aria-current');
     });
-    document.addEventListener('keydown', (ev) => {
-      if (ev.key !== 'Escape' || !nav.classList.contains('open')) return;
-      open(false);
-      btn.focus();
-    });
-  }
-  // Where sticky cannot hold the menu (the host scrolls the frame), carry it down the page by hand.
-  const pin = () => {
-    let want = 0;
-    if (view > 0 && shell) {
-      const gap = parseFloat(getComputedStyle(nav).top) || 0;
-      // offsetTop, not the drawn position: the menu may still be gliding to its last place.
-      const frame = shell.getBoundingClientRect(), natural = frame.top + nav.offsetTop;
-      want = Math.max(0, Math.min(view + gap - natural, frame.bottom - nav.offsetHeight - natural));
-    }
-    if (Math.abs(want - shift) < 0.5) return;
-    shift = want;
-    nav.style.transition = 'transform .12s linear';
-    nav.style.transform = shift ? `translateY(${shift.toFixed(1)}px)` : '';
-  };
-  const mark = () => {
-    raf = 0;
-    pin();
-    if (Date.now() < hold) return;
-    const line = view + (parseFloat(getComputedStyle(items[0].el).scrollMarginTop) || 0) + 16;
-    let sec = tops[0], sub = null;
-    items.forEach((x) => {
-      if (x.el.getBoundingClientRect().top > line) return;
-      if (x.top) {
-        sec = x;
-        sub = null;
-      } else sub = x;
-    });
-    const doc = document.documentElement;
-    const ownEnd = doc.scrollHeight > window.innerHeight + 4 && window.innerHeight + window.scrollY >= doc.scrollHeight - 4;
-    if (ownEnd || atEnd) {
-      sec = tops[tops.length - 1];
-      sub = null;
-    }
-    set(sec, sub);
-  };
-  // Run on the next frame, or shortly after if no frame comes.
-  const queue = () => {
-    if (raf) return;
-    raf = 1;
-    const run = () => {
-      if (raf) mark();
-    };
-    requestAnimationFrame(run);
-    setTimeout(run, 150);
-  };
-  window.addEventListener('scroll', queue, {passive: true, capture: true});
-  window.addEventListener('resize', queue);
-  if (shell && 'IntersectionObserver' in window) {
-    // A ruler down the side of the report: 240 px bands, each watched in 4 px steps. The band cut off by the top of
-    // the screen says exactly where the screen starts; a mark at the foot says when the end is in sight.
-    // The ruler is in the page's HTML (.er-ruler: one <i> per band, a <b> at the foot): a script may not add
-    // elements outside a drawing.
-    const ruler = shell.querySelector('.er-ruler');
-    const bands = ruler ? [...ruler.querySelectorAll('i')] : [];
-    const foot = ruler ? ruler.querySelector('b') : null;
-    const steps = [];
-    for (let i = 0; i <= 60; i += 1) steps.push(i / 60);
-    const cut = new Map();
-    let footSeen = false;
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach((e) => {
-        if (e.target === foot) {
-          footSeen = e.isIntersecting;
-          return;
-        }
-        const box = e.boundingClientRect, seen = e.intersectionRect;
-        if (e.isIntersecting && seen.top > box.top + 0.5) cut.set(e.target, seen.top);
-        else cut.delete(e.target);
-        // the band cut off by the foot of the screen says where the screen ends
-        if (e.isIntersecting && seen.bottom < box.bottom - 0.5) low.set(e.target, seen.bottom);
-        else low.delete(e.target);
+    areas.forEach((a) => {
+      const p = a === sec ? part : '';
+      a.classList.toggle('er-off', a !== sec);
+      a.querySelectorAll('button[data-part]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.part === p)));
+      partsOf(a).forEach((el) => el.classList.toggle('er-off', !!p && !has(el, p)));
+      // a section with nothing of this part in it takes no room
+      a.querySelectorAll('.er-section:not([data-part])').forEach((s) => {
+        const kids = [...s.children].filter((c) => c.hasAttribute('data-part'));
+        s.classList.toggle('er-off', !!p && kids.length > 0 && kids.every((c) => c.classList.contains('er-off')));
       });
-      view = cut.size ? Math.max(0, Math.min(...cut.values())) : 0;
-      atEnd = footSeen && cut.size > 0;
-      queue();
-    }, {threshold: steps});
-    bands.forEach((el) => io.observe(el));
-    if (foot) io.observe(foot);
-  }
-  nav.addEventListener('click', (ev) => {
-    const a = ev.target.closest && ev.target.closest('a[href^="#"]');
-    const x = a && items.find((i) => i.a === a);
-    if (!x) return;
-    ev.preventDefault();
-    open(false);
-    if (x.el.tagName === 'DETAILS') x.el.open = true;
-    // Mark the entry at once, and leave it alone while the page is still travelling there.
-    set(owner(x), x.top ? null : x);
-    hold = Date.now() + 1100;
-    setTimeout(queue, 1150);
-    const calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    x.el.scrollIntoView({behavior: calm ? 'auto' : 'smooth', block: 'start'});
+    });
+    ink();
+    dockShow(true);
+  };
+  // A change of area or part is a step the browser's Back undoes. True when the view changed.
+  const go = (p) => {
+    const now = want();
+    const next = Object.assign({area: now.area, part: now.part}, p);
+    if (next.area === now.area && next.part === now.part) return false;
+    try {
+      history.pushState(null, '', location.href);
+    } catch (e) {
+      // a browser may refuse this for a local file: the view still changes, Back then leaves the page
+    }
+    dash.setParams({area: next.area, part: next.part});
+    apply();
+    return true;
+  };
+  const toTop = (el) => {
+    if (el && el.getBoundingClientRect().top < 0) el.scrollIntoView({behavior: 'auto', block: 'start'});
+  };
+  ER.area = () => want().area;
+  ER.part = () => want().part;
+  ER.go = go;
+  // Bring an element into view, wherever it is: its area first, then its part when the part shown leaves it out.
+  // The finder: the headings of the area on screen, as a list to jump to. It is read from the page when it opens,
+  // so it follows the part shown, the side and the language. A heading a drawing wrote (a finding, a plan item) is
+  // left out: those change with the data, and sit under a heading that is listed.
+  const finders = [...document.querySelectorAll('.er-finder')];
+  const heads = () => {
+    const {sec} = want();
+    return [...sec.querySelectorAll('h2,h3,#shots-find h4')].filter((h) => {
+      if (h.closest('.er-areahead,.er-off,[data-draw],[hidden],.er-multi,.er-keys')) return false;
+      const fold = h.closest('details');
+      if (fold && !fold.open && !h.closest('summary')) return false;       // inside something folded away
+      return h.getClientRects().length > 0 && !!(h.innerText || '').trim();
+    });
+  };
+  const shutFind = () => finders.forEach((f) => {
+    f.querySelector('.er-findermenu').hidden = true;
+    f.querySelector('.er-finderbtn').setAttribute('aria-expanded', 'false');
   });
-  mark();
-  setTimeout(queue, 1200);
+  const openFind = (f) => {
+    const menu = f.querySelector('.er-findermenu'), list = heads();
+    const edge = (parseFloat(getComputedStyle(page).getPropertyValue('--er-jump')) || 0) + 40;
+    let here = null;
+    menu.replaceChildren(...list.map((h) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.dataset.lv = h.tagName === 'H2' ? '1' : h.tagName === 'H3' ? '2' : '3';
+      b.textContent = h.innerText.trim().split(String.fromCharCode(10))[0];
+      if (h.getBoundingClientRect().top <= edge) here = b;
+      b.addEventListener('click', () => {
+        shutFind();
+        const card = h.closest('.er-card,.er-section,[id]');
+        const to = h.tagName === 'H2' ? h.closest('.er-section') || h : card && card.getBoundingClientRect().top > h.getBoundingClientRect().top - 60 ? card : h;
+        to.scrollIntoView({behavior: calm() ? 'auto' : 'smooth', block: 'start'});
+      });
+      return b;
+    }));
+    if (here) here.setAttribute('aria-current', 'true');
+    menu.hidden = false;
+    f.querySelector('.er-finderbtn').setAttribute('aria-expanded', 'true');
+    if (here) here.scrollIntoView({block: 'nearest'});
+  };
+  finders.forEach((f) => f.querySelector('.er-finderbtn').addEventListener('click', () => {
+    const was = !f.querySelector('.er-findermenu').hidden;
+    shutFind();
+    if (!was) openFind(f);
+  }));
+  document.addEventListener('pointerdown', (ev) => {
+    if (!finders.some((f) => f.contains(ev.target))) shutFind();
+  });
+  document.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Escape') shutFind();
+  });
+  // nothing to find in an area of one or two headings
+  const sayFind = () => {
+    const few = heads().length < 4;
+    finders.forEach((f) => (f.hidden = few));
+    if (few) shutFind();
+  };
+  ER.finder = {heads: () => heads().length, open: () => openFind(finders[0]), shut: shutFind};
+
+  // The line under the area on screen slides from tab to tab.
+  const inks = [...document.querySelectorAll('.er-areas,.er-bot')].map((nav) => {
+    const i = document.createElement('i');
+    i.className = 'er-ink';
+    i.setAttribute('aria-hidden', 'true');
+    nav.appendChild(i);
+    nav.classList.add('er-inked');
+    return {nav, i};
+  });
+  const ink = () => inks.forEach(({nav, i}) => {
+    const t = nav.querySelector('[aria-current=page]');
+    if (!t || !t.offsetWidth) return;
+    i.style.width = t.offsetWidth + 'px';
+    i.style.transform = 'translateX(' + t.offsetLeft + 'px)';
+    if (!i.classList.contains('on')) requestAnimationFrame(() => requestAnimationFrame(() => i.classList.add('on')));
+  });
+  window.addEventListener('resize', ink);
+
+  // The dock (the areas along the foot of a phone) steps aside on the way down the page and comes back on the way
+  // up, at the end of the page, and whenever an area opens.
+  const dock = document.getElementById('bot');
+  let dockY = Math.max(0, window.scrollY);
+  const dockShow = (on) => {
+    page.classList.toggle('er-dockoff', !on);
+    if (on) dockY = Math.max(0, window.scrollY);
+  };
+  window.addEventListener('scroll', () => {
+    const y = Math.max(0, window.scrollY), d = y - dockY;
+    if (Math.abs(d) < 8) return;
+    dockY = y;
+    const end = y + window.innerHeight >= document.documentElement.scrollHeight - 32;
+    page.classList.toggle('er-dockoff', d > 0 && y > 80 && !end);
+  }, {passive: true});
+  if (dock) dock.addEventListener('focusin', () => dockShow(true));
+
+  // The way back. A jump from a card (ER.goto) that changes the area or the part, or moves the page by more than a
+  // screen, leaves a button at the foot of the screen that returns to where you were, one step for each jump taken.
+  // Picking an area yourself, or the browser's own Back, clears it.
+  const NAMES = {overview: ER.k('Overview'), review: ER.k('Match review'), progress: ER.k('Progress'), tactics: ER.k('Tactics'),
+    shots: ER.k('Shot analysis'), coaching: ER.k('Coaching')};
+  const trail = [];
+  const backwrap = document.getElementById('backwrap'), backbtn = document.getElementById('back-btn');
+  const sayBack = () => {
+    if (!backwrap || !backbtn) return;
+    const t = trail[trail.length - 1];
+    backbtn.hidden = !t;
+    if (t) backbtn.textContent = t.area !== want().area ? ER.tr('← Back to {0}', ER.tr(NAMES[t.area])) : ER.tr('← Back to where you were');
+  };
+  const leave = (area, part, y) => {
+    const t = trail[trail.length - 1];
+    if (t && t.area === area && t.part === part && Math.abs(t.y - y) < 200) return;
+    trail.push({area, part, y});
+    if (trail.length > 12) trail.shift();
+    sayBack();
+  };
+  const forget = () => {
+    trail.length = 0;
+    sayBack();
+  };
+  if (backbtn) {
+    backbtn.addEventListener('click', () => {
+      const t = trail.pop();
+      if (!t) return;
+      go({area: t.area, part: t.part});
+      window.scrollTo({top: t.y, behavior: 'auto'});
+      sayBack();
+    });
+  }
+  window.addEventListener('popstate', forget);
+  ER.trail = () => trail.length;
+  ER.goto = (el, o) => {
+    if (!el) return;
+    const sec = el.closest('.er-area');
+    const from = want(), y = window.scrollY;
+    let moved = false;
+    if (sec) {
+      const holder = el.closest('[data-part]:not(button)') || (el.matches('.er-section') ? el.querySelector('[data-part]') : null);
+      let part = sec.dataset.area === from.area ? from.part : '';
+      if (part && holder && !has(holder, part)) part = holder.dataset.part.split(' ')[0];
+      moved = go({area: sec.dataset.area, part});
+    }
+    if (el.tagName === 'DETAILS') el.open = true;
+    // a change of area or part, or a move of more than a screen, leaves a way back
+    const r = el.getBoundingClientRect(), h = window.innerHeight || 800;
+    if (sec && (moved || r.top > 1.5 * h || r.bottom < -0.5 * h)) leave(from.area, from.part, y);
+    el.scrollIntoView({behavior: moved || calm() ? 'auto' : 'smooth', block: (o && o.block) || 'start'});
+  };
+  // The replay, wherever you are (ER.viewer). A list of points in another area opens the replay in a window over the
+  // page instead of taking you to Match review: the replay's card itself is moved into the window, so it is the one
+  // replay with its own controls, on a larger table. Closing the window puts the card back and leaves the page where
+  // it was, at the list, ready for the next point.
+  const viewer = document.getElementById('viewer'), rcard = document.getElementById('match-replay');
+  if (viewer && rcard && viewer.showModal && !document.documentElement.classList.contains('pdf')) {
+    const vbody = document.getElementById('viewer-body'), slot = document.createComment('the replay is in its window');
+    const home = () => {
+      if (!slot.isConnected) return;
+      if (ER.replay && ER.replay.stop) ER.replay.stop();
+      slot.replaceWith(rcard);
+      shown = '';
+      apply();
+      dash.setParams({});       // drawn again, at the card's own width
+    };
+    const shut = () => {
+      if (viewer.open) viewer.close();
+      home();
+    };
+    viewer.addEventListener('close', home);
+    viewer.addEventListener('click', (ev) => {
+      if (ev.target === viewer) shut();          // a click outside the window
+    });
+    document.getElementById('viewer-close').addEventListener('click', shut);
+    document.getElementById('viewer-home').addEventListener('click', () => {
+      shut();
+      ER.goto(document.getElementById('chart-replay') || rcard);
+    });
+    window.addEventListener('popstate', shut);
+    ER.viewer = {
+      open: () => {
+        if (!viewer.open) {
+          rcard.replaceWith(slot);
+          rcard.classList.remove('er-off');
+          vbody.appendChild(rcard);
+          viewer.showModal();
+        }
+        return true;
+      },
+      close: shut,
+      isOpen: () => viewer.open,
+    };
+  }
+  document.addEventListener('click', (ev) => {
+    const t = ev.target.closest && ev.target.closest('[data-go],button[data-part],[data-jump]');
+    if (!t || !page.contains(t)) return;
+    if (t.dataset.jump) {
+      ER.goto(document.getElementById(t.dataset.jump));
+    } else if (t.dataset.go) {
+      shutFind();
+      forget();
+      go({area: t.dataset.go, part: ''});
+      toTop(document.getElementById('report'));
+    } else {
+      go({part: t.dataset.part});
+      toTop(t.closest('.er-areahead'));
+    }
+  });
+  dash.onData(apply);
+  dash.onData(sayBack);
+  dash.onData(() => {
+    ink();
+    sayFind();
+  });
+
+  // Overview: your form in short, and the first findings. Each has its full card in its own area.
+  const form = () => {
+    const all = ER.rows('form');
+    if (!all) return null;
+    const L = ER.level(), mine = all.filter((r) => r.level === L);
+    return {L, n: mine.length, rows: mine.filter((r) => r.p20 != null)};
+  };
+  dash.draw('ov-form-note', (el) => {
+    const s = form();
+    if (!s) return el.replaceChildren();
+    if (!s.rows.length) return el.replaceChildren(ER.tr('Level {0} has {1} matches so far: not enough for a run of {2}.', s.L, s.n, 20));
+    const r = s.rows[s.rows.length - 1];
+    el.replaceChildren(...ER.trn('Your last {0} matches at level {1}: {2} of points won, likely range {3} to {4}.',
+      '20', String(s.L), ER.el('b', null, ER.F.pct(r.p20)), ER.F.pct(r.p20lo), ER.F.pct(r.p20hi)));
+  });
+  dash.draw('ov-form', (el) => {
+    const s = form();
+    if (!s) return ER.wait(el, ['form']);
+    el.hidden = s.rows.length < 2;          // too few matches: the line above says so, and no chart is drawn
+    const W = Math.max(240, el.clientWidth || 480), H = 150;
+    if (ER.same(el, [ER.lang(), W, ER.rows('form'), s.L])) return;
+    el.replaceChildren();
+    if (s.rows.length < 2) return;
+    const rows = s.rows, last = rows[rows.length - 1];
+    const svg = ER.svg(el, W, H, ER.tr('Line chart of the share of points you won over your last {0} matches at level {1}, match by match, with the likely range as a band', 20, s.L));
+    const y = d3.scaleLinear().domain([0, Math.max(50, d3.max(rows, (r) => r.p20hi))]).nice();
+    const ticks = y.ticks(4);
+    const m = {t: 10, r: Math.ceil(ER.textW(svg, ER.F.pct(last.p20), 'er-strong')) + 14, b: 24, l: Math.ceil(d3.max(ticks, (t) => ER.textW(svg, t + '%'))) + 10};
+    y.range([H - m.b, m.t]);
+    const x = d3.scaleLinear().domain([rows[0].i, Math.max(last.i, rows[0].i + 1)]).range([m.l, W - m.r]);
+    const px = (r) => x(r.i);
+    ticks.forEach((t) => {
+      svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(t)).attr('y2', y(t))
+        .style('stroke', t === 0 ? 'var(--cds-chart-axis)' : 'var(--cds-chart-grid)');
+      svg.append('text').attr('x', m.l - 8).attr('y', y(t)).attr('text-anchor', 'end').attr('dominant-baseline', 'middle').attr('class', 'er-num').text(t + '%');
+    });
+    svg.append('text').attr('x', m.l).attr('y', H - 6).attr('text-anchor', 'start').text(ER.F.date(rows[0].date));
+    svg.append('text').attr('x', W - m.r).attr('y', H - 6).attr('text-anchor', 'end').text(ER.F.date(last.date));
+    svg.append('path').datum(rows).attr('d', d3.area().x(px).y0((r) => y(r.p20lo)).y1((r) => y(r.p20hi)))
+      .style('fill', ER.YOU).style('fill-opacity', 0.16);
+    svg.append('path').datum(rows).attr('d', d3.line().x(px).y((r) => y(r.p20)))
+      .style('fill', 'none').style('stroke', ER.YOU).style('stroke-width', 2).style('stroke-linejoin', 'round').style('stroke-linecap', 'round');
+    ER.markSvg(svg.append('circle').attr('cx', px(last)).attr('cy', y(last.p20)).attr('r', 4.5)
+      .style('fill', ER.YOU).style('stroke', 'var(--color-panel)').style('stroke-width', 2), 'form', 'p20', last.key);
+    ER.markSvg(svg.append('text').attr('x', px(last) + 9).attr('y', y(last.p20)).attr('dominant-baseline', 'middle')
+      .attr('class', 'er-strong er-num').text(ER.F.pct(last.p20)), 'form', 'p20', last.key);
+  });
+  dash.draw('ov-findings', (el) => {
+    const rows = ER.rows('findings');
+    if (!rows) return ER.wait(el, ['findings']);
+    const list = rows.filter((r) => r.key !== 'main').sort((a, b) => a.rank - b.rank).slice(0, 3);
+    if (!list.length) {
+      el.replaceChildren(ER.el('p', 'er-muted', ER.tr('Not enough matches at this level yet. Findings appear once there are enough matches and shots behind them.')));
+      return;
+    }
+    el.replaceChildren(...list.map((r) => ER.keycard(r, 'findings', 'title', 'h3')));
+  });
 })();
 </script>
