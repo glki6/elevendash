@@ -89,7 +89,9 @@ class Build(unittest.TestCase):
             recs = [s.split(',') for s in row['s'].split(';')]
             self.assertEqual(row['n'], len(recs))
             for a in recs:
-                self.assertEqual(len(a), 21, a)
+                self.assertEqual(len(a), 23, a)
+                self.assertEqual(a[21] == '', a[22] == '', a)       # where your shot landed: both or neither
+                self.assertTrue(a[21] == '' or (a[4] == '1' and int(a[22]) > 0), a)     # only a shot that landed, on the far half
                 self.assertEqual(a[20] == '', a[3] == 'X', a)       # where you met it: every shot you hit
                 self.assertTrue(a[3] != 'X' or a[19] == '', a)
                 self.assertTrue(a[19] == '' or -900 <= int(a[19]) <= 900, a)    # the angle off your bat, tenths of a degree

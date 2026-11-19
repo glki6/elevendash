@@ -192,10 +192,11 @@ def replay_track(p, you, sx):
 # at you (the opponent's shot, its speed and spin off their bat, where it bounced on your half), what you did with it
 # and, for a miss, how it missed. In your view: your half is z below 0 and your shots travel to z above 0.
 # up is the angle the ball left your bat at, above level, in tenths of a degree; cz is where you met it, in cm from the net.
+# lx, lz is where a shot of yours that landed bounced on the far half, in cm (lz is from the net).
 TABLE_W, TABLE_L, FAST = 0.7625, 1.37, 10       # half the table's width and length, in metres; a fast ball, in m/s
 SPIN_C = {'topspin': 't', 'little spin': 'n', 'backspin': 'b'}
 SHOT_FIELDS = ['n', 'role', 'shot', 'ok', 'miss', 'speed', 'top', 'win', 'cx', 'cy', 'inShot', 'inSpeed', 'inTop', 'bx', 'bz',
-               'since', 'rise', 'cls', 'up', 'cz']
+               'since', 'rise', 'cls', 'up', 'cz', 'lx', 'lz']
 
 
 def miss_kind(e, after, you, sx, serve):
@@ -260,6 +261,11 @@ def shot_records(p, you, sx):
         v = e.get('vel')
         if v and any(v):
             r['up'] = round(math.degrees(math.atan2(v[1], math.hypot(v[0], v[2]))) * 10)
+        if h['ok']:         # its first bounce on the far half
+            land = next((a for a in tr[at[i] + 1:at[i + 1] if i + 1 < len(at) else len(tr)]
+                         if a['k'] == 'table' and a['side'] != you and a.get('pos')), None)
+            if land:
+                r.update(lx=round(land['pos'][0] * sx * 100), lz=round(land['pos'][2] * sx * 100))
         if i:
             b = incoming(r, i - 1, e['pos'][0] * sx)
             if b and e.get('gt') and b.get('gt'):

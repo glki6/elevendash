@@ -123,7 +123,7 @@ Rolling win rates with the range chance allows, so a lucky week does not look li
 
 ![Points won by the side the serve comes to and by the length of the return, then a bar for each kind of serve showing how its points ended.](pages/img/serves.png)
 
-Where points on each serve end: by the side, spin and depth of the serve, for the AI's serves and your own.
+Where points on each serve end: by the side, spin and depth of the serve, for the AI's serves and your own. Below that, the first shots of a point as one pattern (your serve, the ball that came back and your third ball; or the AI's serve, your return, its next ball and your fourth), with the points you win from each pattern against your average, and its points one click from the replay.
 
 ### Online matches and ratings
 

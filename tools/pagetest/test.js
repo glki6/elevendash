@@ -106,6 +106,37 @@
       }
     }
 
+    // 4c. patterns that win points: every pattern holds its points, a row lists them, and the way back leads to the card
+    {
+      let bad = '', rowsSeen = 0, opened = false;
+      for (const who of ['serve', 'recv']) {
+        for (const steps of who === 'serve' ? [2, 3] : [2, 3, 4]) {
+          q(`#pat-who [data-who="${who}"]`).click();
+          q(`#pat-steps [data-steps="${steps}"]`).click();
+          await wait(60);
+          const s = ER.shots.patterns();
+          const fair = s.who === who && s.steps === steps && s.n <= s.served && s.won <= s.n
+            && s.rows.every((c) => c.n >= 10 && c.pts.length === c.n && c.pts.filter((o) => o.pt.won).length === c.won
+              && c.key.split('|').length === steps && c.pts.every((o) => (o.pt.served === 'You') === (who === 'serve')))
+            && s.ranked.every((c) => c.n >= 30) && s.rows.reduce((a, c) => a + c.n, 0) <= s.n;
+          const trs = qa('.er-pat tbody tr');
+          if (!fair || trs.length !== Math.min(10, s.rows.length)) bad += ` ${who}${steps}`;
+          rowsSeen += s.rows.length;
+          if (trs.length && !opened) {
+            trs[0].click();
+            await wait(80);
+            const first = ER.shots.patterns().rows.find((c) => c.key === ER.shots.patState.open);
+            const listed = first && !q('#pat-points-wrap').hidden && qa('[data-draw="pat-points"] tr').length === Math.min(25, first.n);
+            q('#pat-close').click();
+            await wait(60);
+            if (!listed || !q('#pat-points-wrap').hidden) bad += ` list:${who}${steps}`;
+            opened = true;
+          }
+        }
+      }
+      check('patterns: each holds its points, and a row lists them', !bad, rowsSeen + ' patterns' + (bad ? '; wrong:' + bad : ''));
+    }
+
     // 5. open a shot of another match from the list (of another month, when there is one): the match changes, its
     //    replays are unpacked, and the point asked for is the one on the table
     const list = ER.shots.chosen().list;

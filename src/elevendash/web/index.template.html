@@ -332,6 +332,21 @@
 .er-sxgroups>li>div:last-child{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
 .er-sxrank{font-variant-numeric:tabular-nums;color:var(--color-fg-muted)}
 .er-sxgroups p{margin:0}
+.er-patctl{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center}
+#patterns-card{grid-template-columns:minmax(0,1fr)}
+.er-pat tbody tr.on th{color:inherit}
+.er-t.er-pat tbody tr{cursor:pointer}
+.er-pat tbody tr:hover th,.er-pat tbody tr:hover td,.er-pat tbody tr.on th,.er-pat tbody tr.on td{background:var(--er-you-wash)}
+.er-t.er-pat tbody th{min-width:15rem;padding-left:6px}
+.er-patbtn{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;text-align:left;width:100%}
+.er-patbtn:focus-visible{outline:2px solid var(--er-you);outline-offset:2px}
+.er-patseq{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:stretch}
+.er-patseq>i{align-self:center;font-style:normal;color:var(--color-fg-muted)}
+.er-patstep{display:grid;gap:1px;padding:4px 9px;border-radius:var(--cds-radius);background:var(--er-track);text-align:left}
+.er-patstep.you{background:color-mix(in oklab,var(--er-you) 18%,var(--color-panel))}
+.er-patstep small{font-size:calc(var(--cds-font-size-caption)*.9);color:var(--color-fg-muted)}
+.er-t.er-pat td.er-patbar{width:22%;min-width:90px}
+.er-patpoints{display:grid;gap:8px;min-width:0;padding-top:14px;border-top:1px solid var(--er-line)}
 .er-sxstrokes{display:grid;gap:8px;min-width:0;padding-top:14px;border-top:1px solid var(--er-line)}
 .er-sxstrokes h4{margin:0;font-size:var(--cds-font-size-body);font-weight:var(--cds-font-weight-medium)}
 .er-t.er-sxst td{white-space:normal}
@@ -549,6 +564,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
       <ol>
         <li><a href="#recv">When the AI serves</a></li>
         <li><a href="#own-serve">When you serve</a></li>
+        <li><a href="#patterns">Patterns that win points</a></li>
       </ol></li>
     <li><a href="#by-level">By AI level</a>
       <ol>
@@ -734,7 +750,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
           <button class="er-btn" type="button" id="replay-prev">← Previous point</button>
           <button class="er-btn" type="button" id="replay-next">Next point →</button>
         </div>
-        <div class="er-rbar"><button class="er-btn" type="button" id="replay-back" hidden>← Back to the shot explorer</button></div>
+        <div class="er-rbar"><button class="er-btn" type="button" id="replay-back" hidden>← Back to where you were</button></div>
         <div class="er-rbar"><span class="er-ctl" id="replay-view-label">View</span><div class="er-tabs" id="replay-view" role="group" aria-labelledby="replay-view-label"><button class="er-tab" type="button" data-view="2d" aria-pressed="true">2D</button><button class="er-tab" type="button" data-view="3d" aria-pressed="false">3D</button></div><button class="er-btn" type="button" id="replay-last" hidden>Deciding shot</button><button class="er-btn er-tog" type="button" id="replay-call" aria-pressed="false" hidden>Landing call</button></div>
         <div class="er-rbar"><span class="er-ctl" id="replay-rate-label">Speed</span><div class="er-tabs" id="replay-rate" role="group" aria-labelledby="replay-rate-label"><button class="er-tab" type="button" data-rate="1" aria-pressed="true">Full</button><button class="er-tab" type="button" data-rate="0.5" aria-pressed="false">Half</button><button class="er-tab" type="button" data-rate="0.25" aria-pressed="false">Quarter</button></div></div>
         <div class="er-legend court"><span><i class="er-sw ball"></i>Your shots</span><span><i class="er-sw ball ai"></i>Opponent's shots</span><span><i class="er-sw rx"></i>Shot that missed</span></div>
@@ -994,6 +1010,26 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
     </div>
     </div>
   </details>
+
+  <h3 class="er-subhead" id="patterns">Patterns that win points</h3>
+  <div class="er-card" id="patterns-card">
+    <h3>The first shots of a point, taken together</h3>
+    <div class="er-patctl">
+      <div class="er-rbar"><span class="er-ctl" id="pat-who-label">Points</span><div class="er-tabs" id="pat-who" role="group" aria-labelledby="pat-who-label"><button class="er-tab" type="button" data-who="serve" aria-pressed="true">On your serve</button><button class="er-tab" type="button" data-who="recv" aria-pressed="false">On the AI's serve</button></div></div>
+      <div class="er-rbar"><span class="er-ctl" id="pat-steps-label">Shots in a pattern</span><div class="er-tabs" id="pat-steps" role="group" aria-labelledby="pat-steps-label"><button class="er-tab" type="button" data-steps="2" aria-pressed="false">2</button><button class="er-tab" type="button" data-steps="3" aria-pressed="true">3</button><button class="er-tab" type="button" data-steps="4" aria-pressed="false" hidden>4</button></div></div>
+      <div class="er-rbar"><span class="er-ctl" id="pat-sort-label">Order</span><div class="er-tabs" id="pat-sort" role="group" aria-labelledby="pat-sort-label"><button class="er-tab" type="button" data-sort="n" aria-pressed="true">Most common</button><button class="er-tab" type="button" data-sort="best" aria-pressed="false">Wins most</button><button class="er-tab" type="button" data-sort="worst" aria-pressed="false">Loses most</button></div></div>
+    </div>
+    <p class="er-muted" data-draw="pat-note" data-source="shots"></p>
+    <p class="er-pstat" data-draw="pat-head" data-source="shots" role="status"></p>
+    <div class="er-tablewrap" id="pat-table"><table class="er-t er-sxst er-pat"><thead><tr><th>Pattern</th><th>Points</th><th>Share</th><th colspan="2">Points won</th></tr></thead><tbody data-draw="pat-rows" data-source="shots"></tbody></table></div>
+    <div class="er-rbar"><button class="er-btn" type="button" id="pat-more" hidden>Show every pattern</button><span class="er-muted" data-draw="pat-count" data-source="shots"></span></div>
+    <div class="er-patpoints" id="pat-points-wrap" hidden>
+      <div class="er-rbar"><span class="er-pstat" data-draw="pat-open" data-source="shots" role="status"></span><button class="er-btn" type="button" id="pat-close">Close the list</button></div>
+      <div class="er-tablewrap"><table class="er-t er-sxlist"><thead><tr><th>Point</th><th>Shots</th><th>How it ended</th><th>Result</th><th>Open</th></tr></thead><tbody data-draw="pat-points" data-source="shots"></tbody></table></div>
+      <div class="er-rbar"><button class="er-btn" type="button" id="pat-points-more" hidden>Show more</button><span class="er-muted" data-draw="pat-points-count" data-source="shots"></span></div>
+    </div>
+    <details class="er-how"><summary>How to read this</summary><p class="er-muted">A pattern is the first shots of a point taken together. On your serve: your serve (its spin, its depth and where it lands), the ball that came back (its spin and the side it came to) and the stroke you played third. On the AI's serve: its serve, the stroke you returned it with, the ball that came next and the stroke you played fourth. A point is counted when it got as far as the last shot of the pattern, and a ball you did not reach counts as that shot. Only patterns with 30 points or more are ranked and can carry an arrow; one with 10 to 29 is listed below them in grey. The mark on each bar is your share of points won over all the points that got as far. An arrow marks a pattern that wins clearly more or fewer points than the rest of them: a gap that would come up by chance about one time in a hundred, which is stricter than elsewhere on the page because many patterns are compared at once. The range is where the true share sits nine times in ten. Spin and depth are as in the rest of this section. Click a pattern to list its points, each with its replay.</p></details>
+  </div>
 </section>
 
 <section class="er-section" id="by-level">
@@ -4589,7 +4625,8 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     mark();
   };
   // Put a point on the table and play it. The page moves only if the court is not already on screen. With n, the
-  // point starts just before the shot that led to its shot n; back says whether the way back to the shot explorer shows.
+  // point starts just before the shot that led to its shot n; back says whether the way back shows: true for the shot
+  // explorer's list, or the id of the card the point was opened from.
   let pending = null;       // a point asked for while its month of replays was still loading
   const show = (key, n, back) => {
     if (!track(key)) {
@@ -4600,7 +4637,10 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     load(key, !calm());
     const lead = n > 1 ? st.hits[n - 2] : null;
     if (lead) st.t = calm() ? st.end : Math.max(0, lead.t - 0.15);
-    if (back != null && $('replay-back')) $('replay-back').hidden = !back;
+    if (back != null && $('replay-back')) {
+      $('replay-back').hidden = !back;
+      st.backTo = back === true ? 'sx-list-wrap' : back || '';
+    }
     redraw();
     const court = $('chart-replay');
     if (court) court.scrollIntoView({behavior: calm() ? 'auto' : 'smooth', block: 'nearest'});
@@ -4782,7 +4822,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   });
   on('replay-back', 'click', () => {
     $('replay-back').hidden = true;
-    const list = $('sx-list-wrap');
+    const list = $(st.backTo || 'sx-list-wrap');
     if (list) list.scrollIntoView({behavior: calm() ? 'auto' : 'smooth', block: 'center'});
   });
   on('replay-prev', 'click', () => step(-1));
@@ -4853,7 +4893,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
 
 <script>
 // Shot explorer. A row of `shots` is one match: every shot you hit and every ball you did not reach (shot X), each as
-// at,n,role,shot,ok,miss,speed,top,win,cx,cy,inShot,inSpeed,inTop,bx,bz,since,rise,cls,up,cz and joined by ';' (see the
+// at,n,role,shot,ok,miss,speed,top,win,cx,cy,inShot,inSpeed,inTop,bx,bz,since,rise,cls,up,cz,lx,lz and joined by ';' (see the
 // dataset's note). The filters, the length of the list and the period of the groups are this section's own state, not
 // dashboard settings: its drawings read them, and a change redraws this section only.
 (() => {
@@ -4907,7 +4947,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
         const num = (i, k) => (a[i] == null || a[i] === '' ? null : +a[i] / k);
         recs.push({m, pt, n: +a[1], role: a[2], shot: a[3], ok: a[4] === '1', miss: a[5], speed: num(6, 10), win: a[8] === '1',
           inShot: a[11] || '', inSpeed: num(12, 10), inTop: num(13, 1), bx: num(14, 100), bz: num(15, 100), cls: a[18] || '----',
-          top: num(7, 1), cy: num(10, 1), since: num(16, 1000), up: num(19, 10), cz: num(20, 100)});
+          top: num(7, 1), cy: num(10, 1), since: num(16, 1000), up: num(19, 10), cz: num(20, 100), lx: num(21, 100), lz: num(22, 100)});
       });
     });
     // your next shot in the same point, or the ball you did not reach: two shots on, with the opponent's in between
@@ -5428,6 +5468,235 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     }));
   };
 
+  // Patterns that win points (in Serves and returns, for the level its tabs pick): the first shots of a point as one
+  // pattern. On your serve: your serve (spin, depth, where it landed), the ball that came back (spin, side) and the
+  // stroke you played third. On the opponent's serve: the serve, your return, the ball that came next, your fourth.
+  // A point counts when it got as far as the pattern's last shot. A pattern is listed with PAT_MIN points, and marked
+  // when it wins clearly more or fewer points than the other points that got as far (Z_MANY, for the many patterns).
+  const PAT_MIN = 30, PAT_FEW = 10, PAT_ROWS = 10;      // ranked from PAT_MIN points, listed in grey from PAT_FEW
+  const pst = {who: 'serve', steps: {serve: 3, recv: 4}, sort: 'n', open: '', all: false, limit: PAGE};
+  const P_SPIN = {t: ER.k('Topspin'), n: ER.k('Little spin'), b: ER.k('Backspin')};
+  const P_SIDE = {B: ER.k('backhand side'), M: ER.k('middle'), F: ER.k('forehand side')};
+  const P_LAND = {L: ER.k('to your left'), M: ER.k('to the middle'), R: ER.k('to your right')};
+  const P_DEPTH = {s: ER.k('short'), h: ER.k('half-long'), l: ER.k('long')};
+  const P_WHO = {
+    serve: [ER.k('Your serve'), ER.k("The AI's return"), ER.k('Your third ball')],
+    recv: [ER.k("The AI's serve"), ER.k('Your return'), ER.k("The AI's third ball"), ER.k('Your fourth ball')],
+  };
+  const PAT_OUT = ['pat-note', 'pat-head', 'pat-rows', 'pat-count', 'pat-open', 'pat-points', 'pat-points-count'];
+  let patMemo = null;
+  const patPoints = () => {       // every point with its first four shots, yours only: {pt, m, 1: serve, 2: return, ...}
+    const d = data();
+    if (!d) return null;
+    if (patMemo && patMemo.d === d) return patMemo.pts;
+    const by = new Map();
+    d.recs.forEach((r) => {
+      if (r.n > 4) return;
+      let o = by.get(r.pt);
+      if (!o) by.set(r.pt, (o = {pt: r.pt, m: r.m}));
+      o[r.n] = r;
+    });
+    patMemo = {d, pts: [...by.values()]};       // newest first, as the records are
+    return patMemo.pts;
+  };
+  const landSide = (x) => (x < -0.25 ? 'L' : x > 0.25 ? 'R' : 'M');
+  const depthOf = (z) => (Math.abs(z) < 0.5 ? 's' : Math.abs(z) < 1 ? 'h' : 'l');
+  const patKey = (o, who, steps) => {
+    if (who === 'serve') {
+      const s = o[1], t = o[3];
+      if (!s || !s.ok || s.lx == null || s.lz == null || !t || t.cls[1] === '-') return null;
+      const k = [(s.top > 20 ? 't' : s.top < -20 ? 'b' : 'n') + depthOf(s.lz) + landSide(s.lx), t.cls[0] + t.cls[1]];
+      if (steps > 2) k.push(t.shot);
+      return k.join('|');
+    }
+    const r = o[2], q = o[4];
+    if (!r || r.cls[1] === '-' || r.cls[2] === '-') return null;
+    const k = [r.cls.slice(0, 3), r.shot];
+    if (steps > 2) {
+      if (!q || q.cls[1] === '-') return null;
+      k.push(q.cls[0] + q.cls[1]);
+      if (steps > 3) k.push(q.shot);
+    }
+    return k.join('|');
+  };
+  const apartMany = (k1, n1, k2, n2) => {
+    if (n1 < MIN_STROKE || n2 < MIN_STROKE) return 0;
+    const p = (k1 + k2) / (n1 + n2), se = Math.sqrt(p * (1 - p) * (1 / n1 + 1 / n2));
+    const z = se ? (k1 / n1 - k2 / n2) / se : 0;
+    return Math.abs(z) < Z_MANY ? 0 : z > 0 ? 1 : -1;
+  };
+  let patWas = null;
+  const patterns = () => {
+    const pts = patPoints();
+    if (!pts) return null;
+    const L = ER.level(), who = pst.who, steps = Math.min(pst.steps[who], who === 'serve' ? 3 : 4);
+    const key = [L, who, steps, ER.vs()].join('|');
+    if (patWas && patWas.pts === pts && patWas.key === key) return patWas;
+    const by = new Map(), all = ER.people();
+    let n = 0, won = 0, served = 0;
+    pts.forEach((o) => {
+      if ((!all && o.m.level !== L) || (o.pt.served === 'You') !== (who === 'serve')) return;
+      served += 1;
+      const k = patKey(o, who, steps);
+      if (!k) return;
+      n += 1;
+      won += o.pt.won;
+      let c = by.get(k);
+      if (!c) by.set(k, (c = {key: k, n: 0, won: 0, pts: []}));
+      c.n += 1;
+      c.won += o.pt.won;
+      c.pts.push(o);
+    });
+    const rows = [...by.values()].filter((c) => c.n >= PAT_FEW).map((c) => {
+      const [lo, hi] = likely(c.won, c.n), few = c.n < PAT_MIN;
+      return Object.assign(c, {lo, hi, few, move: few ? 0 : apartMany(c.won, c.n, won - c.won, n - c.n)});
+    });
+    const ranked = rows.filter((c) => !c.few);
+    patWas = {pts, key, who, steps, n, won, served, rows, ranked, covered: ranked.reduce((a, c) => a + c.n, 0)};
+    return patWas;
+  };
+  // the ranked ones in the order picked, then the ones with too few points to rank, most common first
+  const patSorted = (s) => s.rows.slice().sort((a, b) => a.few - b.few || (a.few || pst.sort === 'n' ? b.n - a.n || b.won - a.won
+    : pst.sort === 'best' ? b.lo - a.lo || b.n - a.n : a.hi - b.hi || b.n - a.n));
+  const patOpen = (s) => (pst.open && s ? s.rows.find((c) => c.key === pst.open) || null : null);
+  // a pattern's steps as [whose shot, what it was, yours]
+  const patSteps = (c, who) => {
+    const k = c.key.split('|');
+    const ball = (v) => ER.tr('{0}, {1}', ER.tr(P_SPIN[v[0]]), ER.tr(P_SIDE[v[1]]));
+    const stroke = (v) => (v === 'X' ? ER.tr('Not reached') : ER.tr(STROKE[v] || v));
+    const text = who === 'serve'
+      ? [ER.tr('{0}, {1}, {2}', ER.tr(P_SPIN[k[0][0]]), ER.tr(P_DEPTH[k[0][1]]), ER.tr(P_LAND[k[0][2]])), ball(k[1]), k[2] && stroke(k[2])]
+      : [ER.tr('{0}, {1}, {2}', ER.tr(P_SPIN[k[0][0]]), ER.tr(P_DEPTH[k[0][2]]), ER.tr(P_SIDE[k[0][1]])), stroke(k[1]), k[2] && ball(k[2]), k[3] && stroke(k[3])];
+    return text.filter(Boolean).map((t, i) => [ER.tr(P_WHO[who][i]), t, (who === 'serve') === (i % 2 === 0)]);
+  };
+  const patSync = () => {
+    const press = (id, attr, v) => document.querySelectorAll(`#${id} [data-${attr}]`).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset[attr] === String(v))));
+    press('pat-who', 'who', pst.who);
+    press('pat-steps', 'steps', Math.min(pst.steps[pst.who], pst.who === 'serve' ? 3 : 4));
+    press('pat-sort', 'sort', pst.sort);
+    const four = document.querySelector('#pat-steps [data-steps="4"]');
+    if (four) four.hidden = pst.who === 'serve';
+  };
+  draws['pat-note'] = (el) => {
+    patSync();
+    const s = patterns();
+    if (!s) return ER.wait(el, SRC);
+    if (!s.n) return el.replaceChildren(ER.tr('No points to make patterns from here yet.'));
+    const far = s.who === 'serve' ? ER.k('Of your {0} points on your serve, {1} got as far as your third ball. You won {2} of those: the mark on each bar.')
+      : s.steps === 2 ? ER.k("Of your {0} points on the AI's serve, {1} have the serve and your return on record. You won {2} of those: the mark on each bar.")
+        : ER.k("Of your {0} points on the AI's serve, {1} got as far as your fourth ball. You won {2} of those: the mark on each bar.");
+    el.replaceChildren(...ER.trn(far, ER.F.int(s.served), ER.F.int(s.n), ER.el('b', null, rate(s.won, s.n))));
+  };
+  draws['pat-head'] = (el) => {
+    const s = patterns();
+    if (!s || !s.n) return el.replaceChildren();
+    if (!s.ranked.length) {
+      return el.replaceChildren(ER.tr(s.rows.length ? 'No pattern has come up 30 times here yet, so none is ranked.'
+        : s.steps > 2 ? 'No pattern has come up 10 times here yet. Try fewer shots in a pattern.' : 'No pattern has come up 10 times here yet.'));
+    }
+    const b = (t) => ER.el('b', null, t);
+    const up = s.rows.filter((c) => c.move > 0).length, down = s.rows.filter((c) => c.move < 0).length;
+    const out = ER.trn('{0} patterns have come up 30 times or more, and they hold {1} of these points.', b(ER.F.int(s.ranked.length)), b(rate(s.covered, s.n)));
+    out.push(' ', ...(up || down ? ER.trn('{0} win clearly more points than the rest, and {1} clearly fewer.', b(ER.F.int(up)), b(ER.F.int(down)))
+      : [ER.tr('None of them stands clearly apart from the rest.')]));
+    el.replaceChildren(...out);
+  };
+  draws['pat-rows'] = (tb) => {
+    const s = patterns(), wrap = $('pat-table');
+    if (wrap) wrap.hidden = !s || !s.rows.length;
+    if (!s || !s.rows.length) return tb.replaceChildren();
+    const avg = 100 * s.won / s.n, cur = patOpen(s);
+    const rows = patSorted(s);
+    tb.replaceChildren(...(pst.all ? rows : rows.slice(0, PAT_ROWS)).map((c) => {
+      const tr = ER.el('tr', (c.few ? 'few' : '') + (c === cur ? ' on' : '')), th = ER.el('th'), btn = ER.el('button', 'er-patbtn'), seq = ER.el('span', 'er-patseq');
+      th.scope = 'row';
+      btn.type = 'button';
+      btn.setAttribute('aria-expanded', String(c === cur));
+      btn.title = ER.tr('List the points of this pattern');
+      patSteps(c, s.who).forEach(([who, what, mine], i) => {
+        if (i) seq.appendChild(ER.el('i', null, '→'));
+        const step = ER.el('span', 'er-patstep' + (mine ? ' you' : ''));
+        step.append(ER.el('small', null, who), ER.el('span', null, what));
+        seq.appendChild(step);
+      });
+      btn.appendChild(seq);
+      th.appendChild(btn);
+      const td = ER.el('td'), p = 100 * c.won / c.n;
+      td.appendChild(ER.el('b', null, rate(c.won, c.n)));
+      if (c.move) {
+        const chg = ER.el('span', 'er-chg ' + (c.move > 0 ? 'good' : 'bad'), c.move > 0 ? '▲' : '▼');
+        chg.title = ER.tr(c.move > 0 ? 'Clearly more points won than in the other patterns' : 'Clearly fewer points won than in the other patterns');
+        chg.setAttribute('role', 'img');
+        chg.setAttribute('aria-label', chg.title);
+        td.appendChild(chg);
+      }
+      td.appendChild(ER.el('small', null, ER.tr('{0} to {1}', ER.F.pct(Math.round(c.lo * 10) / 10), ER.F.pct(Math.round(c.hi * 10) / 10))));
+      const bar = ER.el('td', 'er-patbar'), cmp = ER.el('span', 'er-cmp'), track = ER.el('span', 'er-track'), fill = ER.el('span', 'er-fill'), ref = ER.el('span', 'er-ref');
+      fill.style.width = p.toFixed(1) + '%';
+      ref.style.left = avg.toFixed(1) + '%';
+      track.appendChild(fill);
+      cmp.append(track, ref);
+      cmp.setAttribute('role', 'img');
+      cmp.title = ER.tr('{0} of {1} points won ({2}); over all these points you won {3}.', ER.F.int(c.won), ER.F.int(c.n), rate(c.won, c.n), rate(s.won, s.n));
+      cmp.setAttribute('aria-label', cmp.title);
+      bar.appendChild(cmp);
+      tr.append(th, ER.el('td', null, ER.F.int(c.n)), ER.el('td', null, rate(c.n, s.n)), td, bar);
+      tr.addEventListener('click', () => {
+        pst.open = pst.open === c.key ? '' : c.key;
+        pst.limit = PAGE;
+        redraw(['pat-rows', 'pat-open', 'pat-points', 'pat-points-count']);
+        const list = $('pat-points-wrap');
+        if (pst.open && list) list.scrollIntoView({behavior: calm() ? 'auto' : 'smooth', block: 'nearest'});
+      });
+      return tr;
+    }));
+  };
+  draws['pat-count'] = (el) => {
+    const s = patterns(), more = $('pat-more');
+    const n = s ? s.rows.length : 0;
+    if (more) more.hidden = pst.all || n <= PAT_ROWS;
+    el.replaceChildren(...(n > PAT_ROWS && !pst.all ? [ER.tr('Showing {0} of {1} patterns.', ER.F.int(PAT_ROWS), ER.F.int(n))] : []));
+  };
+  draws['pat-open'] = (el) => {
+    const s = patterns(), c = patOpen(s), wrap = $('pat-points-wrap');
+    if (wrap) wrap.hidden = !c;
+    if (!c) return el.replaceChildren();
+    el.replaceChildren(...ER.trn('{0}: {1} points, {2} won.', ER.el('b', null, patSteps(c, s.who).map((x) => x[1]).join(' → ')), ER.F.int(c.n), ER.F.int(c.won)));
+  };
+  // Put a point on the table in the match explorer from its shot n; back is where the way back leads (true: the shot list).
+  const openAt = (m, pt, n, back) => {
+    const go = () => ER.replay && ER.replay.show(pt.key, n, back);
+    if (ER.matchKey() === m.key) return go();
+    ER.set({match: m.key}, null, {after: go});
+  };
+  draws['pat-points'] = (tb) => {
+    const s = patterns(), c = patOpen(s);
+    if (!c) return tb.replaceChildren();
+    tb.replaceChildren(...c.pts.slice(0, pst.limit).map((o) => {
+      const tr = ER.el('tr'), th = ER.el('th');
+      th.append(ER.el('span', null, where(o)), ER.el('span', 'er-muted', point(o)));
+      const last = ER.el('td'), acts = ER.el('div', 'er-sxopen');
+      const b = ER.el('button', 'er-btn', ER.tr('Replay'));
+      b.type = 'button';
+      last.appendChild(acts);
+      acts.appendChild(b);
+      if (o.pt.video) acts.appendChild(ER.watch(ER.tr('Video'), o.pt.video, o.pt.videoT, 'points', 'videoT', o.pt.key));
+      tr.append(th, ER.el('td', null, ER.F.int(o.pt.hits)), ER.el('td', null, ER.tr(o.pt.ending)),
+        ER.el('td', o.pt.won ? null : 'er-strongcell', ER.tr(o.pt.won ? 'Won' : 'Lost')), last);
+      tr.addEventListener('click', (ev) => {
+        if (ev.target.closest && ev.target.closest('a')) return;      // the video link opens on its own
+        openAt(o.m, o.pt, 1, 'patterns-card');
+      });
+      return tr;
+    }));
+  };
+  draws['pat-points-count'] = (el) => {
+    const s = patterns(), c = patOpen(s), more = $('pat-points-more');
+    const n = c ? c.pts.length : 0;
+    if (more) more.hidden = n <= pst.limit;
+    el.replaceChildren(...(n ? [ER.tr('Showing {0} of {1}, newest first.', ER.F.int(Math.min(n, pst.limit)), ER.F.int(n))] : []));
+  };
+
   Object.keys(draws).forEach((n) => dash.draw(n, draws[n]));
 
   const on = (id, type, fn) => {
@@ -5456,7 +5725,39 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     document.querySelectorAll('#sx-scope [data-scope]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
     redraw(['sx-groups-note', 'sx-groups']);
   });
-  ER.shots = {filters: f, chosen, apply, groups, strokeRows, versus, attackSum, state: st};
+  const patTabs = (id, attr, set) => on(id, 'click', (ev) => {
+    const b = ev.target.closest && ev.target.closest(`[data-${attr}]`);
+    if (!b) return;
+    set(b.dataset[attr]);
+    pst.limit = PAGE;
+    redraw(PAT_OUT);
+  });
+  patTabs('pat-who', 'who', (v) => {
+    pst.who = v;
+    pst.open = '';
+    pst.all = false;
+  });
+  patTabs('pat-steps', 'steps', (v) => {
+    pst.steps[pst.who] = +v;
+    pst.open = '';
+    pst.all = false;
+  });
+  patTabs('pat-sort', 'sort', (v) => {
+    pst.sort = v;
+  });
+  on('pat-more', 'click', () => {
+    pst.all = true;
+    redraw(['pat-rows', 'pat-count']);
+  });
+  on('pat-close', 'click', () => {
+    pst.open = '';
+    redraw(['pat-rows', 'pat-open', 'pat-points', 'pat-points-count']);
+  });
+  on('pat-points-more', 'click', () => {
+    pst.limit += PAGE;
+    redraw(['pat-points', 'pat-points-count']);
+  });
+  ER.shots = {filters: f, chosen, apply, groups, strokeRows, versus, attackSum, state: st, patterns, patState: pst};
 })();
 </script>
 

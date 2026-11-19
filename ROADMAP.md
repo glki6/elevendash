@@ -13,10 +13,10 @@ the order they are planned. Nothing here is a promise of a date.
    came back and you won the point anyway, or came back and you lost it. Split by the ball you attacked and by whether
    your next shot landed, so it shows whether your openers are backed by your follow-ups. A card in the Shot explorer
    that follows its filters. Needs only the shots the page already holds, plus who won each point.
-2. **Patterns that win points.** The first shots of a point as one pattern: your serve, where the return went, your
+2. **Patterns that win points.** *Done in v0.6.0, at the end of Serves and returns.* The first shots of a point as one pattern: your serve, where the return went, your
    third ball; and on the AI's serve, its serve, your return, its third ball, your fourth. Ranked by how often they
    come up and the points they win against your average, each opening its points in the replay. Only patterns with 30
-   or more points are ranked.
+   or more points are ranked. One with 10 to 29 is listed in grey.
 3. **Where your rally shots land.** The serve map, for every other shot: where your shots landed on the far half, and
    the points won from each part of the table (deep or short, wide or middle, cross or down the line). Split by
    stroke and by the ball you played. Needs the landing spot of each of your shots added to the shot records; the
