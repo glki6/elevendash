@@ -219,6 +219,31 @@
       check('patterns: each holds its points, and a row lists them', !bad, rowsSeen + ' patterns' + (bad ? '; wrong:' + bad : ''));
     }
 
+    // 4c2. what works for you: the lists hold only what the rules allow, and a line opens its card
+    {
+      const w = ER.shots.works();
+      const fair = w.serves.length <= 3 && w.serves.every((c, i) => c.n >= 30 && c.won * w.serve.n > w.serve.won * c.n && (!i || w.serves[i - 1].lo >= c.lo))
+        && w.strokes.length <= 6 && w.strokes.every((k) => k.best.n >= 20 && k.rest.n >= 20 && k.gap > 0)
+        && w.pats.length === 2 && w.pats.every((p) => p.rows.length <= 3 && p.rows.every((c) => c.move > 0 && c.n >= 30))
+        && w.place.every((c) => c.wonMove > 0) && w.pace.every((c) => c.wonMove > 0) && w.att.won <= w.att.n && w.att.rest.n >= 0;
+      const lis = (n) => qa(`[data-draw="${n}"] > li`).length;
+      const drawn = lis('wk-serves') === Math.max(1, w.serves.length) && lis('wk-strokes') === Math.max(1, w.strokes.length)
+        && lis('wk-patterns') === w.pats.reduce((a, p) => a + 1 + Math.max(1, p.rows.length), 0) && lis('wk-place') >= 1 && !!q('[data-draw="wk-note"]').textContent;
+      check('what works: the lists hold only what the rules allow', fair && drawn,
+        [w.serves.length, w.strokes.length, w.pats[0].rows.length, w.pats[1].rows.length, w.place.length + w.pace.length].join(' '));
+      const btn = q('[data-draw="wk-strokes"] button') || q('[data-draw="wk-place"] button');
+      if (btn) {
+        btn.click();
+        await wait(80);
+        const f = ER.shots.filters, opened = !f.shot && !f.out && !f.depth && !f.pace && ER.shots.chosen().base.length > 0;
+        q('#sx-clear').click();
+        await wait(80);
+        check('what works: a line opens its card', opened && !ER.shots.state.only && !ER.shots.filters.level, 'filters set and cleared');
+      } else {
+        check('what works: a line opens its card', true, 'no line to open here');
+      }
+    }
+
     // 4d. then and now: each stretch is earlier matches at the same levels, and every measure has its row
     {
       const sel = q('#then-mode');

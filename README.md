@@ -107,6 +107,10 @@ against your average before it.
 
 What to practise next, ranked by how many points a match each item is worth, with a drill, a target taken from the matches you won, and the trend.
 
+### What works for you
+
+The other side of the training plan: your three best serves, the stroke that wins you the most points against each kind of rally ball, the patterns that win clearly more than the rest, and where and how hard your winning shots go. Worked out again at every update, each line one click from the card and the replays behind it.
+
 ### Shot explorer
 
 ![A ranked list of the kinds of ball missed most, each with a bar for the miss rate against the usual rate.](pages/img/shots.png)

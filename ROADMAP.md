@@ -33,7 +33,8 @@ the order they are planned. Nothing here is a promise of a date.
    rate month by month with its likely range, apart from your match results. *Done in v0.10.0, in Find shots: by
    session, week or month.*
 7. **What works for you.** A short page of your best serves, your best stroke against each kind of ball and your best
-   patterns, rebuilt after every import from items 1 to 4. Comes after them.
+   patterns, rebuilt after every import from items 1 to 4. Comes after them. *Done in v0.11.0: the section What works
+   for you.*
 
 ## Then: did it work
 

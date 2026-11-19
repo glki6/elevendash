@@ -334,6 +334,19 @@
 .er-sxgroups p{margin:0}
 .er-t.er-then td .er-chg{min-width:0;margin-left:0;white-space:nowrap}
 .er-t.er-then tbody th{white-space:normal}
+.er-wkgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr));gap:18px}
+.er-wk{list-style:none;margin:0;padding:0;display:grid}
+.er-wk>li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px 16px;align-items:center;padding:12px 0;border-top:1px solid var(--er-line)}
+.er-wk>li.er-muted,.er-wk>li.er-wkhead{display:block}
+.er-wk>li.er-wkhead{padding:12px 0 0;font-size:var(--cds-font-size-caption);letter-spacing:.06em;text-transform:uppercase;color:var(--color-fg-muted)}
+.er-wk>li.er-wkhead+li{border-top:0}
+.er-wk>li>div:first-child{display:grid;gap:4px;min-width:0;justify-items:start}
+.er-wk>li>.er-sxnum{display:grid;justify-items:end;gap:1px;font-size:var(--cds-font-size-caption);font-variant-numeric:tabular-nums;white-space:nowrap}
+.er-wk p{margin:0}
+.er-wk .er-strong{font-weight:var(--cds-font-weight-medium)}
+.er-wkpair{display:flex;flex-wrap:wrap;gap:2px 8px;align-items:baseline}
+.er-wkpair>i{font-style:normal;color:var(--color-fg-muted)}
+@media (max-width:560px){.er-wk>li{grid-template-columns:minmax(0,1fr) auto}.er-wk>li>button{grid-column:1 / -1;justify-self:start}}
 .er-patctl{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center}
 #patterns-card{grid-template-columns:minmax(0,1fr)}
 .er-pat tbody tr.on th{color:inherit}
@@ -551,6 +564,7 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
       </ol></li>
     <li><a href="#plan">Training plan</a></li>
     <li class="er-navgroup">All-time analysis</li>
+    <li><a href="#works">What works for you</a></li>
     <li><a href="#shots">Shot explorer</a>
       <ol>
         <li><a href="#shots-groups">Where misses pile up</a></li>
@@ -808,6 +822,35 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
   <ol class="er-plan" id="plan-items" data-draw="plan-items" data-source="plan"></ol>
   <div class="er-keephead"><h3>Already working</h3><p class="er-muted">At or close to the level of the matches you won. Nothing to drill here; keep doing it.</p></div>
   <ul class="er-plan keep" id="plan-keep" data-draw="plan-keep" data-source="plan"></ul>
+</section>
+
+<section class="er-section" id="works">
+  <div class="er-sechead">
+    <div><h2>What works for you</h2><p class="er-muted">Your best serves, strokes and patterns so far: what to keep doing.</p><p class="er-muted" data-draw="wk-note" data-source="shots"></p><details class="er-how"><summary>How to read this</summary><p class="er-muted">The training plan says what to fix; this page says what already wins you points, and it is worked out again at every update. Each list is short on purpose and every line links to the card it comes from. Points won counts how the whole point ended, not only that shot. A serve or a pattern is listed from 30 points, a stroke from 20 shots, and a line is called clear only when its gap would come up by chance about one time in a hundred, because many things are compared at once. A stroke that wins more may also be the one you choose on the easier balls, so open the card and look before changing how you play.</p></details></div>
+    <div class="er-controls" data-v="ai"><span class="er-ctl" id="works-level-label">AI level</span><div class="er-tabs" id="works-level" role="group" aria-labelledby="works-level-label" data-draw="level-tabs"></div></div>
+  </div>
+  <div class="er-wkgrid">
+    <div class="er-card" id="works-serves">
+      <h3>Your best serves</h3>
+      <p class="er-muted">Serves that landed, by spin, depth and where they landed: the three that win you the most points.</p>
+      <ol class="er-wk" data-draw="wk-serves" data-source="shots"></ol>
+    </div>
+    <div class="er-card" id="works-strokes">
+      <h3>Your best stroke against each kind of ball</h3>
+      <p class="er-muted">Rally balls by spin and side, where one stroke wins clearly more points than your others. Returns of serve are in the patterns.</p>
+      <ol class="er-wk" data-draw="wk-strokes" data-source="shots"></ol>
+    </div>
+    <div class="er-card" id="works-patterns">
+      <h3>Your best patterns</h3>
+      <p class="er-muted">The first shots of a point taken together, where they win clearly more points than the rest.</p>
+      <ol class="er-wk" data-draw="wk-patterns" data-source="shots"></ol>
+    </div>
+    <div class="er-card" id="works-place">
+      <h3>Where and how hard</h3>
+      <p class="er-muted">Where your shots land, how you hit them and what attacking brings, over all your returns and rally shots.</p>
+      <ol class="er-wk" data-draw="wk-place" data-source="shots"></ol>
+    </div>
+  </div>
 </section>
 
 <section class="er-section" id="shots">
@@ -5770,13 +5813,13 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     const z = se ? (k1 / n1 - k2 / n2) / se : 0;
     return Math.abs(z) < Z_MANY ? 0 : z > 0 ? 1 : -1;
   };
-  let patWas = null;
-  const patterns = () => {
+  const patWas = new Map();
+  const patternsOf = (who, steps) => {
     const pts = patPoints();
     if (!pts) return null;
-    const L = ER.level(), who = pst.who, steps = Math.min(pst.steps[who], who === 'serve' ? 3 : 4);
-    const key = [L, who, steps, ER.vs()].join('|');
-    if (patWas && patWas.pts === pts && patWas.key === key) return patWas;
+    const L = ER.level();
+    const key = [L, who, steps, ER.vs()].join('|'), was = patWas.get(key);
+    if (was && was.pts === pts) return was;
     const by = new Map(), all = ER.people();
     let n = 0, won = 0, served = 0;
     pts.forEach((o) => {
@@ -5797,9 +5840,12 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       return Object.assign(c, {lo, hi, few, move: few ? 0 : apartMany(c.won, c.n, won - c.won, n - c.n)});
     });
     const ranked = rows.filter((c) => !c.few);
-    patWas = {pts, key, who, steps, n, won, served, rows, ranked, covered: ranked.reduce((a, c) => a + c.n, 0)};
-    return patWas;
+    const out = {pts, key, who, steps, n, won, served, rows, ranked, covered: ranked.reduce((a, c) => a + c.n, 0)};
+    if (patWas.size > 40) patWas.clear();
+    patWas.set(key, out);
+    return out;
   };
+  const patterns = () => patternsOf(pst.who, Math.min(pst.steps[pst.who], pst.who === 'serve' ? 3 : 4));
   // the ranked ones in the order picked, then the ones with too few points to rank, most common first
   const patSorted = (s) => s.rows.slice().sort((a, b) => a.few - b.few || (a.few || pst.sort === 'n' ? b.n - a.n || b.won - a.won
     : pst.sort === 'best' ? b.lo - a.lo || b.n - a.n : a.hi - b.hi || b.n - a.n));
@@ -6315,6 +6361,194 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     });
   };
 
+  // What works for you: the best of the cards above at one level, each list short. Your serves that landed, by spin,
+  // depth and where they landed; against each kind of rally ball, the stroke that goes with the most points won; the
+  // patterns that win clearly more than the rest; and where, and how hard, your shots win most. A line is only called
+  // clear by the rule for many comparisons (Z_MANY).
+  const WK_ROWS = 3, WK_STROKES = 6;
+  let wkWas = null;
+  const works = () => {
+    const d = data(), pts = patPoints();
+    if (!d || !pts) return null;
+    const L = ER.level(), everyone = ER.people(), key = L + '|' + ER.vs();
+    if (wkWas && wkWas.d === d && wkWas.key === key) return wkWas;
+    const mine = (m) => everyone || m.level === L;
+    const won = (r) => (r.pt.won ? 1 : 0);
+    // serves that landed
+    const sv = new Map(), serve = {n: 0, won: 0};
+    pts.forEach((o) => {
+      const s = o[1];
+      if (!mine(o.m) || o.pt.served !== 'You' || !s || s.role !== 'S' || !s.ok || s.lx == null || s.lz == null) return;
+      const k = (s.top > 20 ? 't' : s.top < -20 ? 'b' : 'n') + depthOf(s.lz) + landSide(s.lx);
+      let c = sv.get(k);
+      if (!c) sv.set(k, (c = {key: k, n: 0, won: 0}));
+      c.n += 1;
+      c.won += won(s);
+      serve.n += 1;
+      serve.won += won(s);
+    });
+    const serves = [...sv.values()].filter((c) => c.n >= PAT_MIN && c.won * serve.n > serve.won * c.n).map((c) => {
+      const [lo, hi] = likely(c.won, c.n);
+      return Object.assign(c, {lo, hi, move: apartMany(c.won, c.n, serve.won - c.won, serve.n - c.n)});
+    }).sort((a, b) => b.lo - a.lo).slice(0, WK_ROWS);
+    // rally balls by spin and side: the stroke whose points you win most, when clearly more than your other strokes there
+    const base = d.recs.filter((r) => mine(r.m));
+    const kinds = new Map();
+    base.forEach((r) => {
+      if (r.role !== 'A' || r.shot === 'X' || r.cls[1] === '-') return;
+      const k = r.cls[0] + r.cls[1];
+      let c = kinds.get(k);
+      if (!c) kinds.set(k, (c = {key: k, n: 0, won: 0, by: {}}));
+      const b = c.by[r.shot] || (c.by[r.shot] = {shot: r.shot, n: 0, ok: 0, won: 0});
+      c.n += 1;
+      c.won += won(r);
+      b.n += 1;
+      b.ok += r.ok ? 1 : 0;
+      b.won += won(r);
+    });
+    let looked = 0;
+    const strokes = [];
+    kinds.forEach((c) => {
+      const cand = Object.values(c.by).filter((b) => b.n >= MIN_STROKE);
+      if (cand.length < 2) return;
+      looked += 1;
+      cand.forEach((b) => {
+        [b.lo, b.hi] = likely(b.won, b.n);
+      });
+      const best = cand.sort((a, b) => b.lo - a.lo)[0], rest = {n: c.n - best.n, won: c.won - best.won};
+      if (apartMany(best.won, best.n, rest.won, rest.n) > 0) strokes.push({key: c.key, best, rest, gap: best.won / best.n - rest.won / rest.n});
+    });
+    strokes.sort((a, b) => b.gap - a.gap);
+    // patterns: three shots on your serve, the serve and your return on theirs
+    const pat = (who, steps) => {
+      const s = patternsOf(who, steps);
+      return {who, steps, n: s.n, won: s.won, ranked: s.ranked.length, rows: s.rows.filter((c) => c.move > 0).sort((a, b) => b.lo - a.lo).slice(0, WK_ROWS)};
+    };
+    // where your shots land and how hard you hit: the part of each group that wins clearly more than the rest
+    const lands = base.filter((r) => r.role !== 'S' && r.ok && r.lx != null && r.lz != null);
+    const hits = base.filter((r) => r.shot !== 'X' && r.speed != null && r.role !== 'S');
+    const ls = tagSum(lands, landOf), hs = tagSum(hits, hitOf);
+    const top = (sum, g, vals) => vals.map((v) => sum.get(g + ':' + v)).filter((c) => c.wonMove > 0).sort((a, b) => b.won / b.n - a.won / a.n)[0] || null;
+    const place = L_GROUPS.map(([g, , vals]) => top(ls, g, vals.map((v) => v[0]))).filter(Boolean);
+    const pace = [top(hs, 'spd', H_SPD.map((b, i) => i)), top(hs, 'rise', H_RISE.map((b) => b[0]))].filter(Boolean);
+    // the points in which you attacked, against your other points
+    const seen = new Set(base.map((r) => r.pt)), hit = attacks(base);
+    const total = {n: seen.size, won: [...seen].filter((p) => p.won).length};
+    const att = {n: hit.length, won: hit.filter((a) => a.kind === 'out' || a.kind === 'backWon').length, landed: hit.filter((a) => a.kind !== 'miss').length};
+    att.rest = {n: total.n - att.n, won: total.won - att.won};
+    att.move = apart(att.won, att.n, att.rest.won, att.rest.n);
+    wkWas = {d, key, level: L, matches: d.ms.filter((m) => (everyone ? m.vs !== 'AI' : m.vs === 'AI' && m.level === L)).length,
+      serve, serves, looked, strokes: strokes.slice(0, WK_STROKES), clearStrokes: strokes.length,
+      pats: [pat('serve', 3), pat('recv', 2)], lands: ls, hits: hs, place, pace, att};
+    return wkWas;
+  };
+  const wkJump = (id) => {
+    const el = $(id);
+    if (el) el.scrollIntoView({behavior: calm() ? 'auto' : 'smooth', block: 'start'});
+  };
+  // the shot explorer with only the level set, a card's line listed when one is given, and the page moved there
+  const wkShots = (set, only, id) => {
+    Object.assign(f, NONE, {level: ER.people() ? '' : String(ER.level())}, set);
+    st.limit = PAGE;
+    st.only = only || '';
+    redraw(['sx-filter', ...OUT]);
+    wkJump(id);
+  };
+  const wkItem = (title, detail, big, small, go) => {
+    const li = ER.el('li'), body = ER.el('div'), num = ER.el('div', 'er-sxnum');
+    body.append(typeof title === 'string' ? ER.el('span', 'er-strong', title) : title, ER.el('p', 'er-muted', detail));
+    num.append(ER.el('b', null, big), ER.el('span', 'er-muted', small));
+    li.append(body, num);
+    if (go) {
+      const btn = ER.el('button', 'er-btn', ER.tr('See it'));
+      btn.type = 'button';
+      btn.addEventListener('click', go);
+      li.appendChild(btn);
+    }
+    return li;
+  };
+  const wkNone = (text) => ER.el('li', 'er-muted', text);
+  const wkSeq = (c, who) => {
+    const seq = ER.el('span', 'er-patseq');
+    patSteps(c, who).forEach(([whose, what, yours], i) => {
+      if (i) seq.appendChild(ER.el('i', null, '→'));
+      const step = ER.el('span', 'er-patstep' + (yours ? ' you' : ''));
+      step.append(ER.el('small', null, whose), ER.el('span', null, what));
+      seq.appendChild(step);
+    });
+    return seq;
+  };
+  draws['wk-note'] = (el) => {
+    const w = works();
+    if (!w) return ER.wait(el, SRC);
+    el.replaceChildren(ER.tr('Level {0}: all {1} of your matches.', w.level, ER.F.int(w.matches)));
+  };
+  draws['wk-serves'] = (el) => {
+    const w = works();
+    if (!w) return el.replaceChildren();
+    if (!w.serves.length) return el.replaceChildren(wkNone(ER.tr('No kind of serve has 30 points and wins more than your serves do overall yet.')));
+    el.replaceChildren(...w.serves.map((c) => wkItem(
+      ER.tr('{0}, {1}, {2}', ER.tr(P_SPIN[c.key[0]]), ER.tr(P_DEPTH[c.key[1]]), ER.tr(P_LAND[c.key[2]])),
+      ER.tr('{0} points, likely range {1}. All your serves that landed: {2}.', ER.F.int(c.n), range(c.won, c.n), rate(w.serve.won, w.serve.n))
+        + ' ' + ER.tr(c.move > 0 ? 'Clearly above the rest.' : 'Not clearly above the rest yet.'),
+      rate(c.won, c.n), ER.tr('points won'), () => wkJump('own-serve'))));
+  };
+  draws['wk-strokes'] = (el) => {
+    const w = works();
+    if (!w) return el.replaceChildren();
+    if (!w.strokes.length) {
+      return el.replaceChildren(wkNone(ER.tr(w.looked ? 'Against no kind of ball does one stroke win clearly more points than your others yet.'
+        : 'No kind of ball has 20 shots each from two of your strokes yet.')));
+    }
+    el.replaceChildren(...w.strokes.map((k) => {
+      const b = k.best, title = ER.el('span', 'er-wkpair');
+      title.append(ER.el('span', null, ER.tr('{0}, {1}', ER.tr(P_SPIN[k.key[0]]), ER.tr(P_SIDE[k.key[1]]))), ER.el('i', null, '→'), ER.el('span', 'er-strong', ER.tr(STROKE[b.shot] || b.shot)));
+      return wkItem(title, ER.tr('{0} shots, {1} landed. Your other strokes against this ball: {2} of points won.', ER.F.int(b.n), rate(b.ok, b.n), rate(k.rest.won, k.rest.n)),
+        rate(b.won, b.n), ER.tr('points won'), () => wkShots({role: 'A', spin: k.key[0], side: k.key[1]}, '', 'sx-strokes-wrap'));
+    }));
+  };
+  draws['wk-patterns'] = (el) => {
+    const w = works();
+    if (!w) return el.replaceChildren();
+    const out = [];
+    w.pats.forEach((p) => {
+      const yours = p.who === 'serve';
+      out.push(ER.el('li', 'er-wkhead', ER.tr(yours ? 'On your serve' : "On the AI's serve")));
+      if (!p.rows.length) {
+        out.push(wkNone(ER.tr(p.ranked ? 'No pattern wins clearly more points than the rest yet.' : 'No pattern has come up 30 times here yet, so none is ranked.')));
+      }
+      p.rows.forEach((c) => out.push(wkItem(wkSeq(c, p.who),
+        ER.tr('{0} points, likely range {1}. The other points that got as far: {2}.', ER.F.int(c.n), range(c.won, c.n), rate(p.won - c.won, p.n - c.n)),
+        rate(c.won, c.n), ER.tr('points won'), () => {
+          Object.assign(pst, {who: p.who, sort: 'best', open: c.key, all: true, limit: PAGE});
+          pst.steps[p.who] = p.steps;
+          redraw(PAT_OUT);
+          wkJump('patterns-card');
+        })));
+    });
+    el.replaceChildren(...out);
+  };
+  draws['wk-place'] = (el) => {
+    const w = works();
+    if (!w) return el.replaceChildren();
+    const out = [];
+    w.place.forEach((c) => out.push(wkItem(ER.tr('Where it lands: {0}', landName(c.key)),
+      ER.tr('{0} shots that landed there. All your shots that landed: {1} of points won.', ER.F.int(c.n), rate(w.lands.won, w.lands.n)),
+      rate(c.won, c.n), ER.tr('points won'), () => wkShots({}, 'L:' + c.key, 'sx-land-wrap'))));
+    w.pace.forEach((c) => out.push(wkItem(ER.tr('How you hit it: {0}', hitName(c.key)),
+      ER.tr('{0} shots, {1} landed. All your shots: {2} of points won.', ER.F.int(c.n), rate(c.ok, c.n), rate(w.hits.won, w.hits.n)),
+      rate(c.won, c.n), ER.tr('points won'), () => wkShots({}, 'H:' + c.key, 'sx-hit-wrap'))));
+    if (w.att.n >= MIN_STROKE && w.att.rest.n >= MIN_STROKE) {
+      const more = w.att.move > 0, less = w.att.move < 0;
+      out.push(wkItem(ER.tr('When you attack'),
+        ER.tr('{0} points with a fast drive or loop of yours; {1} of those attacks landed. Your other points: {2} won.', ER.F.int(w.att.n), rate(w.att.landed, w.att.n), rate(w.att.rest.won, w.att.rest.n))
+          + ' ' + ER.tr(more ? 'Clearly more when you attack.' : less ? 'Clearly fewer when you attack.' : 'The gap is within what chance gives.'),
+        rate(w.att.won, w.att.n), ER.tr('points won'), () => wkShots({}, '', 'sx-attack-wrap')));
+    }
+    if (!out.length) out.push(wkNone(ER.tr('Nothing stands clearly apart here yet.')));
+    el.replaceChildren(...out);
+  };
+
   Object.keys(draws).forEach((n) => dash.draw(n, draws[n]));
 
   const on = (id, type, fn) => {
@@ -6385,7 +6619,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   });
   const P_PACE = {f: ER.k('fast'), s: ER.k('slower')};
   const ballName = (spin, side, pace) => ER.tr('{0}, {1}, {2}', ER.tr(P_SPIN[spin]), ER.tr(P_SIDE[side]), ER.tr(P_PACE[pace]));
-  ER.shots = {data, ballName, filters: f, chosen, apply, groups, strokeRows, versus, attackSum, landSum, hitSum, timeSum, state: st, patterns, patState: pst};
+  ER.shots = {data, ballName, filters: f, chosen, apply, groups, strokeRows, versus, attackSum, landSum, hitSum, timeSum, works, state: st, patterns, patState: pst};
 })();
 </script>
 
