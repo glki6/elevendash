@@ -21,7 +21,7 @@ the order they are planned. Nothing here is a promise of a date.
    the points won from each part of the table (deep or short, wide or middle, cross or down the line). Split by
    stroke and by the ball you played. Needs the landing spot of each of your shots added to the shot records; the
    replay track already has it.
-4. **Your speed and spin sweet spot.** For the balls the Shot explorer's filters pick: how often you land, and win the
+4. **Your speed and spin sweet spot.** *Done in v0.8.0, in Find shots.* For the balls the Shot explorer's filters pick: how often you land, and win the
    point, at each speed you hit them, and a speed by spin map of the shots you landed and missed. Also landing rate
    by when you met the ball: rising or falling, and how soon after the bounce. Answers "how hard should I hit this
    ball?" with your own numbers rather than one fixed speed.

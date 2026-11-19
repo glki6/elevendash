@@ -876,6 +876,19 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
       </div>
       <details class="er-how"><summary>How to read this</summary><p class="er-muted">Only your returns and rally shots that landed are counted: a serve has its own map in Breakdown by AI level, and a miss has no landing spot. Depth is from the net: short is within 50 cm of it, half-long is 50 cm to 1 m from it, deep is the last 37 cm. Left and right are as you see the table. A shot you played more than 25 cm from the middle line is cross-court when it lands on the other side of the table and down the line when it lands on the same side. The share of points won counts how the whole point ended, not only this shot. An arrow marks a row that goes with clearly more or fewer points won than your other shots here: a gap that would come up by chance about one time in a hundred. A part of the map with fewer than 20 shots is left grey. Click a row or a part of the map to list those shots below, each with its replay.</p></details>
     </div>
+    <div class="er-sxstrokes er-sxland" id="sx-hit-wrap">
+      <h4>Your speed, spin and timing</h4>
+      <p class="er-muted" data-draw="sx-hit-note" data-source="shots"></p>
+      <p class="er-pstat" data-draw="sx-hit-head" data-source="shots" role="status"></p>
+      <div class="er-sxout">
+        <div class="er-tablewrap"><table class="er-t er-sxst"><thead><tr><th>Your shot</th><th>Shots</th><th>Landed</th><th>Point won</th></tr></thead><tbody data-draw="sx-hit-rows" data-source="shots"></tbody></table></div>
+        <div class="er-sxmap">
+          <div class="er-chart" data-draw="sx-hit-map" data-source="shots"></div>
+          <p class="er-muted">Each square: the share of those shots that landed and, under it, how many there were. Harder shots are to the right, more topspin is higher up.</p>
+        </div>
+      </div>
+      <details class="er-how"><summary>How to read this</summary><p class="er-muted">Every shot of yours the filters pick, without the balls you did not reach. Serves are counted only when Kind of shot is set to Serves. Speed and spin are as the ball left your bat. Spin is in turns a second (r/s), and a shot has topspin or backspin when it carries more than 20 of them. A ball is still rising when it was going up as you met it. Time from the bounce runs from the ball's bounce on your half to your bat; a serve has neither. A harder shot is not better in itself: it wins more often when it lands and it misses more often, so read the two columns together. The share of points won counts how the whole point ended, not only this shot. An arrow marks a row that lands, or goes with points won, clearly more or less often than your other shots here: a gap that would come up by chance about one time in a hundred. A square with fewer than 20 shots is left grey. Click a row or a square to list those shots below, each with its replay.</p></details>
+    </div>
     <div class="er-sxstrokes" id="sx-versus-wrap">
       <h4>Your misses against the ones you landed</h4>
       <p class="er-muted" data-draw="sx-versus-note" data-source="shots"></p>
@@ -4962,7 +4975,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
         const num = (i, k) => (a[i] == null || a[i] === '' ? null : +a[i] / k);
         recs.push({m, pt, n: +a[1], role: a[2], shot: a[3], ok: a[4] === '1', miss: a[5], speed: num(6, 10), win: a[8] === '1',
           inShot: a[11] || '', inSpeed: num(12, 10), inTop: num(13, 1), bx: num(14, 100), bz: num(15, 100), cls: a[18] || '----',
-          top: num(7, 1), cy: num(10, 1), since: num(16, 1000), up: num(19, 10), cz: num(20, 100), lx: num(21, 100), lz: num(22, 100), cx: num(9, 100)});
+          top: num(7, 1), cy: num(10, 1), since: num(16, 1000), up: num(19, 10), cz: num(20, 100), lx: num(21, 100), lz: num(22, 100), cx: num(9, 100), rise: a[17] || ''});
       });
     });
     // your next shot in the same point, or the ball you did not reach: two shots on, with the opponent's in between
@@ -5011,7 +5024,9 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     const base = d.recs.filter((r) => pass(d, r, f));
     const hit = attacks(base);
     const lands = base.filter((r) => r.role !== 'S' && r.ok && r.lx != null && r.lz != null);       // where your shots land
-    const list = st.only.startsWith('L:') ? lands.filter(landPick(st.only))
+    // your speed, spin and timing: every shot you hit; serves only when the filter asks for them
+    const hits = base.filter((r) => r.shot !== 'X' && r.speed != null && (f.role === 'S' || r.role !== 'S'));
+    const list = st.only.startsWith('L:') ? lands.filter(tagPick(st.only, landOf)) : st.only.startsWith('H:') ? hits.filter(tagPick(st.only, hitOf))
       : st.only ? hit.filter((a) => a.kind === st.only || a.next === st.only).map((a) => a.r)
         : f.out ? base.filter((r) => outOk(r, f.out)) : base;
     let ref = null;
@@ -5025,7 +5040,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     const q = Object.assign({}, f, {shot: ''});
     const same = d.recs.filter((r) => r.role !== 'S' && pass(d, r, q));
     const strokes = same.filter((r) => r.shot !== 'X');
-    was = {d, key, base, list, ref, strokes, unreached: same.length - strokes.length, attacks: hit, lands};
+    was = {d, key, base, list, ref, strokes, unreached: same.length - strokes.length, attacks: hit, lands, hits};
     return was;
   };
   const rate = (a, b) => ER.F.pct(Math.round(1000 * a / b) / 10);
@@ -5033,9 +5048,9 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   const draws = {};
   const redraw = (names) => names.forEach((n) => document.querySelectorAll(`[data-draw="${n}"]`).forEach((el) => draws[n](el)));
   const OUT = ['sx-summary', 'sx-bars', 'sx-strokes-note', 'sx-strokes', 'sx-attack-note', 'sx-attack-head', 'sx-attack', 'sx-attack-next',
-    'sx-land-note', 'sx-land-head', 'sx-land-rows', 'sx-land-map', 'sx-versus-note', 'sx-versus', 'sx-only', 'sx-map', 'sx-list', 'sx-count'];
+    'sx-land-note', 'sx-land-head', 'sx-land-rows', 'sx-land-map', 'sx-hit-note', 'sx-hit-head', 'sx-hit-rows', 'sx-hit-map', 'sx-versus-note', 'sx-versus', 'sx-only', 'sx-map', 'sx-list', 'sx-count'];
   // what a change of st.only (the list narrowed to one line of a card) redraws
-  const ONLY_OUT = ['sx-attack', 'sx-attack-next', 'sx-land-rows', 'sx-land-map', 'sx-only', 'sx-map', 'sx-list', 'sx-count'];
+  const ONLY_OUT = ['sx-attack', 'sx-attack-next', 'sx-land-rows', 'sx-land-map', 'sx-hit-rows', 'sx-hit-map', 'sx-only', 'sx-map', 'sx-list', 'sx-count'];
 
   // The filters. Each select is drawn once for a language, then only told what is chosen.
   const options = (k, d) => {
@@ -5236,7 +5251,8 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     if (wrap) wrap.hidden = !st.only;
     if (!s || !st.only) return el.replaceChildren();
     el.replaceChildren(st.only.startsWith('L:') ? ER.tr('Listing {0} shots of yours by where they landed: {1}.', ER.F.int(s.list.length), landName(st.only.slice(2)))
-      : ER.tr(A_ONLY[st.only], ER.F.int(s.list.length)));
+      : st.only.startsWith('H:') ? ER.tr('Listing {0} shots of yours: {1}.', ER.F.int(s.list.length), hitName(st.only.slice(2)))
+        : ER.tr(A_ONLY[st.only], ER.F.int(s.list.length)));
   };
 
   // Your misses against the ones you landed: the shots the filters pick (Result left aside), by how they ended, on
@@ -5717,6 +5733,79 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     el.replaceChildren(...(n ? [ER.tr('Showing {0} of {1}, newest first.', ER.F.int(Math.min(n, pst.limit)), ER.F.int(n))] : []));
   };
 
+  // Rows of a card that splits the shots picked: a heading for each group, then a row for each value with its shots
+  // and, as cols asks, its share of all of them, the share that landed and the share of points won. A row lists its
+  // shots below (st.only is the card's prefix and the row's key).
+  const onlyToggle = (key) => {
+    st.only = st.only === key ? '' : key;
+    st.limit = PAGE;
+    redraw(ONLY_OUT);
+  };
+  const statRows = (tb, total, groups, get, cols, prefix) => {
+    const cell = (k, n, move) => {
+      const td = ER.el('td');
+      if (!n) {
+        td.textContent = '—';
+        return td;
+      }
+      td.appendChild(ER.el('b', null, rate(k, n)));
+      if (move) {
+        const chg = ER.el('span', 'er-chg ' + (move > 0 ? 'good' : 'bad'), move > 0 ? '▲' : '▼');
+        chg.title = ER.tr(move > 0 ? 'Clearly more often than your other shots here' : 'Clearly less often than your other shots here');
+        chg.setAttribute('role', 'img');
+        chg.setAttribute('aria-label', chg.title);
+        td.appendChild(chg);
+      }
+      td.appendChild(ER.el('small', null, range(k, n)));
+      return td;
+    };
+    const out = [];
+    groups.forEach(([g, label, vals]) => {
+      const head = ER.el('tr', 'er-group'), gh = ER.el('th', null, ER.tr(label));
+      gh.colSpan = cols.length + 2;
+      head.appendChild(gh);
+      out.push(head);
+      vals.forEach(([v, name]) => {
+        const x = get(g + ':' + v), on = st.only === prefix + x.key;
+        const tr = ER.el('tr', (x.n < MIN_STROKE ? 'few' : '') + (on ? ' on' : '')), th = ER.el('th'), pick = ER.el('button', 'er-sxpick', ER.tr(name));
+        th.scope = 'row';
+        pick.type = 'button';
+        pick.disabled = !x.n;
+        pick.setAttribute('aria-pressed', String(on));
+        pick.title = ER.tr('List these shots below');
+        pick.addEventListener('click', () => onlyToggle(prefix + x.key));
+        th.appendChild(pick);
+        tr.append(th, ER.el('td', null, ER.F.int(x.n)), ...cols.map((col) => (col === 'share' ? ER.el('td', null, total ? rate(x.n, total) : '—')
+          : col === 'ok' ? cell(x.ok, x.n, x.okMove) : cell(x.won, x.n, x.wonMove))));
+        out.push(tr);
+      });
+    });
+    tb.replaceChildren(...out);
+  };
+  // A grid of tinted squares: each cell {x0, x1, y0, y1, n, value (0 to 100), key, tip}. Squares with MIN_STROKE shots are
+  // tinted from the lowest value to the highest; one lists its shots.
+  const tintGrid = (svg, tip, cells, prefix) => {
+    const solid = cells.filter((q) => q.n >= MIN_STROKE);
+    const lo = d3.min(solid, (q) => q.value), hi = d3.max(solid, (q) => q.value);
+    const depth = d3.scaleLinear().domain(lo === hi ? [lo - 1, hi + 1] : [lo, hi]).range([14, 86]).clamp(true);
+    cells.forEach((q) => {
+      const p = q.n >= MIN_STROKE ? depth(q.value) : null, on = st.only === prefix + q.key;
+      const cell = svg.append('rect').attr('x', q.x0 + 1).attr('y', q.y0 + 1).attr('width', Math.max(0, q.x1 - q.x0 - 2)).attr('height', Math.max(0, q.y1 - q.y0 - 2)).attr('rx', 3)
+        .style('fill', p == null ? 'var(--er-track)' : ER.mix(ER.YOU, p)).style('fill-opacity', q.n ? null : 0.45)
+        .style('stroke', on ? 'var(--color-fg)' : 'none').style('stroke-width', 2).style('cursor', q.n ? 'pointer' : null);
+      if (!q.n) return;
+      cell.on('click', () => onlyToggle(prefix + q.key))
+        .on('pointermove pointerdown', (evt) => tip.show(evt, q.tip().filter(Boolean)))
+        .on('pointerleave', () => tip.hide());
+      const strong = p != null && p >= 78, mx = (q.x0 + q.x1) / 2, my = (q.y0 + q.y1) / 2;
+      svg.append('text').attr('x', mx).attr('y', my - 2).attr('text-anchor', 'middle')
+        .attr('class', (strong ? 'er-on' : q.n >= MIN_STROKE ? 'er-strong' : '') + ' er-num').style('pointer-events', 'none').text(Math.round(q.value) + '%');
+      svg.append('text').attr('x', mx).attr('y', my + 13).attr('text-anchor', 'middle').attr('class', (strong ? 'er-on' : '') + ' er-num')
+        .style('font-weight', 400).style('fill', strong || p == null ? null : 'var(--color-fg)').style('fill-opacity', strong ? 0.85 : p == null ? null : 0.72)
+        .style('pointer-events', 'none').text(ER.F.int(q.n));
+    });
+  };
+
   // Where your shots land: your returns and rally shots that landed, among the shots the filters pick (Result left
   // aside), by the part of the far half they bounced on (three depths by three sides, as the serve map has them) and
   // by direction (from a wing: across the table, down the line or to the middle). Each with the share of points won,
@@ -5729,55 +5818,52 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     if (r.land) return r.land;
     const col = landSide(r.lx), from = r.cx == null ? 'M' : landSide(r.cx);
     r.land = {col, dep: depthOf(r.lz), dir: from === 'M' ? 'c' : col === 'M' ? 'm' : col === from ? 'd' : 'x'};
+    r.land.cell = r.land.col + r.land.dep;
     return r.land;
   };
-  // st.only for a part of the table is L:<group>:<value>, with the group cell for one of the nine parts (side then depth)
-  const landPick = (only) => {
-    const [, g, v] = only.split(':');
-    return g === 'cell' ? (r) => landOf(r).col + landOf(r).dep === v : (r) => landOf(r)[g] === v;
-  };
-  const landSum = (s) => {
-    if (s.lsum) return s.lsum;
-    const all = {n: 0, won: 0}, by = {};
-    const add = (k, r) => {
-      const c = by[k] || (by[k] = {key: k, n: 0, won: 0});
-      c.n += 1;
-      c.won += r.pt.won;
-    };
-    s.lands.forEach((r) => {
-      const l = landOf(r);
+  // Shots added up by each key the groups give (a record's tags: {group: value}), each sum with whether it lands, and
+  // goes with points won, clearly more or less often than the other shots.
+  const tagSum = (recs, tagsOf) => {
+    const all = {n: 0, ok: 0, won: 0}, by = {};
+    recs.forEach((r) => {
+      const t = tagsOf(r);
       all.n += 1;
+      all.ok += r.ok ? 1 : 0;
       all.won += r.pt.won;
-      add('cell:' + l.col + l.dep, r);
-      add('dep:' + l.dep, r);
-      add('col:' + l.col, r);
-      add('dir:' + l.dir, r);
+      Object.keys(t).forEach((g) => {
+        if (t[g] == null) return;
+        const k = g + ':' + t[g], c = by[k] || (by[k] = {key: k, n: 0, ok: 0, won: 0});
+        c.n += 1;
+        c.ok += r.ok ? 1 : 0;
+        c.won += r.pt.won;
+      });
     });
     Object.values(by).forEach((c) => {
-      c.move = apartMany(c.won, c.n, all.won - c.won, all.n - c.n);
+      c.okMove = apartMany(c.ok, c.n, all.ok - c.ok, all.n - c.n);
+      c.wonMove = apartMany(c.won, c.n, all.won - c.won, all.n - c.n);
     });
-    s.lsum = {n: all.n, won: all.won, by, get: (k) => by[k] || {key: k, n: 0, won: 0, move: 0}};
-    return s.lsum;
+    return Object.assign(all, {by, get: (k) => by[k] || {key: k, n: 0, ok: 0, won: 0, okMove: 0, wonMove: 0}});
   };
+  // st.only for a line of a card is <card letter>:<group>:<value>
+  const tagPick = (only, tagsOf) => {
+    const [, g, v] = only.split(':');
+    return (r) => String(tagsOf(r)[g]) === v;
+  };
+  const landSum = (s) => s.lsum || (s.lsum = tagSum(s.lands, landOf));
   const landName = (key) => {
     const [g, v] = key.split(':');
     if (g === 'cell') return ER.tr('{0}, {1}', ER.tr(L_DEPS.find((d) => d[0] === v[1])[3]), ER.tr(L_COLS.find((c) => c[0] === v[0])[3]));
     return ER.tr(L_GROUPS.find((x) => x[0] === g)[2].find((x) => x[0] === v)[1]);
   };
-  const landToggle = (key) => {
-    st.only = st.only === 'L:' + key ? '' : 'L:' + key;
-    st.limit = PAGE;
-    redraw(ONLY_OUT);
-  };
+  const mixed = () => !(f.shot || f.spin || f.side || f.depth || f.pace);
+  const MIXED = ER.k('No stroke or kind of ball is picked, so pushes are mixed with loops and easy balls with hard ones. Set the filters to compare like with like.');
   draws['sx-land-note'] = (el) => {
     const s = chosen(), wrap = $('sx-land-wrap');
     const c = s ? landSum(s) : null, show = !!c && c.n >= MIN_SHOWN;
     if (wrap) wrap.hidden = !show;
     if (!show) return el.replaceChildren();
     const out = [ER.tr('{0} returns and rally shots of yours that landed, among the shots the filters pick, whatever Result is set to.', ER.F.int(c.n))];
-    if (!(f.shot || f.spin || f.side || f.depth || f.pace)) {
-      out.push(' ', ER.el('b', null, ER.tr('No stroke or kind of ball is picked, so pushes are mixed with loops and easy balls with hard ones. Set the filters to compare like with like.')));
-    }
+    if (mixed()) out.push(' ', ER.el('b', null, ER.tr(MIXED)));
     el.replaceChildren(...out);
   };
   draws['sx-land-head'] = (el) => {
@@ -5786,7 +5872,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     if (c.n < MIN_STROKE) return el.replaceChildren(ER.tr('Too few shots here for shares to mean much.'));
     const b = (t) => ER.el('b', null, t), sep = ER.lang() === 'zh' ? '、' : ', ';
     const rows = L_GROUPS.flatMap(([g, , vals]) => vals.map(([v]) => c.get(g + ':' + v)));
-    const names = (m) => rows.filter((x) => x.move === m).map((x) => landName(x.key)).join(sep);
+    const names = (m) => rows.filter((x) => x.wonMove === m).map((x) => landName(x.key)).join(sep);
     const out = ER.trn('You went on to win the point after {0} of these shots.', b(rate(c.won, c.n)));
     const up = names(1), down = names(-1);
     if (up) out.push(' ', ...ER.trn('Clearly more often: {0}.', b(up)));
@@ -5797,39 +5883,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
   draws['sx-land-rows'] = (tb) => {
     const s = chosen(), c = s ? landSum(s) : null;
     if (!c || c.n < MIN_SHOWN) return tb.replaceChildren();
-    const out = [];
-    L_GROUPS.forEach(([g, label, vals]) => {
-      const head = ER.el('tr', 'er-group'), gh = ER.el('th', null, ER.tr(label));
-      gh.colSpan = 4;
-      head.appendChild(gh);
-      out.push(head);
-      vals.forEach(([v, name]) => {
-        const x = c.get(g + ':' + v), on = st.only === 'L:' + x.key;
-        const tr = ER.el('tr', (x.n < MIN_STROKE ? 'few' : '') + (on ? ' on' : '')), th = ER.el('th'), pick = ER.el('button', 'er-sxpick', ER.tr(name));
-        th.scope = 'row';
-        pick.type = 'button';
-        pick.disabled = !x.n;
-        pick.setAttribute('aria-pressed', String(on));
-        pick.title = ER.tr('List these shots below');
-        pick.addEventListener('click', () => landToggle(x.key));
-        th.appendChild(pick);
-        const td = ER.el('td');
-        if (x.n) {
-          td.appendChild(ER.el('b', null, rate(x.won, x.n)));
-          if (x.move) {
-            const chg = ER.el('span', 'er-chg ' + (x.move > 0 ? 'good' : 'bad'), x.move > 0 ? '▲' : '▼');
-            chg.title = ER.tr(x.move > 0 ? 'Clearly more often than your other shots here' : 'Clearly less often than your other shots here');
-            chg.setAttribute('role', 'img');
-            chg.setAttribute('aria-label', chg.title);
-            td.appendChild(chg);
-          }
-          td.appendChild(ER.el('small', null, range(x.won, x.n)));
-        } else td.textContent = '—';
-        tr.append(th, ER.el('td', null, ER.F.int(x.n)), ER.el('td', null, rate(x.n, c.n)), td);
-        out.push(tr);
-      });
-    });
-    tb.replaceChildren(...out);
+    statRows(tb, c.n, L_GROUPS, c.get, ['share', 'won'], 'L:');
   };
   draws['sx-land-map'] = (el) => {
     const s = chosen(), c = s ? landSum(s) : null;
@@ -5840,41 +5894,109 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     const H = Math.round(W * (Z1 - Z0) / (2 * X)) + 18;
     const sx = (x) => (x + X) / (2 * X) * W, sy = (z) => (Z1 - z) / (Z1 - Z0) * (H - 18);
     const svg = ER.svg(el, W, H, ER.tr('The far half of the table seen from above, split into nine parts, with your share of points won when your shot landed in each'));
-    const tip = ER.tip(el);
     const cells = [];
-    L_COLS.forEach(([col, xa, xb]) => L_DEPS.forEach(([dep, za, zb]) => cells.push({xa, xb, za, zb, x: c.get('cell:' + col + dep)})));
-    const solid = cells.filter((q) => q.x.n >= MIN_STROKE), pc = (q) => 100 * q.x.won / q.x.n;
-    const lo = d3.min(solid, pc), hi = d3.max(solid, pc);
-    const depth = d3.scaleLinear().domain(lo === hi ? [lo - 1, hi + 1] : [lo, hi]).range([14, 86]).clamp(true);
-    cells.forEach((q) => {
-      const x0 = sx(q.xa), x1 = sx(q.xb), y0 = sy(q.zb), y1 = sy(q.za), n = q.x.n;
-      const p = n >= MIN_STROKE ? depth(pc(q)) : null, on = st.only === 'L:' + q.x.key;
-      const cell = svg.append('rect').attr('x', x0 + 1).attr('y', y0 + 1).attr('width', Math.max(0, x1 - x0 - 2)).attr('height', Math.max(0, y1 - y0 - 2)).attr('rx', 3)
-        .style('fill', p == null ? 'var(--er-track)' : ER.mix(ER.YOU, p)).style('fill-opacity', n ? null : 0.45)
-        .style('stroke', on ? 'var(--color-fg)' : 'none').style('stroke-width', 2).style('cursor', n ? 'pointer' : null);
-      if (!n) return;
-      cell.on('click', () => landToggle(q.x.key))
-        .on('pointermove pointerdown', (evt) => tip.show(evt, [
-          landName(q.x.key),
-          ER.tr('{0} shots landed here ({1})', ER.F.int(n), rate(n, c.n)),
-          ER.tr('You won {0} of those points ({1})', rate(q.x.won, n), range(q.x.won, n)),
-          ER.tr('Over all these shots: {0}', rate(c.won, c.n)),
-          q.x.move ? ER.tr(q.x.move > 0 ? 'Clearly more often than your other shots here' : 'Clearly less often than your other shots here') : '',
-          n < MIN_STROKE ? ER.tr('Too few shots to colour') : '',
-        ].filter(Boolean)))
-        .on('pointerleave', () => tip.hide());
-      const strong = p != null && p >= 78, mx = (x0 + x1) / 2, my = (y0 + y1) / 2;
-      svg.append('text').attr('x', mx).attr('y', my - 2).attr('text-anchor', 'middle')
-        .attr('class', (strong ? 'er-on' : n >= MIN_STROKE ? 'er-strong' : '') + ' er-num').style('pointer-events', 'none').text(Math.round(pc(q)) + '%');
-      svg.append('text').attr('x', mx).attr('y', my + 13).attr('text-anchor', 'middle').attr('class', (strong ? 'er-on' : '') + ' er-num')
-        .style('font-weight', 400).style('fill', strong || p == null ? null : 'var(--color-fg)').style('fill-opacity', strong ? 0.85 : p == null ? null : 0.72)
-        .style('pointer-events', 'none').text(ER.F.int(n));
-    });
+    L_COLS.forEach(([col, xa, xb]) => L_DEPS.forEach(([dep, za, zb]) => {
+      const x = c.get('cell:' + col + dep);
+      cells.push({x0: sx(xa), x1: sx(xb), y0: sy(zb), y1: sy(za), n: x.n, value: x.n ? 100 * x.won / x.n : 0, key: x.key, tip: () => [
+        landName(x.key),
+        ER.tr('{0} shots landed here ({1})', ER.F.int(x.n), rate(x.n, c.n)),
+        ER.tr('You won {0} of those points ({1})', rate(x.won, x.n), range(x.won, x.n)),
+        ER.tr('Over all these shots: {0}', rate(c.won, c.n)),
+        x.wonMove ? ER.tr(x.wonMove > 0 ? 'Clearly more often than your other shots here' : 'Clearly less often than your other shots here') : '',
+        x.n < MIN_STROKE ? ER.tr('Too few shots to colour') : '',
+      ]});
+    }));
+    tintGrid(svg, ER.tip(el), cells, 'L:');
     svg.append('line').attr('x1', sx(-0.82)).attr('x2', sx(0.82)).attr('y1', sy(0)).attr('y2', sy(0))
       .style('stroke', 'var(--color-fg)').style('stroke-width', 2).style('stroke-linecap', 'round');
     svg.append('text').attr('x', sx(-0.7625)).attr('y', H - 4).attr('text-anchor', 'start').text(ER.tr('← your left'));
     svg.append('text').attr('x', sx(0)).attr('y', H - 4).attr('text-anchor', 'middle').attr('class', 'er-strong').text(ER.tr('Net'));
     svg.append('text').attr('x', sx(0.7625)).attr('y', H - 4).attr('text-anchor', 'end').text(ER.tr('your right →'));
+  };
+
+  // Your speed, spin and timing: every shot of yours the filters pick (Result left aside; no ball you did not reach,
+  // and serves only when the filter asks for them), by its speed off your bat, by whether the ball was still rising
+  // and by the time since its bounce, each with the share landed and the share of points won. The map is speed by
+  // topspin, tinted by the share landed.
+  const H_SPD = [[6, ER.k('Under 6 m/s'), '<6'], [8, ER.k('6 to 8 m/s'), '6–8'], [10, ER.k('8 to 10 m/s'), '8–10'], [12, ER.k('10 to 12 m/s'), '10–12'],
+    [14, ER.k('12 to 14 m/s'), '12–14'], [Infinity, ER.k('14 m/s or more'), '14+']];
+  const H_SPIN = [[-20, ER.k('Backspin'), ER.k('back')], [20.5, ER.k('Little spin'), ER.k('little')], [40, ER.k('Topspin, 20 to 40 r/s'), '20–40'],
+    [60, ER.k('Topspin, 40 to 60 r/s'), '40–60'], [Infinity, ER.k('Topspin, 60 r/s or more'), '60+']];
+  const H_SINCE = [[0.1, ER.k('Under 0.10 s')], [0.14, ER.k('0.10 to 0.14 s')], [0.18, ER.k('0.14 to 0.18 s')], [0.25, ER.k('0.18 to 0.25 s')], [Infinity, ER.k('0.25 s or more')]];
+  const H_RISE = [['r', ER.k('Still rising')], ['f', ER.k('Already falling')]];
+  const band = (v, bands) => (v == null ? null : bands.findIndex((b) => v < b[0]));
+  const H_GROUPS = [['spd', ER.k('Speed off your bat'), H_SPD.map((b, i) => [i, b[1]])], ['rise', ER.k('The ball as you met it'), H_RISE],
+    ['since', ER.k('Time from the bounce to your bat'), H_SINCE.map((b, i) => [i, b[1]])]];
+  const hitOf = (r) => {
+    if (r.hit) return r.hit;
+    r.hit = {spd: band(r.speed, H_SPD), spin: band(r.top, H_SPIN), since: band(r.since, H_SINCE), rise: r.rise || null};
+    r.hit.cell = r.hit.spd == null || r.hit.spin == null ? null : r.hit.spd + '' + r.hit.spin;
+    return r.hit;
+  };
+  const hitSum = (s) => s.hsum || (s.hsum = tagSum(s.hits, hitOf));
+  const hitName = (key) => {
+    const [g, v] = key.split(':');
+    if (g === 'cell') return ER.tr('{0}, {1}', ER.tr(H_SPD[+v[0]][1]), ER.tr(H_SPIN[+v[1]][1]));
+    return ER.tr(H_GROUPS.find((x) => x[0] === g)[2].find((x) => String(x[0]) === v)[1]);
+  };
+  draws['sx-hit-note'] = (el) => {
+    const s = chosen(), wrap = $('sx-hit-wrap');
+    const c = s ? hitSum(s) : null, show = !!c && c.n >= MIN_SHOWN;
+    if (wrap) wrap.hidden = !show;
+    if (!show) return el.replaceChildren();
+    const out = [ER.tr('{0} shots of yours among the shots the filters pick, whatever Result is set to.', ER.F.int(c.n))];
+    if (mixed()) out.push(' ', ER.el('b', null, ER.tr(MIXED)));
+    el.replaceChildren(...out);
+  };
+  draws['sx-hit-head'] = (el) => {
+    const s = chosen(), c = s ? hitSum(s) : null;
+    if (!c || c.n < MIN_SHOWN) return el.replaceChildren();
+    if (c.n < MIN_STROKE) return el.replaceChildren(ER.tr('Too few shots here for shares to mean much.'));
+    const b = (t) => ER.el('b', null, t);
+    const out = ER.trn('You landed {0} of these shots and went on to win the point after {1}.', b(rate(c.ok, c.n)), b(rate(c.won, c.n)));
+    const bands = H_SPD.map((x, i) => c.get('spd:' + i)).filter((x) => x.n >= MIN_STROKE);
+    if (bands.length > 1) {
+      const best = bands.reduce((a, x) => (x.won / x.n > a.won / a.n ? x : a));
+      out.push(' ', ...ER.trn('By speed, the points you win peak at {0}: {1} ({2}), with {3} of those shots landing.',
+        b(hitName(best.key)), b(rate(best.won, best.n)), range(best.won, best.n), b(rate(best.ok, best.n))));
+      if (!best.wonMove) out.push(' ', ER.tr('That is not clearly more than at your other speeds.'));
+    }
+    const rise = H_RISE.map(([v]) => c.get('rise:' + v)).find((x) => x.okMove > 0);
+    const rising = !!rise && rise.key.endsWith('r');
+    if (rise) out.push(' ', ER.tr(rising ? 'You land clearly more of the balls you meet still rising.' : 'You land clearly more of the balls you meet already falling.'));
+    el.replaceChildren(...out);
+  };
+  draws['sx-hit-rows'] = (tb) => {
+    const s = chosen(), c = s ? hitSum(s) : null;
+    if (!c || c.n < MIN_SHOWN) return tb.replaceChildren();
+    statRows(tb, c.n, H_GROUPS, c.get, ['ok', 'won'], 'H:');
+  };
+  draws['sx-hit-map'] = (el) => {
+    const s = chosen(), c = s ? hitSum(s) : null;
+    if (!c || c.n < MIN_SHOWN) return el.replaceChildren();
+    const cw = el.clientWidth;      // before emptying: see ER.tableFrame
+    el.replaceChildren();
+    const W = Math.max(240, Math.min(340, cw || 320)), LEFT = 44, TOP = 18, CH = 40, BOT = 34;
+    const CW = (W - LEFT) / H_SPD.length, H = TOP + CH * H_SPIN.length + BOT;
+    const svg = ER.svg(el, W, H, ER.tr('A grid of your shots by speed off your bat, left to right, and by topspin, bottom to top, with the share that landed in each square'));
+    const cells = [];
+    H_SPD.forEach((sp, i) => H_SPIN.forEach((tp, j) => {
+      const x = c.get('cell:' + i + j), y0 = TOP + CH * (H_SPIN.length - 1 - j);
+      cells.push({x0: LEFT + CW * i, x1: LEFT + CW * (i + 1), y0, y1: y0 + CH, n: x.n, value: x.n ? 100 * x.ok / x.n : 0, key: x.key, tip: () => [
+        hitName(x.key),
+        ER.tr('{0} shots ({1})', ER.F.int(x.n), rate(x.n, c.n)),
+        ER.tr('{0} of them landed ({1})', rate(x.ok, x.n), range(x.ok, x.n)),
+        ER.tr('You won {0} of those points ({1})', rate(x.won, x.n), range(x.won, x.n)),
+        ER.tr('Over all these shots: {0} landed', rate(c.ok, c.n)),
+        x.n < MIN_STROKE ? ER.tr('Too few shots to colour') : '',
+      ]});
+    }));
+    tintGrid(svg, ER.tip(el), cells, 'H:');
+    H_SPD.forEach((sp, i) => svg.append('text').attr('x', LEFT + CW * (i + 0.5)).attr('y', H - BOT + 14).attr('text-anchor', 'middle').attr('class', 'er-num').text(sp[2]));
+    H_SPIN.forEach((tp, j) => svg.append('text').attr('x', LEFT - 6).attr('y', TOP + CH * (H_SPIN.length - 0.5 - j)).attr('text-anchor', 'end')
+      .attr('dominant-baseline', 'middle').attr('class', 'er-num').text(j < 2 ? ER.tr(tp[2]) : tp[2]));
+    svg.append('text').attr('x', LEFT + (W - LEFT) / 2).attr('y', H - 4).attr('text-anchor', 'middle').text(ER.tr('Speed off your bat, m/s'));
+    svg.append('text').attr('x', 0).attr('y', 10).attr('text-anchor', 'start').text(ER.tr('Topspin, r/s'));
   };
 
   Object.keys(draws).forEach((n) => dash.draw(n, draws[n]));
@@ -5937,7 +6059,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     pst.limit += PAGE;
     redraw(['pat-points', 'pat-points-count']);
   });
-  ER.shots = {filters: f, chosen, apply, groups, strokeRows, versus, attackSum, landSum, state: st, patterns, patState: pst};
+  ER.shots = {filters: f, chosen, apply, groups, strokeRows, versus, attackSum, landSum, hitSum, state: st, patterns, patState: pst};
 })();
 </script>
 

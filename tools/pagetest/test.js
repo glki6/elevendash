@@ -131,6 +131,31 @@
       }
     }
 
+    // 4b3. your speed, spin and timing: the bands add up, and a row lists exactly its shots
+    {
+      const s0 = ER.shots.chosen(), c = ER.shots.hitSum(s0);
+      const sum = (g, vs) => vs.reduce((a, v) => a + c.get(g + ':' + v).n, 0);
+      const cells = [0, 1, 2, 3, 4, 5].flatMap((x) => [0, 1, 2, 3, 4].map((y) => '' + x + y));
+      const adds = c.n === s0.hits.length && sum('spd', [0, 1, 2, 3, 4, 5]) === c.n && sum('cell', cells) === c.n && sum('rise', ['r', 'f']) <= c.n
+        && sum('since', [0, 1, 2, 3, 4]) <= c.n && c.ok === s0.hits.filter((r) => r.ok).length && s0.hits.every((r) => r.shot !== 'X' && r.role !== 'S');
+      check('speed, spin and timing: the bands add up', adds, c.n + ' shots');
+      const picks = qa('[data-draw="sx-hit-rows"] .er-sxpick');
+      if (c.n >= 5) {
+        const i = picks.findIndex((b) => !b.disabled);
+        picks[i].click();
+        await wait(80);
+        const only = ER.shots.state.only, [, g, v] = only.split(':');
+        const l = ER.shots.chosen().list;
+        const listed = picks.length === 13 && l.length === c.get(g + ':' + v).n && l.length > 0 && !q('#sx-only-wrap').hidden;
+        q('#sx-only-clear').click();
+        await wait(80);
+        const back = ER.shots.chosen().list.length === s0.base.length && q('#sx-only-wrap').hidden;
+        check('speed, spin and timing: a row lists its shots, and back', listed && back, only + ' ' + l.length);
+      } else {
+        check('speed, spin and timing: a row lists its shots, and back', q('#sx-hit-wrap').hidden, 'too few shots: hidden');
+      }
+    }
+
     // 4c. patterns that win points: every pattern holds its points, a row lists them, and the way back leads to the card
     {
       let bad = '', rowsSeen = 0, opened = false;
