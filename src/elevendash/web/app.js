@@ -231,6 +231,22 @@
       say(data.msg, err.message, err.message, 'bad');
     }
   };
+  const diag = $('ed-diagnose');
+  if (diag) {
+    diag.addEventListener('click', async () => {
+      diag.disabled = true;
+      say(data.msg, 'Reading your logs for the report…', '正在讀取記錄以製作報告…');
+      try {
+        const r = await A.api('POST', '/api/diagnose');
+        say(data.msg, `Report written: ${r.file}. Read it, then paste it into your report on GitHub (Issues).`,
+          `已寫入報告：${r.file}。請先看一遍，再貼到 GitHub 的問題回報（Issues）裡。`, 'ok');
+        openSub('diagnose');
+      } catch (err) {
+        say(data.msg, err.message, err.message, 'bad');
+      }
+      diag.disabled = false;
+    });
+  }
   data.csv.addEventListener('click', exportAs('csv'));
   data.json.addEventListener('click', exportAs('json'));
   if (data.restore) {
@@ -589,6 +605,18 @@
     new MutationObserver(flag).observe(head, {subtree: true, childList: true, attributes: true, attributeFilter: ['hidden', 'class']});
   }
 
+  // the session report's first lines (app.py headline), in Chinese
+  const WON = {Matches: '贏得場數', Games: '贏得局數', Points: '得分'};
+  const zhHead = (lines) => lines.map((l) => {
+    let m = l.match(/^SESSION (\d+): (\S+) (\S+) to (\S+), (.*)$/);
+    if (m) {
+      const vs = m[5] === 'online' ? '線上比賽' : m[5].replace(/^AI at level (\d+)$/, '對 AI，等級 $1').replace(/^AI at (.+)$/, '對 AI，$1');
+      return `第 ${m[1]} 節：${m[2]} ${m[3]} 至 ${m[4]}，${vs}`;
+    }
+    m = l.match(/^(Matches|Games|Points) won (\d+) of (\d+) \((.*)\)$/);
+    return m ? `${WON[m[1]]} ${m[2]} / ${m[3]}（${m[4]}）` : l;
+  }).join(' · ');
+
   // after a reload that an import caused: say what came in
   try {
     const r = JSON.parse(sessionStorage.getItem(DONE) || 'null');
@@ -597,7 +625,7 @@
       const head = (r.headline || []).join(' · ');
       const n = r.new || 0;
       const en = (n ? `Imported ${plural(n, 'log', 'logs')}. ` : 'Rebuilt. ') + head;
-      const z = (n ? `已匯入 ${n} 個記錄。` : '已重新建立。') + head;
+      const z = (n ? `已匯入 ${n} 個記錄。` : '已重新建立。') + zhHead(r.headline || []);
       say(bar.msg, en, z, 'ok');
     }
   } catch (e) {

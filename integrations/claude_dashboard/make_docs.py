@@ -28,7 +28,7 @@ TITLES = {
     'session_notes': ('Session notes',
                       'The written lines of each session report: the result, what moved furthest from your earlier average, and the longest point.'),
     'plan': ('Training plan',
-             'One row per thing to practise at the AI level you play now, ranked by the points a match it is worth: your recent number, the target from matches you won, the evidence and a drill.'),
+             'One row per thing to practise at the AI level you play now, ranked by the points a match it is worth: your recent number, the target from your better recent matches, the evidence and a drill.'),
     'plan_trend': ('Training plan by session',
                    'Each plan item\'s number in every session at that level, with how many tries it covers.'),
     'plan_progress': ('Training plan progress',

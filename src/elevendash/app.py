@@ -17,6 +17,7 @@ import http.server
 import ipaddress
 import json
 import os
+import re
 import secrets
 import shutil
 import socket
@@ -42,11 +43,16 @@ STATE = '.app.json'            # in the workspace: the port of the running app, 
 NOTES = 'notes.json'
 RESTORE = '.restore.zip'       # an uploaded backup waits here until the restore job unpacks it
 MAX_BACKUP = 16 << 30
-FOLDERS = ('backups', 'export', 'share')      # what Open folder may open besides the workspace itself
+FOLDERS = ('backups', 'export', 'share', 'diagnose')      # what Open folder may open besides the workspace itself
 REPORT = '.import.json'        # in the workspace: the logs the last build could not read as usual, and why
 INCOMING = '.incoming'         # uploaded logs wait here until the import job copies them in
 APP_NAME = 'Eleven Dashboard'
 SETTINGS = {'hand': ('auto', 'right', 'left'), 'theme': THEMES, 'lang': LANGS}
+
+
+def _same(given, key):
+    """A key compared in constant time, as bytes: a header or cookie with letters outside ASCII is simply wrong."""
+    return secrets.compare_digest(str(given).encode('utf-8', 'surrogateescape'), str(key).encode('utf-8', 'surrogateescape'))
 
 
 def default_home():
@@ -226,6 +232,13 @@ class App:
         path, n = backup.make(self.ws)
         return dict(n, file=path)
 
+    def make_diagnose(self):
+        if self.job.busy:
+            raise ValueError('an import is running; make the report when it is done')
+        from . import diagnose
+        path, text = diagnose.write(self.ws)
+        return {'file': path, 'text': text}
+
     def make_export(self, fmt):
         if not self.built():
             raise ValueError('there is no match data to export yet')
@@ -299,12 +312,21 @@ class App:
             v.update({'home': self.ws.root, 'shortcut': os.name == 'nt'})
             return v
 
-        def hide(x):              # and so is what a job said about where it wrote
-            return x.replace(self.ws.root, '…') if isinstance(x, str) else x
-        v['lines'] = [hide(x) for x in v['lines']]
+        v['lines'] = [self.hide(x) for x in v['lines']]
         if v['result']:
-            v['result'] = {k: hide(x) for k, x in v['result'].items()}
+            v['result'] = {k: self.hide(x) for k, x in v['result'].items()}
         return v
+
+    def hide(self, x):
+        """Text for the phone: where things are on the computer is the computer's business (the workspace, the user's
+        home folder), however a message spells the path: as typed, with doubled backslashes, or with slashes."""
+        if not isinstance(x, str):
+            return x
+        for root in sorted({self.ws.root, os.path.expanduser('~')}, key=len, reverse=True):
+            for form in (root, root.replace('\\', '\\\\'), root.replace('\\', '/')):
+                if form:
+                    x = re.sub(re.escape(form), '…', x, flags=re.I)
+        return x
 
     def save_settings(self, body):
         new = {}
@@ -594,10 +616,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
     def _phone_ok(self):
         key = self.app.phone_key()
-        return any(k and secrets.compare_digest(k, key) for k in (self._query_key(), self._cookie_key()))
+        return any(k and _same(k, key) for k in (self._query_key(), self._cookie_key()))
 
     def _api_ok(self):
-        if not secrets.compare_digest(self.headers.get('X-Elevendash', ''), self.app.token):
+        if not _same(self.headers.get('X-Elevendash', ''), self.app.token):
             return False
         origin = self.headers.get('Origin')
         return origin is None or origin.lower() in {'http://' + h for h in self._hosts()}
@@ -618,8 +640,18 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if self.command != 'HEAD':
             self.wfile.write(data)
 
+    def _length(self):
+        """The request body's length; a negative or unreadable one is refused (it would leave the thread waiting)."""
+        try:
+            n = int(self.headers.get('Content-Length') or 0)
+        except ValueError:
+            n = -1
+        if n < 0:
+            raise ValueError('bad length')
+        return n
+
     def _body(self, limit):
-        n = int(self.headers.get('Content-Length') or 0)
+        n = self._length()
         if n > limit:
             raise ValueError('too large')
         raw = self.rfile.read(n) if n else b''
@@ -661,11 +693,16 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 return self._send(202 if started else 409, app.status(self.remote))
             if path == '/api/upload' and m == 'POST':
                 name = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query).get('name', [''])[0]
-                app.receive_log(name, self.rfile, int(self.headers.get('Content-Length') or 0))
+                app.receive_log(name, self.rfile, self._length())
                 return self._send(200, {'ok': True})
             if path == '/api/settings' and m == 'POST':
-                job = app.save_settings(self._body(4096))
+                body = self._body(4096)
+                if self.remote and 'quest' in body:      # the phone never points the computer at another address
+                    return self._send(403, {'error': 'only on the computer itself'})
+                job = app.save_settings(body)
                 return self._send(200, dict(app.status(self.remote), started=job))
+            if path == '/api/check' and m == 'POST' and self.remote:
+                return self._send(403, {'error': 'only on the computer itself'})
             if path == '/api/check' and m == 'POST':
                 return self._send(200, fetch.check(self._body(4096).get('quest', '')))
             if path == '/api/notes' and m == 'GET':
@@ -673,7 +710,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             if path == '/api/notes' and m == 'PUT':
                 app.write_notes(self._body(MAX_NOTES))
                 return self._send(200, {'ok': True})
-            if path in ('/api/shortcut', '/api/folder', '/api/phone', '/api/quit', '/api/backup', '/api/restore', '/api/export',
+            if path in ('/api/shortcut', '/api/folder', '/api/phone', '/api/quit', '/api/backup', '/api/restore', '/api/export', '/api/diagnose',
                         '/api/share') and self.remote:
                 return self._send(403, {'error': 'only on the computer itself'})
             if path == '/api/quit' and m == 'POST':
@@ -691,6 +728,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 return self._send(200, {'ok': True})
             if path == '/api/backup' and m == 'POST':
                 return self._send(200, app.make_backup())
+            if path == '/api/diagnose' and m == 'POST':
+                return self._send(200, app.make_diagnose())
             if path == '/api/export' and m == 'POST':
                 return self._send(200, app.make_export(self._body(4096).get('format', 'csv')))
             if path == '/api/share' and m == 'POST':
@@ -702,7 +741,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 started = app.start_job('share', keys=keys)
                 return self._send(202 if started else 409, app.status(self.remote))
             if path == '/api/restore' and m == 'POST':
-                app.receive_backup(self.rfile, int(self.headers.get('Content-Length') or 0))
+                app.receive_backup(self.rfile, self._length())
                 started = app.start_job('restore')
                 return self._send(202 if started else 409, app.status(self.remote))
             if path == '/api/phone' and m == 'GET':
@@ -710,8 +749,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             if path == '/api/phone' and m == 'POST':
                 return self._send(200, app.set_phone(self._body(4096)))
             return self._send(404, {'error': 'not found'})
-        except (ValueError, OSError, RuntimeError) as e:
-            return self._send(400, {'error': str(e)})
+        except (ValueError, OSError, RuntimeError, UnicodeError) as e:
+            return self._send(400, {'error': app.hide(str(e)) if self.remote else str(e)})
 
     def do_GET(self):
         self._route()

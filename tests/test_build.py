@@ -137,6 +137,12 @@ class Build(unittest.TestCase):
         plan = {r['key']: r for r in self.rows('plan')}
         prog = self.rows('plan_progress')
         self.assertEqual(sorted(g['key'] for g in prog), sorted(plan))
+        # a target comes from 10 or more matches at the level (all of them, not only the ones won)
+        for r in plan.values():
+            self.assertEqual(r['target'] is None, r['targetMatches'] < 10, r['key'])
+            self.assertTrue(r['target'] is None or 0 <= r['target'] <= 100, r)
+            self.assertEqual(r['status'] == 'none', r['target'] is None, r['key'])
+        self.assertTrue(any(r['target'] is not None for r in plan.values()))
         # plan history: a row for every item and session at the plan's level, spelling out the same states
         hist = self.rows('plan_history')
         self.assertEqual(len({h['key'] for h in hist}), len(hist))

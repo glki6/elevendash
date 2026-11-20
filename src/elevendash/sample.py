@@ -213,9 +213,13 @@ def log_name(when):
     return f'ALL-{when:%m.%d.%Y}.{hour}.{when:%M.%S}.{"AM" if when.hour < 12 else "PM"}.log'
 
 
+FORM = 0.06       # how far the made-up player's miss rate moves from one match to the next (one standard deviation)
+
+
 def write_logs(logs_dir, seed=8):
     """Write one generated log per session into logs_dir. Returns the file names."""
     rng = random.Random(seed)
+    form = random.Random(seed + 7)      # a player has better and worse matches: how steady they are moves match by match
     os.makedirs(logs_dir, exist_ok=True)
     names = []
     for i, (level, count) in enumerate(SESSIONS):
@@ -228,7 +232,7 @@ def write_logs(logs_dir, seed=8):
         miss = {'A': 0.25 - 0.015 * i, 'B': 0.27 if level == 75 else 0.21}
         t = 40.0
         for _ in range(count):
-            t = play_match(log, rng, t, level, miss) + rng.uniform(40, 80)
+            t = play_match(log, rng, t, level, dict(miss, A=miss['A'] + form.gauss(0, FORM))) + rng.uniform(40, 80)
         log.say(t, '[App] Quit')
         name = log_name(start)
         with open(os.path.join(logs_dir, name), 'w', encoding='utf-8', newline='\n') as f:
@@ -241,6 +245,7 @@ def write_online_logs(logs_dir, seed, day):
     """One generated log per online session, from `day` days after the first AI session. Your rating moves with every
     ranked match as the game moves it; opponents are drawn around it, and the stronger ones miss less."""
     rng = random.Random(seed)
+    form = random.Random(seed + 7)
     names, mine, n = [], START_RATING, 0
     for i, session in enumerate(ONLINE):
         start = FIRST + dt.timedelta(days=day + i, hours=2, minutes=rng.randint(0, 50))
@@ -255,7 +260,7 @@ def write_online_logs(logs_dir, seed, day):
                             f'"messageId":"{n}","data":[{{"response":"LoginResponse","user":{{"Id":"{MY_ID}","UserName":"{ME}",'
                             f'"ELO":"{mine}","Rank":"0"}}}}]}}')
             theirs = mine + rng.randint(-160, 160)
-            miss = {'A': 0.22 - 0.01 * i, 'B': min(0.34, max(0.14, 0.22 + (mine - theirs) / 1600))}
+            miss = {'A': 0.22 - 0.01 * i + form.gauss(0, FORM), 'B': min(0.34, max(0.14, 0.22 + (mine - theirs) / 1600))}
             t, won = play_online_match(log, rng, t, n, mine, theirs, ranked, miss)
             if ranked:
                 e = expected(mine, theirs)

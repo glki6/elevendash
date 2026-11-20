@@ -15,9 +15,10 @@ import glob, json, math, os, sys
 from collections import Counter, defaultdict
 from . import health, i18n
 from .extract import extract_log
+from .fetch import LOG_NAME
 from .i18n import Bi, T, W, join, put
 from .i18n import listing as bilist
-from .metrics import player_metrics, match_metrics, metric_sums
+from .metrics import player_metrics, match_metrics, metric_sums, from_sums
 
 logs_dir, out_dir = sys.argv[1], sys.argv[2]
 videos_path = sys.argv[3] if len(sys.argv) > 3 else None
@@ -36,7 +37,8 @@ METRICS = ['serveSpeed', 'serveTop', 'serveBack', 'rallySpeed', 'rallyTop', 'ral
 SHOT_ORDER = ['Drive', 'SlowLoop', 'FastLoop', 'Push', 'Chop']
 ENDS = {0: 'your winner', 1: 'AI error', 2: 'your error', 3: 'AI winner', 4: 'other'}
 
-logs = sorted(glob.glob(os.path.join(logs_dir, 'ALL-*.log')))
+# only files named as the game names its logs: a renamed copy ("ALL-... - Copy.log") would count its matches twice
+logs = sorted(p for p in glob.glob(os.path.join(logs_dir, 'ALL-*.log')) if LOG_NAME.match(os.path.basename(p)))
 input_meta = {'label': 'Input', 'value': f'{len(logs)} Eleven Table Tennis game logs (ALL-*.log) copied from the Quest'}
 
 
@@ -53,13 +55,17 @@ def spin_kind(h):
 
 
 def ending(p, you):
+    """How a point ended, from who won it first (the score), then from the last shot. A last shot that does not fit
+    the score (it landed, yet its player lost the point: a let, a net touch, a shot after the ball was dead) is
+    'other', so a won point is never shown as lost."""
     h = p['hits']
     if not h:
         return 4
     last = h[-1]
-    if last['ok']:
-        return 0 if last['side'] == you else 3
-    return 2 if last['side'] == you else 1
+    end = (0 if last['side'] == you else 3) if last['ok'] else (2 if last['side'] == you else 1)
+    if p.get('winner') is not None and (end in (0, 1)) != (p['winner'] == you):
+        return 4
+    return end
 
 
 SIDE_OF = lambda x: 'left' if x < -0.25 else 'right' if x > 0.25 else 'middle'     # x in your view: + is your right
@@ -75,8 +81,15 @@ def zone(x, z):
 # ---------------- extract ----------------
 M = []   # (match dict, you, ai, points); ai is the other side of the table, the AI or a person
 PROBLEMS = {}   # log name -> what looks misread in it (health.py); the command line prints these after a build
+# Only matches played to the end count. A match stopped before its end (restarted, quit, or ended in the middle of a
+# game: the log has no end for it, or its last game is unfinished) is left out of everything. They are listed here,
+# so the page and the command line can say how many were left out. (match dict, points)
+STOPPED = []
+played_out = lambda m: bool(m.get('end')) and health._finished(m['games'][-1])
+
+
 if 'PARSED' in globals():       # the second pass is handed what the first one read (cli.do_build)
-    M, PROBLEMS = PARSED        # noqa: F821
+    M, PROBLEMS, STOPPED = PARSED        # noqa: F821
 else:
     for path in logs:
         try:
@@ -89,12 +102,23 @@ else:
         if bad:
             PROBLEMS[os.path.basename(path)] = bad
         for m in found:
-            if m['games'] and m.get('end'):
-                you = m['you']
-                M.append((m, you, 'B' if you == 'A' else 'A', [p for g in m['games'] for p in g['points']]))
-    M.sort(key=lambda t: (t[0]['date'], t[0]['start']))
+            m['games'] = [g for g in m['games'] if g['points']]
+            if not m['games']:
+                continue
+            pts = [p for g in m['games'] for p in g['points']]
+            you = m['you']
+            M.append((m, you, 'B' if you == 'A' else 'A', pts))
+    # the same match twice (a log copied in twice under another name, two logs that overlap): the fuller one counts
+    best = {}
+    for t in M:
+        k = (t[0]['date'], t[0]['start'])
+        if k not in best or (played_out(t[0]), len(t[3])) > (played_out(best[k][0]), len(best[k][3])):
+            best[k] = t
+    M = sorted(best.values(), key=lambda t: (t[0]['date'], t[0]['start']))
     if 'ONLY' in globals():     # a dashboard of some matches (elevendash share): the rest are left out before anything is counted
         M = [t for t in M if f"{t[0]['date']} {t[0]['start']}" in ONLY]     # noqa: F821
+    STOPPED = [(t[0], t[3]) for t in M if not played_out(t[0])]
+    M = [t for t in M if played_out(t[0])]
 
 # Your paddle hand decides which side is your backhand. The game's paddle settings say which hand holds the paddle;
 # the hand used in most AI matches counts, unless the workspace sets one (elevendash config hand=left).
@@ -445,10 +469,16 @@ def summary_row(key, label, ms):
 def split_sessions(ms, gap_min=45):
     """A session is a run of matches with less than gap_min minutes between one ending and the next starting."""
     from datetime import datetime
+    from datetime import timedelta
     ts = lambda d, t: datetime.strptime(f'{d} {t}', '%Y-%m-%d %H:%M:%S')
+
+    def ended(r):          # a match that runs past midnight ends on the next day
+        e = ts(r['date'], r['end'])
+        return e + timedelta(days=1) if e < ts(r['date'], r['start']) else e
+
     out = []
     for r in ms:
-        if out and (ts(r['date'], r['start']) - ts(out[-1][-1]['date'], out[-1][-1]['end'])).total_seconds() < gap_min * 60:
+        if out and (ts(r['date'], r['start']) - ended(out[-1][-1])).total_seconds() < gap_min * 60:
             out[-1].append(r)
         else:
             out.append([r])
@@ -471,6 +501,8 @@ if not scope_ms:
 if scope_ms:
     last_day = scope_ms[-1]['date']
     summary = [summary_row('all', 'All online matches' if PEOPLE else 'All AI matches', scope_ms)]
+    mine = [pts for m, pts in STOPPED if bool(m.get('ai')) != PEOPLE]
+    summary[0].update(stopped=len(mine), stoppedPoints=sum(len(p) for p in mine))
     for lvl in sorted({r['level'] for r in scope_ms}):
         summary.append(summary_row(f'L{lvl}', 'Online' if PEOPLE else f'Level {lvl}', [r for r in scope_ms if r['level'] == lvl]))
     sessions = split_sessions(scope_ms)
@@ -549,11 +581,14 @@ if scope_ms:
         if has_base:
             movers = []
             for f, num, den, label, up_good in MOVERS:
-                n = sc[den]
-                if n < MIN_TRIES or not bc[den]:
+                n, m = sc[den], bc[den]
+                if n < MIN_TRIES or m < MIN_TRIES:
                     continue
-                pb, ps = bc[num] / bc[den], sc[num] / n
-                se = math.sqrt(pb * (1 - pb) / n)
+                # a two-sample test on the pooled share, as the page's gap(): the earlier average is a sample too,
+                # not an exact number, so treating it as exact would call far more changes clear than one in ten
+                pb, ps = bc[num] / m, sc[num] / n
+                pool = (sc[num] + bc[num]) / (n + m)
+                se = math.sqrt(pool * (1 - pool) * (1 / n + 1 / m))
                 if se and abs(ps - pb) / se >= MIN_Z:
                     movers.append((abs(ps - pb) / se, ps > pb, f, n, label, up_good, ps, pb))
                     row['m_' + f] = 1 if (ps > pb) == up_good else -1
@@ -600,9 +635,31 @@ if scope_ms:
     # rally shot against a fast ball). Each part is counted on one thing, except the slower ball, which is counted on two
     # that work separately (how often it lands, and how often you hit it firmly), so the estimated gains can be added up.
     #   now    = your recent sessions at that level, pooled (the latest ones holding at least RECENT_POINTS points)
-    #   target = the same number in the matches you won at that level
+    #   target = what your better matches among those recent ones reach (plan_target)
     #   gain   = tries a match x (target - now) x what one more success is worth in points, from all your points there
     PACE, HARD, RECENT_POINTS, MIN_TARGET = 10, 12, 1000, 40      # m/s, m/s, points, tries
+    # A target comes from the same recent matches as now, not from the matches you won: picking matches by their result
+    # picks the ones where things went your way, partly by luck, and that sets every target too high; and older matches
+    # would hold it back as you improve. Each match's number is pulled toward your average over them, by as much as
+    # chance explains: a match with few tries moves little, and when your matches differ no more than chance would make
+    # them, they all sit at the average and there is no gap. The target is the number a quarter of those matches reach
+    # or beat. An item has no target until TARGET_MATCHES of them have TARGET_TRIES tries.
+    TARGET_SHARE, TARGET_MATCHES, TARGET_TRIES, TARGET_PULL_MAX = 0.75, 10, 5, 1000
+
+
+    def plan_target(tallies, num, den):
+        """(the target from 0 to 1, or None; the matches it comes from) for one plan number, from match tallies."""
+        ms = [c for c in tallies if c[den] >= TARGET_TRIES]
+        if len(ms) < TARGET_MATCHES:
+            return None, len(ms)
+        avg = sum(c[num] for c in ms) / sum(c[den] for c in ms)
+        spread = sum((c[num] / c[den] - avg) ** 2 for c in ms) / len(ms)          # how much the matches differ
+        chance = sum(avg * (1 - avg) / c[den] for c in ms) / len(ms)              # how much chance alone would make them
+        pull = TARGET_PULL_MAX if spread <= chance else min(TARGET_PULL_MAX, avg * (1 - avg) / (spread - chance))
+        xs = sorted((c[num] + pull * avg) / (c[den] + pull) for c in ms)
+        at = TARGET_SHARE * (len(xs) - 1)
+        lo = int(at)
+        return xs[lo] + (xs[min(lo + 1, len(xs) - 1)] - xs[lo]) * (at - lo), len(ms)
 
 
     def plan_tally(items):
@@ -722,9 +779,14 @@ if scope_ms:
     for row in session_rows[-5:]:
         recent_pts[row['level']] += row['points']
     plan_level = recent_pts.most_common(1)[0][0]
-    lv_sessions = [(row, ms) for row, ms in zip(session_rows, sessions) if row['level'] == plan_level]
+    # every session with a match at the plan's level, its other matches left out (sess_items): a session is mostly at
+    # one level, but one that mixed levels still holds plan-level points, and the plan's totals count them
+    lv_sessions = [(row, ms) for row, ms in zip(session_rows, sessions) if any(r['level'] == plan_level for r in ms)]
     sess_items = lambda ms: [(scope_items[r['key']][0], p) for r in ms for p in scope_items[r['key']][1] if r['level'] == plan_level]
     sess_tallies = [(row, plan_tally(sess_items(ms))) for row, ms in lv_sessions]
+    # and each of their matches at the plan's level on its own, for the targets
+    match_tallies = [[plan_tally([(scope_items[r['key']][0], p) for p in scope_items[r['key']][1]]) for r in ms if r['level'] == plan_level]
+                     for _, ms in lv_sessions]
     n_recent, c_recent = 0, Counter()
     while n_recent < len(sess_tallies) and c_recent['pts'] < RECENT_POINTS:
         n_recent += 1
@@ -734,12 +796,12 @@ if scope_ms:
         c_before.update(c)
     lv_ms = [r for r in scope_ms if r['level'] == plan_level]
     c_all = plan_tally(level_items[plan_level])
-    c_won = plan_tally([(scope_items[r['key']][0], p) for r in lv_ms if r['result'] == 'Won' for p in scope_items[r['key']][1]])
     per_match = c_all['pts'] / len(lv_ms)
     recent_rate = c_recent['won'] / c_recent['pts']
     plan, plan_trend = [], []
     for key, title, metric, num, den, worth, drill in PLAN:
-        now, was, target = fr(c_recent, num, den), fr(c_before, num, den), fr(c_won, num, den) if c_won[den] >= MIN_TARGET else None
+        now, was = fr(c_recent, num, den), fr(c_before, num, den)
+        target, t_matches = plan_target([c for cs in match_tallies[len(match_tallies) - n_recent:] for c in cs], num, den)
         tries = c_all[den] / len(lv_ms)
         gain = None if target is None or now is None else max(0.0, tries * (target - now) * worth(c_all))
         move = 0        # 1 = recent sessions clearly above the earlier ones, -1 = clearly below
@@ -749,7 +811,7 @@ if scope_ms:
             move = 0 if not se or abs(now - was) / se < MIN_Z else 1 if now > was else -1
         row = {'key': key, 'now': pc(c_recent[num], c_recent[den]), 'nowTries': c_recent[den],
                'was': pc(c_before[num], c_before[den]), 'all': pc(c_all[num], c_all[den]),
-               'target': None if target is None else r1(100 * target), 'targetTries': c_won[den],
+               'target': None if target is None else r1(100 * target), 'targetMatches': t_matches,
                'perMatch': r1(tries), 'gain': None if gain is None else round(gain, 2), 'move': move,
                'status': 'none' if gain is None else 'reached' if now >= target else 'gap'}
         for f, v in (('title', title), ('metric', metric), ('why', plan_why(key, c_all, len(lv_ms))), ('drill', drill)):
@@ -780,8 +842,6 @@ if scope_ms:
     # the same one-in-ten rule for calling a change clear. An item joins when its number is low, and a low number is partly
     # bad luck, so some rise afterwards would come without any practice: read a small rise with that in mind.
     PLAN_KEEP = 0.15        # points a match; the page uses the same value to split the list from "Already working"
-    sess_won = [plan_tally([(scope_items[r['key']][0], q) for r in ms if r['level'] == plan_level and r['result'] == 'Won'
-                            for q in scope_items[r['key']][1]]) for _, ms in lv_sessions]
     sess_n = [sum(r['level'] == plan_level for r in ms) for _, ms in lv_sessions]
 
 
@@ -791,13 +851,12 @@ if scope_ms:
         while n <= k and rec['pts'] < RECENT_POINTS:
             rec.update(sess_tallies[k - n][1])
             n += 1
-        tot, won = Counter(), Counter()
+        tot = Counter()
         for j in range(k + 1):
             tot.update(sess_tallies[j][1])
-            won.update(sess_won[j])
         m, out = sum(sess_n[:k + 1]), {}
         for key, _title, _metric, num, den, worth, _drill in PLAN:
-            now, target = fr(rec, num, den), fr(won, num, den) if won[den] >= MIN_TARGET else None
+            now, target = fr(rec, num, den), plan_target([c for cs in match_tallies[k + 1 - n:k + 1] for c in cs], num, den)[0]
             gain = None if target is None or now is None else round(max(0.0, tot[den] / m * (target - now) * worth(tot)), 2)
             state = '-' if gain is None else '0' if now >= target or gain < PLAN_KEEP else '1'
             out[key] = {'state': state, 'gain': gain, 'num': rec[num], 'den': rec[den]}
@@ -805,8 +864,10 @@ if scope_ms:
 
 
     plan_hist = [plan_asof(k) for k in range(len(sess_tallies))]
-    for r in plan:      # the last step of the history is the plan itself
-        assert plan_hist[-1][r['key']]['gain'] == r['gain'], (r['key'], plan_hist[-1][r['key']]['gain'], r['gain'])
+    for r in plan:      # the last step of the history is the plan itself (a difference is a bug: say so, do not stop)
+        if plan_hist[-1][r['key']]['gain'] != r['gain']:
+            print(f"warning: plan history ends at {plan_hist[-1][r['key']]['gain']} for {r['key']}, the plan says {r['gain']}",
+                  file=sys.stderr)
     plan_progress = []
     for key, title, metric, num, den, worth, drill in PLAN:
         states = ''.join(h[key]['state'] for h in plan_hist)
@@ -1244,8 +1305,13 @@ if scope_ms:
     for lvl in sorted(level_items):
         items = level_items[lvl]
         ms = [r for r in scope_ms if r['level'] == lvl]
-        pa = [p for y, p in items if y == 'A']      # all AI matches put you on side A
-        pm_you, pm_ai = player_metrics(pa, 'A'), player_metrics(pa, 'B')
+        # each point counted from your side of the table in its own match (you can play from side A or side B)
+        s_you, s_ai = Counter(), Counter()
+        for y, p in items:
+            s_you.update(metric_sums([p], y))
+            s_ai.update(metric_sums([p], 'B' if y == 'A' else 'A'))
+        pm_you = {k: from_sums(s_you, k) for k in METRICS}
+        pm_ai = {k: from_sums(s_ai, k) for k in METRICS}
         row = {'key': lvl, 'level': lvl, 'from': ms[0]['date'], 'to': ms[-1]['date'], 'matches': len(ms), **agg(items)}
         for k in METRICS:
             row['you_' + k] = r1(pm_you[k]); row['ai_' + k] = r1(pm_ai[k])
@@ -1285,8 +1351,8 @@ if scope_ms:
         for name, lo, hi in [('1', 1, 1), ('2', 2, 2), ('3', 3, 3), ('4', 4, 4), ('5-6', 5, 6), ('7-9', 7, 9), ('10+', 10, 999)]:
             xs = [p['winner'] == y for y, p in items if lo <= len(p['hits']) <= hi]
             ins('rally', name, len(xs), sum(xs), total=len(items))
-        ins('rally', '1-2', sum(1 for y, p in items if len(p['hits']) <= 2),
-            sum(1 for y, p in items if len(p['hits']) <= 2 and p['winner'] == y), total=len(items))
+        ins('rally', '1-2', sum(1 for y, p in items if 1 <= len(p['hits']) <= 2),
+            sum(1 for y, p in items if 1 <= len(p['hits']) <= 2 and p['winner'] == y), total=len(items))
         ins('rally', '3+', sum(1 for y, p in items if len(p['hits']) >= 3),
             sum(1 for y, p in items if len(p['hits']) >= 3 and p['winner'] == y), total=len(items))
         for who in ('you', 'ai'):
@@ -1382,6 +1448,7 @@ if scope_ms:
     FIND_MIN = 30           # fewest serves behind a serve comparison
     FIND_MIN_SHOTS = 50     # fewest shots of a type behind a shot comparison
     FIND_MIN_MATCHES = 3    # fewest matches won (and lost) behind the won-versus-lost finding
+    FIND_MIN_POINTS = 100   # fewest points at the level behind any finding (a single match is too few to say anything)
     SHOT_ONE = {'Drive': W('drive'), 'SlowLoop': W('slow loop'), 'FastLoop': W('fast loop'), 'Push': W('push'), 'Chop': W('chop')}
     SHOT_MANY = {'Drive': W('drives'), 'SlowLoop': W('slow loops'), 'FastLoop': W('fast loops'), 'Push': W('pushes'), 'Chop': W('chops')}
     SERVE_SUBJECT = {'topspin': W('Your topspin serves'), 'backspin': W('Your backspin serves'),
@@ -1411,6 +1478,8 @@ if scope_ms:
         I, Wv, LV, Z, S = keyed(insights), keyed(wvl), keyed(levels), keyed(zones), keyed(shot_mix)
         g = lambda d, k, f: (d.get(k) or {}).get(f)
         out = []
+        if (g(I, f'{L}|rally|1-2', 'n') or 0) + (g(I, f'{L}|rally|3+', 'n') or 0) < FIND_MIN_POINTS:
+            return out
 
         # Bars go in flat columns (bar1, bar1_label, bar1_tone, bar2 ...; `bars` is how many): a dashboard host hands a
         # nested list in a row to the page as JSON text, so rows hold plain values only.
@@ -1481,7 +1550,8 @@ if scope_ms:
 
         # short points against rallies
         r12, r3 = g(I, f'{L}|rally|1-2', 'rate'), g(I, f'{L}|rally|3+', 'rate')
-        if r12 is not None and r3 is not None:
+        if (r12 is not None and r3 is not None and g(I, f'{L}|rally|1-2', 'n') >= FIND_MIN
+                and g(I, f'{L}|rally|3+', 'n') >= FIND_MIN):
             d = r3 - r12
             title = ((W("You're stronger once a rally starts") if r3 >= 55 else
                       W("Past the first two shots you're close to even") if r3 >= 45 else

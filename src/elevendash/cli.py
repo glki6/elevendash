@@ -17,7 +17,8 @@
   elevendash share --last N | --from DATE [--to DATE] | --match KEY
                                          a dashboard file of some matches only, to send to a coach
   elevendash demo [DIR]                  try it without a Quest: a workspace of made-up matches and its dashboard
-  elevendash redact LOG OUT              a copy of a log without account, people or location data, to show someone
+  elevendash redact [--full] LOG OUT     a copy of a log with only what elevendash reads (no account, people or place)
+  elevendash diagnose                    a report for a bug report: versions, counts and log problems, nothing private
 
 Every command works on the workspace in the current folder, or the one named by --dir or ELEVENDASH_HOME.
 Game logs contain your Eleven and Meta account tokens: keep the workspace private, share only the dashboard file.
@@ -103,7 +104,7 @@ def do_build(ws, verbose=False, say=print, only=None, out=None):
     made = run('ai', **({} if only is None else {'ONLY': set(only)}))
     if any(not m['ai'] for m, *_ in made['M']):
         try:        # the online side is built from the same matches; if it fails, the rest of the dashboard stands
-            run('people', PARSED=(made['M'], made['PROBLEMS']))
+            run('people', PARSED=(made['M'], made['PROBLEMS'], made['STOPPED']))
         except Exception as e:
             drop_online()
             say(f'  The online side could not be built ({type(e).__name__}: {e}). Everything else is unaffected; '
@@ -113,6 +114,10 @@ def do_build(ws, verbose=False, say=print, only=None, out=None):
     if only is not None:
         return {}
     say(f'  Data in {ws.build}')
+    stopped = made.get('STOPPED') or []
+    if stopped:
+        say(f'  {len(stopped)} match{"es" if len(stopped) != 1 else ""} stopped before the end (a restart or a quit) '
+            'left out: only matches played to the end count.')
     for line in health.advice(made.get('PROBLEMS')):
         say(line)
     return made.get('PROBLEMS') or {}       # {log name: what looks misread in it}; the app lists these after an import
@@ -167,14 +172,19 @@ def share_keys(ws, last=None, since=None, until=None, matches=()):
     return [r['key'] for r in rows if r['key'] in keys]
 
 
-def do_report(ws, say=print):
+def need_data(ws):
     if not os.path.exists(os.path.join(ws.build, 'sessions.json')):
         raise SystemExit('No match data yet. Run "elevendash build" first.')
+
+
+def do_report(ws, say=print):
+    need_data(ws)
     for line in report.session_report(ws.build):
         say(line)
 
 
 def do_site(ws, out=None, videos=True, say=print, theme=None, lang=None):
+    need_data(ws)
     out = out or os.path.join(ws.site, 'index.html')
     c = ws.config()
     build_site(ws.build, out, videos=videos, theme=theme or c.get('theme', 'dark'), lang=lang or c.get('lang', 'en'))
@@ -228,20 +238,24 @@ def do_demo(path, say=print):
     return 0
 
 
-def do_redact(src, dst, say=print):
+def do_redact(src, dst, say=print, full=False):
     from .redact import redact_file
     try:
-        n = redact_file(src, dst)
+        n = redact_file(src, dst, full=full)
     except (OSError, ValueError) as e:
         say(f'elevendash redact: {e}')
         return 1
     say(f'Redacted copy: {dst}')
-    say(f"  {n['fields']} fields cleared, {n['mentions']} more mentions of their values, {n['addresses']} network "
-        f"addresses, {n['dropped']} lines of UserCommunication dropped.")
+    if full:
+        say(f"  Every line kept: {n['fields']} fields cleared, {n['mentions']} more mentions of their values and tokens, "
+            f"{n['addresses']} network addresses, {n['dropped']} lines of UserCommunication dropped. Read it before you "
+            "share it: a game update can add fields this does not know.")
+    else:
+        say(f"  Only what elevendash reads: {n['kept']:,} lines kept (ball contacts, scores, match starts and ends, the AI "
+            f"level, your paddle hand, ratings with stand-in player ids), {n['dropped']:,} left out.")
     if n['left']:
         say(f"  {n['left']} cleared value(s) still appear in the text: do not share this copy; please report it.")
         return 1
-    say('  Read it before you share it: a game update can add fields elevendash does not know about yet.')
     return 0
 
 
@@ -265,10 +279,12 @@ def main(argv=None):
     p = sub.add_parser('build', help='turn the logs into match data')
     p.add_argument('-v', '--verbose', action='store_true', help='list every data file written')
     sub.add_parser('report', help="print your last session's report")
-    for name, text in (('site', 'write the dashboard as one HTML file'), ('pdf', 'print the dashboard to a PDF')):
+    for name, text in (('site', 'write the dashboard as one HTML file'), ('pdf', 'print the dashboard to a PDF (without your video links)')):
         p = sub.add_parser(name, help=text)
         p.add_argument('--out', help='where to write it')
-        p.add_argument('--no-videos', action='store_true', help='leave out the links to your YouTube uploads')
+        # a PDF is made to be sent: it never carries the links to your (unlisted) uploads; the flag stays for old scripts
+        p.add_argument('--no-videos', action='store_true',
+                       help='leave out the links to your YouTube uploads' if name == 'site' else argparse.SUPPRESS)
         p.add_argument('--theme', choices=THEMES, help='dark or light (default: the theme setting, else dark)')
         p.add_argument('--lang', choices=LANGS, help='en, or zh for Traditional Chinese (default: the lang setting, else en)')
     p = sub.add_parser('config', help='show or change settings')
@@ -302,6 +318,9 @@ def main(argv=None):
     p = sub.add_parser('redact', help='write a copy of a log without account, people or location data')
     p.add_argument('log', help='the game log (ALL-*.log)')
     p.add_argument('out', help='where to write the redacted copy (a new file)')
+    p.add_argument('--full', action='store_true', help='keep every line, not only the ones elevendash reads (read it before you share it)')
+    p = sub.add_parser('diagnose', help='write a report to paste into a bug report (versions, counts, log problems; nothing private)')
+    p.add_argument('--quick', action='store_true', help='do not read the logs again (counts and sizes only)')
     a = ap.parse_args(argv)
     if a.nice:
         lower_priority()
@@ -322,7 +341,7 @@ def main(argv=None):
             print(f'elevendash app: {e}', file=sys.stderr)
             return 1
     if a.cmd == 'redact':
-        return do_redact(a.log, a.out)
+        return do_redact(a.log, a.out, full=a.full)
     if a.cmd == 'restore':
         from . import backup
         try:
@@ -357,6 +376,12 @@ def main(argv=None):
             return 0
         if a.cmd == 'config':
             return do_config(ws, a.pairs)
+        if a.cmd == 'diagnose':
+            from . import diagnose, health
+            path, text = diagnose.write(ws, read=not a.quick)
+            print(text)
+            print(f'Written to {path}. Read it, then paste it into your report: {health.ISSUES}')
+            return 0
         if a.cmd == 'backup':
             from . import backup
             path, n = backup.make(ws, a.out)
@@ -378,9 +403,10 @@ def main(argv=None):
             return 0
         if a.cmd == 'pdf':
             from .pdf import make_pdf
+            need_data(ws)
             out = a.out or os.path.join(ws.site, 'report.pdf')
             c = ws.config()
-            make_pdf(ws.build, out, videos=not a.no_videos, theme=a.theme or c.get('theme', 'dark'), lang=a.lang or c.get('lang', 'en'))
+            make_pdf(ws.build, out, videos=False, theme=a.theme or c.get('theme', 'dark'), lang=a.lang or c.get('lang', 'en'))
             print(f'PDF: {out} ({os.path.getsize(out) // 1024:,} KB)')
             return 0
         if a.cmd == 'update':

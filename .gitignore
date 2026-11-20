@@ -50,5 +50,6 @@ elevendash-backup-*.zip
 .restore.zip*
 export/
 share/
+diagnose/
 .share-*/
 packaging/windows/out/

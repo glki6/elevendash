@@ -22,6 +22,16 @@ TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 ```
 
+## Fonts on the project site
+
+The project site (`pages/`, not the app or the dashboards) uses two fonts, copied unchanged into `pages/fonts/`, each
+under the SIL Open Font License 1.1, whose full text sits next to the font files:
+
+- Barlow Condensed (Bold, ExtraBold), Copyright 2017 The Barlow Project Authors, https://github.com/jpt/barlow:
+  `pages/fonts/OFL-BarlowCondensed.txt`
+- Inter (Regular, SemiBold), Copyright 2016 The Inter Project Authors, https://github.com/rsms/inter:
+  `pages/fonts/OFL-Inter.txt`
+
 ## Optional extras
 
 `pip install -e ".[youtube]"` installs Google's API client libraries (Apache License 2.0) and NumPy (BSD 3-Clause)

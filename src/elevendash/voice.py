@@ -84,15 +84,12 @@ PHRASES = [
     ('built for the AI level you played most in your last five sessions', 'built from your online matches',
      '針對你最近五節最常打的 AI 等級', '根據你的線上比賽建立'),
     ('Now is your latest sessions at that level', 'Now is your latest online sessions', '「現在」是你在該等級最近幾節的合計', '「現在」是你最近幾節線上比賽的合計'),
-    ('the same number in the matches you won at that level', 'the same number in the online matches you won',
-     '你在該等級贏球場次中的同一數字', '你贏下的線上比賽中的同一數字'),
     ('over all your points at that level', 'over all your online points', '在該等級所有分數中', '在所有線上分數中'),
     ('that the AI plays the same way', 'that your opponents play the same way', '而且 AI 的打法不變', '而且對手的打法不變'),
     ('after each earlier session at that level', 'after each earlier online session', '按該等級較早每一節結束時的情況', '按較早每一節線上比賽結束時的情況'),
     ('since is every session at that level played after that one', 'since is every online session played after that one',
      '「之後」是其後在該等級打的所有節', '「之後」是其後打的所有線上節'),
     ('Never on the plan at level {0}', 'Never on the online plan', '在等級 {0} 從未列入計劃', '在線上計劃中從未列入'),
-    ('No matches won at this level yet', 'No online matches won yet', '此等級還沒有贏過比賽', '還沒有贏過線上比賽'),
     ('{0}: line chart by session at level {1}', '{0}: line chart by online session', '{0}：等級 {1} 的每節折線圖', '{0}：線上每節折線圖'),
     # ---- the shot explorer and matches you pick
     ('is worked out for the level of the training plan', 'is worked out over your online matches',
@@ -151,7 +148,7 @@ PHRASES = [
 ]
 
 # Left as they are. The drills send you to the AI or the ball machine to practise, whoever you play your matches
-# against; "the level of the matches you won" is a standard you reached, not an AI level; and a few labels are only
+# against; and a few labels are only
 # ever shown for a match against the AI.
 KEEP = {
     "Have slow balls fed to you (the ball machine, or the AI at a low level) and play every one as a firm topspin stroke: "
@@ -159,10 +156,6 @@ KEEP = {
     "Rally at a steady, firm pace with the ball machine, or with the AI at a level you beat comfortably, and count shots "
     "in a row, starting again at every miss. Aim for runs of 10 before you go back to matches.",
     '{1} matches and {2} points at this level, {3} to {4}',
-    'At the level of your matches won',
-    'Close to the level of your matches won',
-    'Every item is at the level of the matches you won. Time to move the targets.',
-    'At or close to the level of the matches you won. Nothing to drill here; keep doing it.',
     'Match against the AI, level {0}',
     'Session {0} against the AI, level {1}',
     'AI matches',

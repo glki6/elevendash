@@ -92,6 +92,10 @@ class AppServer(unittest.TestCase):
         code, s = self.call('POST', '/api/upload?name=notes.txt', raw=b'x')
         self.assertEqual(code, 400)
         self.assertEqual(self.call('POST', '/api/import', {'source': 'elsewhere'})[0], 400)
+        # a name with a newline after it, a negative length, a key with letters outside ASCII: refused, not stuck
+        self.assertEqual(self.call('POST', '/api/upload?name=ALL-01.05.2026.6.30.00.PM.log%0A', raw=b'x')[0], 400)
+        self.assertEqual(self.call('POST', '/api/settings', headers={'Content-Length': '-1'})[0], 400)
+        self.assertEqual(self.call('GET', '/api/status', key=False, headers={'X-Elevendash': 'café'})[0], 403)
 
     def test_5_import_files(self):
         for name in self.names:
@@ -211,6 +215,9 @@ class AppServer(unittest.TestCase):
         self.assertEqual((code, r['dir']), (200, os.path.join(self.ws.root, 'export')))
         self.assertEqual(sorted(r['files']), ['columns.txt', 'matches.csv', 'points.csv', 'shots.csv'])
         self.assertTrue(all(os.path.isfile(os.path.join(r['dir'], n)) for n in r['files']))
+        code, r = self.call('POST', '/api/diagnose')
+        self.assertEqual((code, os.path.dirname(r['file'])), (200, os.path.join(self.ws.root, 'diagnose')))
+        self.assertIn(f'Game logs: {len(self.names)}', r['text'])
         # a backup goes into an empty workspace only
         with open(self.call('POST', '/api/backup')[1]['file'], 'rb') as f:
             self.assertEqual(self.call('POST', '/api/restore', raw=f.read())[0], 400)
@@ -367,9 +374,18 @@ class Phone(unittest.TestCase):
         s = json.loads(body)
         self.assertTrue(s['remote'])
         self.assertNotIn('home', s)                         # where the data lives stays on the computer
-        for path in ('/api/phone', '/api/folder', '/api/shortcut', '/api/quit', '/api/backup', '/api/restore', '/api/export', '/api/share'):
+        for path in ('/api/phone', '/api/folder', '/api/shortcut', '/api/quit', '/api/backup', '/api/restore', '/api/export', '/api/share',
+                     '/api/diagnose'):
             self.assertEqual(self.call('POST', path, cookie=key)[0], 403, path)
         self.assertEqual(self.call('GET', '/api/phone', cookie=key)[0], 403)
+        # the phone never points the computer at another address, nor has it try one
+        self.assertEqual(self.call('POST', ('/api/settings', {'quest': '10.9.8.7'}), cookie=key)[0], 403)
+        self.assertEqual(self.call('POST', ('/api/check', {'quest': '10.9.8.7'}), cookie=key)[0], 403)
+        self.assertNotIn('10.9.8.7', json.dumps(self.app.ws.config()))
+        # nor is it told where things are, however a message spells the path
+        root = self.app.ws.root
+        for form in (root, root.replace('\\', '\\\\'), root.replace('\\', '/')):
+            self.assertNotIn(root.split(os.sep)[-2], self.app.hide(f'could not write {form}{os.sep}x'))
 
     def test_3_computer_side(self):
         code, _, body = self.call('GET', '/api/phone', port=self.app.port)

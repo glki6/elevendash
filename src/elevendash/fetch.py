@@ -12,12 +12,33 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-LOG_NAME = re.compile(r'^ALL-\d{2}\.\d{2}\.\d{4}\.\d{1,2}\.\d{2}\.\d{2}\.(AM|PM)\.log$')
+LOG_NAME = re.compile(r'^ALL-\d{2}\.\d{2}\.\d{4}\.\d{1,2}\.\d{2}\.\d{2}\.(AM|PM)\.log\Z')    # \Z: no newline after it
 DEFAULT_PORT = 8090
+
+
+MAX_LOG = 200 << 20             # the largest log taken from the headset (a long day of play is a few MB)
+MAX_LISTING = 16 << 20         # the largest list of files read from it
 
 
 class QuestUnreachable(Exception):
     pass
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    """File Sharing answers where it was asked: a reply that points elsewhere is not followed."""
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        raise urllib.error.HTTPError(req.full_url, code, 'a redirect, not followed', headers, fp)
+
+
+_open = urllib.request.build_opener(_NoRedirect).open
+
+
+def _listing(url, timeout=10):
+    with _open(url, timeout=timeout) as r:
+        raw = r.read(MAX_LISTING + 1)
+    if len(raw) > MAX_LISTING:
+        raise ValueError('the list of files is too large')
+    return json.loads(raw.decode('utf-8'))['output']
 
 
 def normalize_host(host):
@@ -55,8 +76,7 @@ def check(host, timeout=5):
         return out
     step('reach', True)
     try:
-        with urllib.request.urlopen(f'http://{h}/getListing?path=logs', timeout=10) as r:
-            listing = json.load(r)['output']
+        listing = _listing(f'http://{h}/getListing?path=logs')
         if not isinstance(listing, list):
             raise ValueError('not a listing')
     except (urllib.error.URLError, OSError, ValueError, KeyError, TypeError):
@@ -72,16 +92,26 @@ def from_quest(host, logs_dir, say=print):
     """Copy logs that are new, or have grown, from the Quest into logs_dir. Returns the names copied."""
     base = f'http://{normalize_host(host)}'
     try:
-        with urllib.request.urlopen(f'{base}/getListing?path=logs', timeout=10) as r:
-            listing = json.load(r)['output']
-    except (urllib.error.URLError, OSError, ValueError, KeyError) as e:
+        listing = _listing(f'{base}/getListing?path=logs')
+        if not isinstance(listing, list):
+            raise ValueError('not a listing')
+    except (urllib.error.URLError, OSError, ValueError, KeyError, TypeError) as e:
         raise QuestUnreachable(f'Quest not reached at {host} ({e}). Open Eleven and start File Sharing '
                                '(Settings > Network Settings > File Sharing), on the same network as this computer.')
     os.makedirs(logs_dir, exist_ok=True)
     got = []
     for f in listing:
-        name, size = str(f.get('name', '')), int(f.get('size') or 0)
+        if not isinstance(f, dict):
+            continue
+        name = str(f.get('name', ''))
+        try:
+            size = int(f.get('size') or 0)
+        except (TypeError, ValueError):
+            continue
         if f.get('type') != 'file' or not LOG_NAME.match(name):   # the name is checked, so it cannot point elsewhere
+            continue
+        if size > MAX_LOG:
+            say(f'  {name}: {size:,} bytes, larger than any game log; skipped')
             continue
         dest = os.path.join(logs_dir, name)
         have = os.path.getsize(dest) if os.path.exists(dest) else -1
@@ -91,9 +121,27 @@ def from_quest(host, logs_dir, say=print):
             continue
         part = dest + '.part'
         url = f'{base}/downloadFile?path=' + urllib.parse.quote('logs/' + name)
-        with urllib.request.urlopen(url, timeout=180) as r, open(part, 'wb') as out:
-            shutil.copyfileobj(r, out, 1 << 20)
-        n = os.path.getsize(part)
+        n, too_big = 0, False
+        try:
+            with _open(url, timeout=180) as r, open(part, 'wb') as out:
+                while True:
+                    chunk = r.read(1 << 20)
+                    if not chunk:
+                        break
+                    n += len(chunk)
+                    if n > MAX_LOG:
+                        too_big = True
+                        break
+                    out.write(chunk)
+        except (urllib.error.URLError, OSError) as e:     # this one log failed (or pointed elsewhere): the rest go on
+            if os.path.exists(part):
+                os.remove(part)
+            say(f'  {name}: not copied ({getattr(e, "reason", None) or e})')
+            continue
+        if too_big:
+            os.remove(part)
+            say(f'  {name}: more than {MAX_LOG >> 20} MB came, larger than any game log; discarded')
+            continue
         if n < size:   # cut short; the log of a game still running may grow, never shrink
             os.remove(part)
             say(f'  {name}: got {n:,} of {size:,} bytes, discarded')

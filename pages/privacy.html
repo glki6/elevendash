@@ -43,8 +43,14 @@
       <li>writes a dashboard that holds match data only (scores, points, shots, dates), never log lines, tokens, ids
         or account names. Who you share the dashboard with is up to you.</li>
     </ul>
-    <p><code>elevendash redact</code> makes a copy of a log without tokens, ids, names, network addresses and
-      location, for the rare case you need to show one. Read the copy before you share it.</p>
+    <p>For a bug report, <code>elevendash diagnose</code> (the app's <b>Report for a bug…</b>) writes a report of
+      versions, counts and the problems found in reading your logs. It holds no log lines, names, ids, tokens,
+      addresses, paths, dates or scores, and it is only written to your workspace: you choose whether to paste it
+      anywhere.</p>
+    <p><code>elevendash redact</code> makes a copy of a log with only the lines elevendash reads (match starts and
+      ends, scores, ball contacts, the paddle hand, and online ratings with the players' ids replaced), for the rare
+      case you need to show one. <code>--full</code> keeps every line and removes tokens, ids, names, e-mail and
+      network addresses instead. Read the copy before you share it.</p>
 
     <h2>Optional: YouTube uploads</h2>
     <p>If you choose to set it up, the <code>youtube/</code> part of elevendash uploads a session's headset recording

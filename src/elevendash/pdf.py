@@ -38,7 +38,7 @@ def find_browser():
     return None
 
 
-def make_pdf(build_dir, out_pdf, videos=True, theme='dark', lang='en'):
+def make_pdf(build_dir, out_pdf, videos=False, theme='dark', lang='en'):
     browser = find_browser()
     if not browser:
         raise RuntimeError('no Chrome, Edge or Chromium found to print the PDF (set ELEVENDASH_CHROME to its path)')

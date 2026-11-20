@@ -1,28 +1,34 @@
 name: release
 
-# A tag such as v0.2.0 builds Eleven Dashboard for Windows, checks it, and publishes it as a GitHub release.
-# Run by hand (Actions > release > Run workflow) it only builds and keeps the zip as a workflow artifact.
+# A tag such as v0.2.0 builds Eleven Dashboard for Windows, checks it, and publishes it as a GitHub release with its
+# SHA-256 and a build provenance attestation. Run by hand (Actions > release > Run workflow) it only builds and keeps
+# the zip as a workflow artifact.
+# The build job can only read the repository; the release job, which can write, installs and runs nothing of its own.
+# Actions are pinned to a commit (the tag they had is in the comment); the build tools are pinned by hash
+# (packaging/windows/build-requirements.txt).
 on:
   push:
     tags: ['v*']
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  windows:
+  build:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.12'
       - name: Install
         run: |
           python -m venv .venv
-          .venv\Scripts\python -m pip install --upgrade pip
-          .venv\Scripts\python -m pip install . pyinstaller==6.11.1
+          .venv\Scripts\python -m pip install --require-hashes --only-binary :all: -r packaging/windows/build-requirements.txt
+          .venv\Scripts\python -m pip install --no-deps --no-build-isolation .
       - name: Tests
         run: .venv\Scripts\python -m unittest discover -s tests
       - name: Build and check
@@ -30,13 +36,47 @@ jobs:
         run: |
           $env:Path = "$PWD\.venv\Scripts;$env:Path"
           ./packaging/windows/build.ps1
-      - uses: actions/upload-artifact@v4
+      - name: Checksum
+        shell: pwsh
+        run: |
+          $zip = 'packaging/windows/out/Eleven-Dashboard-windows.zip'
+          $h = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
+          "$h  Eleven-Dashboard-windows.zip" | Out-File -Encoding ascii -NoNewline "$zip.sha256"
+          Write-Output "SHA-256: $h"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: Eleven-Dashboard-windows
-          path: packaging/windows/out/Eleven-Dashboard-windows.zip
-      - name: Release
-        if: startsWith(github.ref, 'refs/tags/')
-        shell: pwsh
+          path: |
+            packaging/windows/out/Eleven-Dashboard-windows.zip
+            packaging/windows/out/Eleven-Dashboard-windows.zip.sha256
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: Eleven-Dashboard-windows
+      - name: Notes
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create $env:GITHUB_REF_NAME packaging/windows/out/Eleven-Dashboard-windows.zip --title "elevendash $env:GITHUB_REF_NAME" --notes-file packaging/windows/RELEASE.md
+        run: gh api "repos/$GITHUB_REPOSITORY/contents/packaging/windows/RELEASE.md?ref=$GITHUB_REF_NAME" -H 'Accept: application/vnd.github.raw' > notes.md
+      - uses: actions/attest-build-provenance@ef244123eb79f2f7a7e75d99086184180e6d0018 # v1
+        with:
+          subject-path: Eleven-Dashboard-windows.zip
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            cat notes.md
+            echo
+            echo "SHA-256 of the zip: \`$(cut -d' ' -f1 Eleven-Dashboard-windows.zip.sha256)\` (also in Eleven-Dashboard-windows.zip.sha256)."
+          } > body.md
+          gh release create "$GITHUB_REF_NAME" Eleven-Dashboard-windows.zip Eleven-Dashboard-windows.zip.sha256 \
+            --repo "$GITHUB_REPOSITORY" --title "elevendash $GITHUB_REF_NAME" --notes-file body.md

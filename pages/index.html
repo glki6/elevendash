@@ -4,85 +4,175 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>elevendash: match analysis for Eleven Table Tennis</title>
-<meta name="description" content="elevendash turns the log files Eleven Table Tennis writes on your Meta Quest into a dashboard of every match, game, point and shot. Free, open source, runs on your own computer.">
+<meta name="description" content="elevendash turns the logs Eleven Table Tennis keeps on your Meta Quest into match analysis, 3D replays and a training plan of your own. Free, open source, runs on your own computer.">
+<meta name="color-scheme" content="dark light">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='7' y='2' width='18' height='28' rx='2' fill='%231f63c9'/%3E%3Cpath d='M3 16h26' stroke='%23fff' stroke-width='2.4'/%3E%3Cpath d='M16 3v26' stroke='%23fff' stroke-width='1' opacity='.7'/%3E%3Ccircle cx='21' cy='9' r='3' fill='%23e0700a'/%3E%3C/svg%3E">
-<link rel="stylesheet" href="style.css">
+<link rel="preload" href="fonts/BarlowCondensed-ExtraBold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="home.css">
 </head>
 <body>
 <header class="top">
   <div class="wrap">
     <a class="mark" href="./">
-      <svg width="22" height="26" viewBox="0 0 22 26" aria-hidden="true"><rect x="3" y="1" width="16" height="24" rx="2" fill="var(--table)"/><path d="M0 13h22" stroke="var(--line)" stroke-width="2"/><path d="M11 2v22" stroke="var(--line)" stroke-width="1" opacity=".6"/><circle cx="15.5" cy="6.5" r="2.6" fill="var(--orange)"/></svg>
+      <svg width="22" height="26" viewBox="0 0 22 26" aria-hidden="true"><rect x="3" y="1" width="16" height="24" rx="2" fill="#1f63c9"/><path d="M0 13h22" stroke="#fff" stroke-width="2"/><path d="M11 2v22" stroke="#fff" stroke-width="1" opacity=".6"/><circle cx="15.5" cy="6.5" r="2.6" fill="#e2802c"/></svg>
       elevendash
     </a>
     <nav aria-label="Site">
       <a href="demo/">Demo</a>
+      <a href="https://github.com/glki6/elevendash#readme">Guide</a>
       <a href="https://github.com/glki6/elevendash">GitHub</a>
     </nav>
   </div>
 </header>
 
 <main>
-  <div class="wrap hero">
-    <p class="eyebrow">Eleven Table Tennis · Meta Quest</p>
-    <h1>Your matches, point by point.</h1>
-    <p class="lede">elevendash reads the log files Eleven Table Tennis keeps on your Quest and turns every match, game,
-      point and shot into a dashboard you open in any browser. It runs on your own computer, it is free and open
-      source, and your logs never leave your hands.</p>
-    <div class="actions">
-      <a class="btn primary" href="demo/">Open the demo dashboard</a>
-      <a class="btn" href="https://github.com/glki6/elevendash">Get it on GitHub</a>
+  <div class="hero">
+    <div class="wrap">
+      <div class="hero-grid">
+        <div>
+          <h1>Understand <span>every point.</span></h1>
+          <p class="lede">elevendash turns the logs <b>Eleven Table Tennis</b> keeps on your Meta Quest into match
+            analysis, 3D replays and a training plan of your own. It runs on your computer, and your logs stay there.</p>
+          <div class="actions">
+            <a class="btn primary" href="https://github.com/glki6/elevendash/releases/latest">
+              <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 2v10M4.5 7.5 9 12l4.5-4.5M3 15.5h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Download for Windows</a>
+            <a class="btn" href="demo/">Try the demo</a>
+          </div>
+          <p class="fine">Free · Open source · No account · macOS and Linux: <a href="#start">install with pipx</a></p>
+        </div>
+
+        <figure class="rally">
+          <svg viewBox="0 0 470 270" role="img" aria-labelledby="rally-t">
+            <title id="rally-t">A side view of the table: a ball's path over the net to a bounce on the far side.</title>
+            <text class="lbl" x="30" y="22">SPEED</text>
+            <text class="val" x="30" y="56">8.5</text><text class="unit" x="72" y="56">m/s</text>
+            <text class="lbl" x="150" y="22">SPIN</text>
+            <text class="val" x="150" y="56">13</text><text class="unit" x="182" y="56">r/s top</text>
+            <path class="legs" d="M78 214v46M392 214v46"/>
+            <rect class="top-side" x="30" y="212" width="410" height="9" rx="1.5"/><path class="tbl" d="M30 212h410"/>
+            <path class="net" d="M235 212v-26"/>
+            <path class="path" d="M40 150Q200 40 360 210Q400 130 462 112"/>
+            <g class="moving">
+              <ellipse class="bounce" cx="360" cy="212" rx="9" ry="3" opacity="0">
+                <animate attributeName="opacity" values="0;0;1;0;0" keyTimes="0;.53;.56;.72;1" dur="2.8s" repeatCount="indefinite"/>
+              </ellipse>
+              <circle class="ball" r="7">
+                <animateMotion dur="2.8s" repeatCount="indefinite" keyPoints="0;1;1" keyTimes="0;.72;1" calcMode="linear" path="M40 150Q200 40 360 210Q400 130 462 112"/>
+              </circle>
+            </g>
+            <g class="still">
+              <ellipse class="bounce" cx="360" cy="212" rx="9" ry="3"/>
+              <circle class="ball" cx="200" cy="108" r="7"/>
+            </g>
+          </svg>
+          <figcaption>Shot 4 of a 14-shot rally in the demo: a drive, as the replay reads it from the log.</figcaption>
+        </figure>
+      </div>
+
+      <div class="stage">
+        <figure class="window">
+          <img src="img/home/replay.webp" width="2200" height="845" alt="The demo dashboard's Point by point view: a 14-shot rally drawn in 3D over the table, bars for every point of three games, blue for points won and orange for points lost, and the longest points as chips.">
+        </figure>
+        <figure class="float">
+          <img src="img/home/session-card.webp" width="761" height="952" loading="lazy" alt="A session card from the demo: matches won 5 to 3, games and points won, a tile for every match and eight bars setting the session against the average before it.">
+        </figure>
+        <p class="stage-note">The demo dashboard, built from made-up matches: one rally in 3D, every point of the match,
+          and a session card to send or post.</p>
+      </div>
     </div>
-    <p class="small">The demo is built from made-up matches, against the AI and online, generated by the project itself.</p>
-    <figure class="shot">
-      <img src="img/overview.png" width="1200" height="780" alt="The demo dashboard's Overview: a bar of six areas, the last session's result (5 of 8 matches won) as the heading, then 9 matches won and 6 lost at level 100 and 14 won and 12 lost over every AI match.">
-      <figcaption>The top of the page: your main AI level and every match so far, then the report on your last session with session and all-time win rates.</figcaption>
-    </figure>
   </div>
+
+  <section aria-label="In short">
+    <div class="wrap three">
+      <div>
+        <div class="icon"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18c3-9 9-12 16-12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="1 4"/><circle cx="19" cy="6" r="3" fill="currentColor"/><path d="M2 20h20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+        <h3>Review every point</h3>
+        <p>Every rally replayed from the ball contacts the game logs, in 2D or 3D, with each shot's type, speed and spin.</p>
+      </div>
+      <div>
+        <div class="icon"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l5-5 4 3 8-8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 7h5v5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <h3>Track your progress</h3>
+        <p>Every session against your average at the same AI level, and your form over the last 10, 20 or 50 matches.</p>
+      </div>
+      <div>
+        <div class="icon"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/></svg></div>
+        <h3>Train smarter</h3>
+        <p>A plan ranked by how many points a match each item is worth to you, with a drill for each.</p>
+      </div>
+    </div>
+  </section>
 
   <section>
     <div class="wrap">
       <h2>What you get</h2>
       <p class="intro">Everything is worked out from the logs by fixed rules, so the same logs always give the same
         dashboard. No AI service and no account.</p>
-      <div class="split">
-        <ul class="points">
-          <li><b>A replay of every point</b><span>Drawn from the ball contacts the game logs: bat, table, net and floor,
-            with each shot's type, speed in m/s and spin in r/s. Switch it to 3D to see the ball's flight and replay
-            the deciding shot in slow motion with its spin.</span></li>
-          <li><b>A shot explorer</b><span>Every shot you played, by the ball that came at you: its spin, speed, side and
-            depth. It lists the kinds of ball you miss most, shows how your misses differ from the shots you land, and opens
-            any shot in the replay.</span></li>
-          <li><b>Form and stamina</b><span>Your win rate over your last 10, 20 or 50 matches with the range chance
-            allows, and whether you start sessions cold or fade late in them.</span></li>
-          <li><b>A session report</b><span>Results, written notes and how the session compares with your average at the
-            same AI level, with session and all-time win rates.</span></li>
-          <li><b>Serves and returns</b><span>Where your serves land, which ones win points, and how you return the AI's.</span></li>
-          <li><b>A training plan</b><span>What to work on, ranked by how many points each item is worth to you, with how each item has moved since it joined the plan.</span></li>
-          <li><b>Matches you pick</b><span>Pick whole sessions or single matches and see your numbers over just those,
-            set against your other matches at the same level.</span></li>
-          <li><b>A match card</b><span>Any match against the AI as one picture to send or post: the result, every point,
-            a few numbers and you against the AI, in the dashboard's look and language. A session card does the same for
-            a whole session.</span></li>
-          <li><b>Your notes</b><span>A note on any match: what happened, what worked, what to try next time. Marked on
-            the match lists, gathered under each session, and kept in your browser, never in the file you send.</span></li>
-          <li><b>Progress over time</b><span>By day, by AI level and by what decides your points, with
-            <a href="https://11hero.com">11hero</a>-style match metrics.</span></li>
-          <li><b>Online matches and ratings</b><span>A switch turns the whole dashboard to your matches against people
-            online, with your rating match by match and your results set against what the ratings alone expect.</span></li>
-        </ul>
-        <figure class="shot">
-          <img src="img/replay.png" width="1100" height="800" loading="lazy" alt="The point-by-point view: a table seen from above with the paths of a 16-shot rally, bars for every point of two games, and a shot list with type, speed and spin.">
-          <figcaption>Point by point: pick any bar to watch that rally from above.</figcaption>
-        </figure>
+
+      <div class="feature" style="margin-top: clamp(48px, 7vw, 80px)">
+        <div class="copy">
+          <p class="where">Shot analysis</p>
+          <h3>See the balls you miss</h3>
+          <p>Every shot you played, by the ball that came at you: its spin, speed, side and depth.</p>
+          <ul>
+            <li>The kinds of ball you miss most, against your usual rate</li>
+            <li>Where each ball bounced on your half of the table</li>
+            <li>How your misses differ from the shots you land</li>
+            <li>Any shot opens in the replay</li>
+          </ul>
+        </div>
+        <figure class="shot"><img src="img/home/shots.webp" width="1400" height="624" loading="lazy" alt="The shot explorer in the demo: 2,728 shots with 78.7% landed, bars for landed, into the net, long, wide and not reached, and your half of the table from above with a dot where each ball bounced."></figure>
       </div>
-      <div class="grid">
-        <div class="card"><h3>One file</h3><p>The dashboard is a single HTML file that works offline. Send it to a coach
-          or keep it on a static host.</p></div>
-        <div class="card"><h3>Dark or light, two languages</h3><p>English and Traditional Chinese, and a PDF of the
-          whole report when you want one.</p></div>
-        <div class="card"><h3>Optional videos</h3><p>Upload a session's headset recording and a highlight reel to your
-          own YouTube channel, unlisted, and every point links to its moment.</p></div>
+
+      <div class="feature flip">
+        <figure class="shot"><img src="img/home/plan.webp" width="1400" height="482" loading="lazy" alt="The first item of the training plan in the demo, A firmer backhand return, worth about 0.5 points a match, with a drill and a chart against its target."></figure>
+        <div class="copy">
+          <p class="where">Coaching</p>
+          <h3>Practise what's worth points</h3>
+          <p>A training plan ranked by how many points a match each item is worth to you, worked out from your own
+            points.</p>
+          <ul>
+            <li>A drill for each item, for the ball machine or the AI</li>
+            <li>A chart of where you are against the target</li>
+            <li>How each item has moved since it joined the plan</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="feature">
+        <div class="copy">
+          <p class="where">Overview</p>
+          <h3>Know how the session went</h3>
+          <p>A report on your last session, written out: results, notes, and how it compares with your average at the
+            same AI level, with session and all-time win rates.</p>
+          <ul>
+            <li>A PDF of the whole report when you want one</li>
+            <li>A match card or a session card to send or post</li>
+          </ul>
+        </div>
+        <figure class="shot"><img src="img/home/overview.webp" width="1400" height="716" loading="lazy" alt="The demo's Overview: the heading Last session: 5 of 8 matches won, a written summary, and 7 matches won and 8 lost at level 100 beside 14 won and 12 lost over every AI match, with games and points won."></figure>
+      </div>
+
+      <div class="feature flip">
+        <figure class="shot narrow"><img src="img/home/table3d.webp" width="601" height="781" loading="lazy" alt="The replay in 3D: the table seen from behind your end, the paths of a rally's shots, and a ball in the corner turning at 16 r/s."></figure>
+        <div class="copy">
+          <p class="where">Match review</p>
+          <h3>Watch it again in 3D</h3>
+          <p>Drawn from the bat, table, net and floor contacts the game logs. Follow the ball's flight, replay the
+            deciding shot in slow motion with its spin, and step through a match point by point.</p>
+        </div>
+      </div>
+
+      <div class="more">
+        <div><h3>Form, stamina, progress</h3><p>Your floor, whether you start cold or fade late, and progress by day and level with <a href="https://11hero.com">11hero</a>-style metrics.</p></div>
+        <div><h3>Serves and returns</h3><p>Where your serves land, which ones win points, and how you return the AI's.</p></div>
+        <div><h3>Matches you pick</h3><p>Your numbers over chosen sessions or matches, set against the rest at the same level.</p></div>
+        <div><h3>Your notes</h3><p>A note on any match, gathered under each session and kept in your browser.</p></div>
+        <div><h3>Online matches and ratings</h3><p>One switch turns the dashboard to your matches against people, with your rating match by match.</p></div>
+        <div><h3>One file, offline</h3><p>The dashboard is a single HTML file. Send it to a coach or keep it on a static host.</p></div>
+        <div><h3>Dark or light, two languages</h3><p>English and Traditional Chinese (繁體中文), on your computer or your phone.</p></div>
+        <div><h3>Optional videos</h3><p>A session's headset recording and a highlight reel on your own YouTube channel, unlisted, with every point linked.</p></div>
+        <div><h3>No opponent names</h3><p>Nobody you played online is named anywhere in the dashboard or the cards.</p></div>
       </div>
     </div>
   </section>
@@ -103,38 +193,54 @@
           into it.</span></div>
       </div>
       <div class="note">
-        <p><b>Never share a raw log.</b> If a bug report needs one, make a redacted copy and read it before you share
-          it: <code>elevendash redact LOG OUT</code> removes tokens, ids, names, addresses and location.</p>
+        <p><b>Never share a raw log.</b> For a bug report, the app's <b>Report for a bug…</b> (or
+          <code>elevendash diagnose</code>) gives versions, counts and log problems, with nothing private. If a log is
+          needed too, <code>elevendash redact LOG OUT</code> makes a copy with only the lines elevendash reads: read it
+          before you share it. More in the <a href="privacy.html">privacy notice</a>.</p>
       </div>
     </div>
   </section>
 
-  <section>
+  <section id="start">
     <div class="wrap">
       <h2>Get started</h2>
       <p class="intro">Eleven Dashboard is an app on your computer: it opens your dashboard in your browser, with an
         <b>Import new logs</b> button you press after each session.</p>
-      <p><b>Windows:</b> download <code>Eleven-Dashboard-windows.zip</code> from the
-        <a href="https://github.com/glki6/elevendash/releases/latest">latest release</a>, unzip it and open
-        <b>Eleven Dashboard.exe</b>. It isn't code-signed, so Windows may ask first: <b>More info</b>, then
-        <b>Run anyway</b>.</p>
-      <p><b>macOS, Linux, or Windows with Python 3.10 or newer:</b></p>
+      <div class="ways">
+        <div class="way">
+          <h3>Windows</h3>
+          <p>Download <code>Eleven-Dashboard-windows.zip</code> from the latest release, unzip it and open
+            <b>Eleven Dashboard.exe</b>. It isn't code-signed, so Windows may ask first: <b>More info</b>, then
+            <b>Run anyway</b>.</p>
+          <a class="btn primary" href="https://github.com/glki6/elevendash/releases/latest">
+            <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 2v10M4.5 7.5 9 12l4.5-4.5M3 15.5h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Latest release</a>
+        </div>
+        <div class="way">
+          <h3>macOS, Linux, or Python</h3>
+          <p>With Python 3.10 or newer and <a href="https://pipx.pypa.io">pipx</a>:</p>
 <pre><code>pipx install git+https://github.com/glki6/elevendash
-elevendash app                 <span class="c"># Windows: elevendash app --shortcut adds it to the Start menu</span></code></pre>
-      <p>Then, on the headset, start File Sharing in Eleven (Settings, Network Settings, File Sharing), enter the address
-        it shows in the app's <b>Settings</b>, and press <b>Import new logs</b>.</p>
-      <p>With <a href="https://tailscale.com">Tailscale</a> on your computer and phone, <b>Settings › Open on my phone</b>
-        shows a code to scan: the same dashboard and Import button on your phone, reachable only by your own devices.</p>
-      <p class="small">No Wi-Fi sharing? Copy the <code>ALL-*.log</code> files off the headset any other way and use
+elevendash app   <span class="c"># Windows: --shortcut adds it to the Start menu</span></code></pre>
+        </div>
+      </div>
+      <ol class="steps">
+        <li>On the headset, start <b>File Sharing</b> in Eleven: Settings, Network Settings, File Sharing.</li>
+        <li>Enter the address it shows in the app's <b>Settings</b>.</li>
+        <li>Press <b>Import new logs</b>. Your dashboard opens with every match the logs hold.</li>
+      </ol>
+      <p class="after">With <a href="https://tailscale.com">Tailscale</a> on your computer and phone, <b>Settings › Open on
+        my phone</b> shows a code to scan: the same dashboard and Import button on your phone, reachable only by your own
+        devices.</p>
+      <p class="after">No Wi-Fi sharing? Copy the <code>ALL-*.log</code> files off the headset any other way and use
         <b>From files…</b>. Everything also works from the command line (<code>elevendash update</code>); the full guide is
         in the <a href="https://github.com/glki6/elevendash#readme">README</a>.</p>
     </div>
   </section>
 
   <section>
-    <div class="wrap">
-      <h2>Against the AI, and against people online</h2>
-      <div class="note">
+    <div class="wrap status">
+      <h2>Against the AI, and online</h2>
+      <div>
         <p>elevendash is built for matches against the AI: the game logs every ball contact by both players, so the
           whole dashboard works. Matches against people online are its second side: a switch at the top turns the page
           to them, with your rating match by match. The two sides are added up apart, and no opponent's name appears
@@ -144,6 +250,17 @@ elevendash app                 <span class="c"># Windows: elevendash app --short
         <p>elevendash is early: tested on one player's logs (Quest 3S, AI levels 75 to 100, a few hundred matches) and on
           generated logs. Redacted logs from other headsets, game versions and online matches are welcome; see
           <a href="https://github.com/glki6/elevendash/blob/main/CONTRIBUTING.md">CONTRIBUTING</a>.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="close">
+    <div class="wrap">
+      <h2>See your next session<br>point by point.</h2>
+      <p class="intro">The demo is the whole dashboard, built from made-up matches against the AI and online.</p>
+      <div class="actions">
+        <a class="btn primary" href="https://github.com/glki6/elevendash/releases/latest">Download for Windows</a>
+        <a class="btn" href="demo/">Try the demo</a>
       </div>
     </div>
   </section>

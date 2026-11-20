@@ -38,6 +38,11 @@ def load_data(build_dir, videos=True):
                 data[name[:-5]] = json.load(f)['rows']
     if not data:
         raise FileNotFoundError(f'no data in {build_dir}: run "elevendash build" first')
+    # the page links a video by its id and shows its kind and length; a title, link or upload date it never shows
+    for r in data.get('videos') or []:
+        if isinstance(r, dict):
+            for k in ('title', 'url', 'uploaded'):
+                r.pop(k, None)
     if not videos:
         data['videos'] = []
         for rows in data.values():

@@ -209,7 +209,7 @@
       b.click();
       await wait(120);
       const gs = ER.shots.groups();
-      const lis = qa('.er-sxgroups > li');
+      const lis = qa('.er-sxgroups > li:not(.er-muted)');
       if (lis.length !== gs.length) wrong.push(scope + ': ' + lis.length + ' rows for ' + gs.length + ' kinds');
       for (let i = 0; i < Math.min(gs.length, lis.length); i++) {
         lis[i].querySelectorAll('button')[0].click();
@@ -341,8 +341,9 @@
       if (!list || !list.length) {
         check('side by side: two tables in step', q('#sx-pair-go').disabled, 'no pair to show here');
       } else {
-        q('#sx-pair-go').click();
+        // the pair is open from the start: no click needed
         for (let i = 0; i < 40 && qa('[data-draw="sx-pair"] svg').length < 2 && !q('[data-draw="sx-pair"] p'); i += 1) await wait(150);
+        const atStart = pair.state.on && q('#sx-pair-go').hidden;
         const p = pair.state, two = qa('[data-draw="sx-pair"] svg.er-r3d').length === 2 && p.sides.length === 2;
         let tied = false, fair = false;
         if (two) {
@@ -368,7 +369,7 @@
         q('#sx-pair-hide').click();
         await wait(60);
         const closed = !qa('[data-draw="sx-pair"] svg').length && q('#sx-pair-ctl').hidden && !q('#sx-pair-go').hidden;
-        check('side by side: two tables in step', two && tied && fair && opened && closed, list.length + ' pairs' + (two ? '' : '; not drawn') + (tied ? '' : '; clocks apart') + (opened ? '' : '; its point did not open') + (closed ? '' : '; not closed'));
+        check('side by side: two tables in step', atStart && two && tied && fair && opened && closed, list.length + ' pairs' + (atStart ? '' : '; not open at the start') + (two ? '' : '; not drawn') + (tied ? '' : '; clocks apart') + (opened ? '' : '; its point did not open') + (closed ? '' : '; not closed'));
       }
     }
 
@@ -560,6 +561,9 @@
     if (other) {
       const far = ER.replayId(other.m.key) !== ER.replayId(here);
       const before = unpacked();
+      // its month may be unpacked already: Side by side, open from the start, unpacks the months of the pair it shows
+      const itsMonth = () => q('script[data-ed="' + ER.replayId(other.m.key) + '"]');
+      const wasPacked = !!itsMonth() && itsMonth().textContent !== '';
       const idx = list.indexOf(other);
       const rows = qa('.er-sxlist tbody tr');
       const areaWas = ER.area(), yWas = window.scrollY;
@@ -580,7 +584,8 @@
       q('#viewer-home').click();
       const lives = await until(() => !ER.viewer.isOpen() && ER.area() === 'review' && seen(q('#area-review #chart-replay')) && !q('#back-btn').hidden, 3000);
       check('the replay opens in Match review, with a way back', !!lives, ER.area() + ', steps back: ' + ER.trail());
-      if (far) check('the other month is unpacked when asked for', unpacked() === before + 1, unpacked() + ' of ' + months);
+      if (far) check('the other month is unpacked when asked for', itsMonth() && itsMonth().textContent === '' && unpacked() === before + (wasPacked ? 1 : 0),
+        unpacked() + ' of ' + months + (wasPacked ? '' : '; it was unpacked already'));
       await wait(300);
       if (q('#replay-play-stop') && !q('#replay-play-stop').hidden) q('#replay-play').click();
     } else {
@@ -629,7 +634,7 @@
       check('online: nothing failed to load', qa('.er-fail').length === 0, qa('.er-fail').length);
       check('online: nothing hidden shows', showing().length === 0, showing().slice(0, 3).map((e) => e.className || e.id || e.tagName).join(', '));
       // what may still name the AI or a level: the way back, the drills against the AI, and a standard you reached
-      const kept = ['AI matches', 'the AI at a low level', 'the AI at a level you beat', 'level of the matches you won', 'level of your matches won', 'above level',
+      const kept = ['AI matches', 'the AI at a low level', 'the AI at a level you beat', 'above level',
         'Matches against the AI are not in these totals'];
       qa('details').forEach((d) => {
         d.open = true;
@@ -660,6 +665,25 @@
       const back = await until(() => !page.classList.contains('er-people') && ER.matchRow() && ER.matchRow().vs === 'AI', 8000);
       check('and back to the AI side', back);
       await wait(300);
+    }
+
+    // 8b. no number came out broken: no NaN, undefined, Infinity or [object in any area's text or in a drawn attribute
+    {
+      const bad = ['NaN', 'undefined', 'Infinity', '[object'];
+      const hits = [];
+      const walk = document.createTreeWalker(q('#dash-root') || document.body, NodeFilter.SHOW_TEXT);
+      for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+        const tag = n.parentNode && n.parentNode.nodeName;
+        if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'TEMPLATE') continue;
+        if (bad.some((w) => n.nodeValue.includes(w))) hits.push(n.nodeValue.trim().slice(0, 60));
+      }
+      for (const el of qa('#dash-root [style], #dash-root svg *, #dash-root [title], #dash-root [aria-label]')) {
+        for (const at of ['style', 'd', 'x', 'y', 'width', 'height', 'cx', 'cy', 'r', 'transform', 'title', 'aria-label']) {
+          const v = el.getAttribute(at);
+          if (v && bad.some((w) => v.includes(w))) hits.push(at + '=' + v.slice(0, 60));
+        }
+      }
+      check('no broken numbers in the text or the drawings', hits.length === 0, hits.slice(0, 4).join(' | '));
     }
 
     // 9. nothing went wrong on the way

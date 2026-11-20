@@ -1375,11 +1375,11 @@ html.pdf .er-finder{display:none}
 <section data-part="plan" class="er-section" id="plan">
   <div class="er-sechead">
     <div><h2>Training plan</h2><p class="er-muted">What to practise next, in order of how many points a match each item is worth.</p><details class="er-how"><summary>How to read this</summary><p class="er-muted">The plan is rebuilt from the logs at every update, so an item drops down the list as you close its gap. Each item also shows its number since the session that first put it on the plan.</p></details></div>
-    <div class="er-legend"><span><i class="er-sw dot"></i>Recent sessions, counted as now</span><span><i class="er-sw hollow"></i>Earlier sessions</span><span><i class="er-sw dash"></i>Target: the same number in matches you won</span><span><i class="er-sw vdot"></i>Joined the plan</span></div>
+    <div class="er-legend"><span><i class="er-sw dot"></i>Recent sessions, counted as now</span><span><i class="er-sw hollow"></i>Earlier sessions</span><span><i class="er-sw dash"></i>Target: what your better matches reach</span><span><i class="er-sw vdot"></i>Joined the plan</span></div>
   </div>
   <div class="er-multi er-plead" data-draw="plan-lead" data-source="plan"></div>
   <ol class="er-plan" id="plan-items" data-draw="plan-items" data-source="plan"></ol>
-  <div class="er-keephead"><h3>Already working</h3><p class="er-muted">At or close to the level of the matches you won. Nothing to drill here; keep doing it.</p></div>
+  <div class="er-keephead"><h3>Already working</h3><p class="er-muted">At or close to what your better matches reach. Nothing to drill here; keep doing it.</p></div>
   <ul class="er-plan keep" id="plan-keep" data-draw="plan-keep" data-source="plan"></ul>
   <div class="er-keephead" id="plan-history"><h3>Plan history</h3><p class="er-muted">When each item joined the plan, whether it left, and whether it came back.</p>
     <div class="er-legend"><span><i class="er-sw"></i>On the plan</span><span><i class="er-sw ok"></i>Already working</span><span><i class="er-sw none"></i>No target yet</span></div>
@@ -1447,7 +1447,7 @@ html.pdf .er-finder{display:none}
     <li>Everything comes from the game's own log files, copied from the Quest through Eleven's File Sharing. The Quest keeps only its most recent launches, so a copy of every log is kept on your computer. Nothing is sent anywhere: the numbers are worked out there, by code anyone can read.</li>
     <li>A session is a run of AI matches with less than 45 minutes between one ending and the next starting.</li>
     <li>The session report sets each session against all your earlier points at the same AI level. A change is called out when a session of that size would show a gap that large by chance only about one time in ten, so about one line in ten is still luck. The notes are written by the same code that builds the data.</li>
-    <li>The training plan is built for the AI level you played most in your last five sessions. Now is your latest sessions at that level, taken together until they hold 1,000 points. The target is the same number in the matches you won at that level. What an item is worth is the number of tries you get in a match, times the gap between now and the target, times what one more success has been worth in points over all your points at that level. That assumes the extra balls you land win as often as the ones you land today, and that the AI plays the same way, so read it as a ranking and not as a promise. An arrow marks a number that moved further from your earlier sessions than chance explains about nine times in ten. Speeds are the ball's speed just after the hit. The plan keeps no history, so to say when an item joined it, the same sums are done again as they would have stood after each earlier session at that level. Then is the item's number over the recent sessions as they stood when it first made the list; since is every session at that level played after that one. An item joins when its number is low, and a low number is partly bad luck, so a small rise afterwards would come even without practice.</li>
+    <li>The training plan is built for the AI level you played most in your last five sessions. Now is your latest sessions at that level, taken together until they hold 1,000 points. The target is what your better matches among those same recent ones reach: each match's number, pulled toward your average over them by as much as chance explains (a match with few tries moves little), then the number a quarter of those matches reach or beat. Taking it from the matches you won would set it too high, as a match won is partly one where things went your way. An item gets a target once 10 of those matches have 5 tries or more of it. What an item is worth is the number of tries you get in a match, times the gap between now and the target, times what one more success has been worth in points over all your points at that level. That assumes the extra balls you land win as often as the ones you land today, and that the AI plays the same way, so read it as a ranking and not as a promise. An arrow marks a number that moved further from your earlier sessions than chance explains about nine times in ten. Speeds are the ball's speed just after the hit. The plan keeps no history, so to say when an item joined it, the same sums are done again as they would have stood after each earlier session at that level. Then is the item's number over the recent sessions as they stood when it first made the list; since is every session at that level played after that one. An item joins when its number is low, and a low number is partly bad luck, so a small rise afterwards would come even without practice.</li>
     <li>In Serves and returns, depth is where the serve first bounces on the receiver's half: short is within 50 cm of the net, half-long is 50 cm to 1 m from it, long is the last 37 cm. A serve has topspin or backspin when it carries more than 20 r/s of it, otherwise little spin. A point is won by the return when the AI does not reach it or misses its next shot; it is lost to the AI's next shot when you do not reach that shot or miss it. The same goes for your serve and third ball. Rows and serve types with fewer than 30 serves are left out, and the written notes use only groups of 50 or more.</li>
     <li>The point replay moves the ball in straight lines between the contacts the game logged, at the logged times, so a ball that curved with sidespin is drawn straight. The ball is drawn larger the higher it is; its height between contacts is worked out from the contact heights and gravity. When the log stops with the ball in the air, the last stretch carries on the way the ball was going for 0.4 seconds. The 3D view curves each flight instead: the log gives the ball's velocity just after every hit and as it arrives at every contact, and the curve is the smooth path that leaves and arrives with those. Where the two can be compared, on a shot from bat to table, this path and a simpler one sit about 2 cm apart at mid-flight. The log has nothing between contacts, no bats and no players, and the spin shown is the spin as the ball left the bat.</li>
     <li>The landing call measures from where the log says the ball met the table to the nearest edge of that half. A ball that missed the table is measured where its drawn flight comes down to the height of the table, and the height over the net is read off the drawn flight where it crosses the net, so those two are estimates, good to a few centimetres.</li>
@@ -1460,9 +1460,10 @@ html.pdf .er-finder{display:none}
     <li>A shot landed when its first bounce was on the other side. A serve landed when it bounced on your side and then the other.</li>
     <li>Shot types follow 11hero's rule: backspin over the table is a push, backspin away from it a chop; 50 r/s or more of spin is a loop (a fast loop at 10.5 m/s or more); anything else is a drive. An open-up is a drive or loop against a ball that had backspin.</li>
     <li>Left and right are as you face the AI.<span data-showif data-ds="findings" data-k="main" data-f="hand" data-eq="right" hidden> You hold the paddle in your right hand, so your left is your backhand side.</span><span data-showif data-ds="findings" data-k="main" data-f="hand" data-eq="left" hidden> You hold the paddle in your left hand, so your right is your backhand side.</span> The game's paddle settings in the logs say which hand holds the paddle; <code translate="no">elevendash config hand=left</code> (or right) sets it instead. The direction was checked against a video recording.</li>
-    <li>The opening line, the second scoreboard and What decides your points cover your main level: the AI level with the most points in your last five sessions. The findings there are written by code with fixed rules. A headline calls one thing better than another only when the gap is at least 5 percentage points (3 for landing rates, which rest on thousands of shots, and 0.5 m/s for speed). A finding with fewer than 3 matches won and 3 lost, 30 serves or 50 shots of a type behind it is left out.</li>
+    <li>The opening line, the second scoreboard and What decides your points cover your main level: the AI level with the most points in your last five sessions. The findings there are written by code with fixed rules. A headline calls one thing better than another only when the gap is at least 5 percentage points (3 for landing rates, which rest on thousands of shots, and 0.5 m/s for speed). A finding with fewer than 100 points, 3 matches won and 3 lost, 30 serves or 50 shots of a type behind it is left out.</li>
     <li>The AI level is the game's difficulty setting; 100 is legendary. On days you changed level, the progress chart labels the day with the higher one.</li>
     <li>Lets are left out. Online matches are not in the AI totals: the switch at the top of the page shows them.</li>
+    <li data-showif data-ds="summary" data-k="all" data-f="stopped" hidden>Only matches played to the end count. Matches stopped before the end, by a restart or a quit, are left out: <span data-draw="v" data-ds="summary" data-k="all" data-f="stopped" data-fmt="int">—</span> matches and <span data-draw="v" data-ds="summary" data-k="all" data-f="stoppedPoints" data-fmt="int">—</span> points.</li>
     <li>Small groups swing a lot. The zone map and the rally-length chart show how many serves or points each number covers, and the zone map colours only zones with 30 serves or more.</li>
   </ul>
 </details>
@@ -1532,8 +1533,14 @@ html.pdf .er-finder{display:none}
   ER.tr = (key, ...args) => {
     const zh = ER.lang() === 'zh';
     const s = (ER.people() && ER.VOICE[zh ? 'zh' : 'en'][key]) || (zh && ER.I18N[key]) || key;
-    return args.length ? s.replace(/\{(\d+)\}/g, (m, i) => (args[i] == null ? '' : String(args[i]))) : s;
+    if (!args.length) return s;
+    const out = s.replace(/\{(\d+)\}/g, (m, i) => (args[i] == null ? '' : String(args[i])));
+    // English counts of one: "1 matches" reads as "1 match" (a sentence keyed for any number says "{0} matches")
+    return zh ? out : ER.one(out);
   };
+  ER.one = (s) => (ER.lang() === 'zh' ? s : s.replace(ONE, (m, pre, w) => pre + '1 ' + (SINGLE[w] || w.slice(0, -1))));
+  const ONE = /(^|[^\d.,−-])1 (matches|sessions|games|points|days|shots|balls|serves|returns|attacks|tries|times|rallies|entries|levels|misses)\b/g;
+  const SINGLE = {matches: 'match', tries: 'try', rallies: 'rally', entries: 'entry', misses: 'miss'};
   ER.txf = (f) => (ER.lang() === 'zh' ? f + '_zh' : f);
   ER.tx = (row, f) => (row ? (ER.lang() === 'zh' && row[f + '_zh'] != null ? row[f + '_zh'] : row[f]) : null);
   const zhDate = (v) => `${Number(v.slice(5, 7))}月${Number(v.slice(8, 10))}日`;
@@ -1814,7 +1821,10 @@ html.pdf .er-finder{display:none}
     if (j.drawn) return;
     j.drawn = true;
     if (drawn && j.whole && j.page) fadeIn(j.page);
-    if (j.after) j.after();
+    if (j.after) {
+      if (dash.flush) dash.flush();        // what `after` does may lean on a drawing of another area, not yet drawn
+      j.after();
+    }
   };
   const step = (j) => {
     if (job !== j) return;
@@ -2463,6 +2473,12 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     let val = ER.tx(row, f);
     if (el.hasAttribute('data-tr') && val != null) val = ER.tr(String(val));
     el.replaceChildren(ER.span(fmt(val), src, f, key));
+    // "1 matches and 74 points": the word after a count of one, in the page's own English sentences
+    const nx = el.nextSibling;
+    if (nx && nx.nodeType === 3) {
+      if (nx.erWords == null) nx.erWords = nx.nodeValue;
+      nx.nodeValue = ER.one(fmt(val) + nx.erWords).slice(fmt(val).length);
+    }
   });
 
   // A thin bar for one percentage, its value printed at the end. data-num / data-den add "3 of 7", data-n a count.
@@ -2536,6 +2552,8 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     }
     el.replaceChildren(ER.span(ER.tr(m.result), 'matches', 'result', m.key, 'er-pill ' + (m.result === 'Won' ? 'won' : 'lost')));
   });
+  // a match's word in a list
+  ER.word = (r) => ER.tr(r.result === 'Won' ? 'Won' : 'Lost');
 
   // The picked match in the session recording, when that session was recorded. The row is hidden otherwise.
   dash.draw('match-video', (el) => {
@@ -2637,7 +2655,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       ms.slice().reverse().forEach((r) => {
         const who = r.vs === 'AI' ? ER.tr('level {0}', r.level) : r.rOpp ? ER.tr('rated {0}', ER.F.rating(r.rOpp)) : ER.tr('online');
         const note = ER.notes.has(r.key) ? ` · ${ER.tr('your note')}` : '';
-        g.appendChild(new Option(`${ER.F.time(r.start)} · ${ER.tr(r.result === 'Won' ? 'Won' : 'Lost')} ${r.gamesWon}–${r.gamesLost} · ${who}${note}`, r.key));
+        g.appendChild(new Option(`${ER.F.time(r.start)} · ${ER.word(r)} ${r.gamesWon}–${r.gamesLost} · ${who}${note}`, r.key));
       });
       return g;
     });
@@ -2758,7 +2776,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     const k = ER.sessionKey(), open = ER.matchKey();
     el.replaceChildren(...rows.filter((r) => r.session === k).map((r) => {
       const won = r.result === 'Won';
-      const b = ER.el('button', 'er-chip' + (won ? ' won' : ''), `${r.sessionMatch} · ${ER.tr(won ? 'Won' : 'Lost')} ${r.gamesWon}–${r.gamesLost}`);
+      const b = ER.el('button', 'er-chip' + (won ? ' won' : ''), `${r.sessionMatch} · ${ER.word(r)} ${r.gamesWon}–${r.gamesLost}`);
       b.type = 'button';
       b.title = `${ER.F.time(r.start)}: ${String(r.score).replace(/-/g, '–')}`;
       b.setAttribute('aria-pressed', String(r.key === open));
@@ -2790,7 +2808,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     el.replaceChildren(...rows.filter((r) => r.session === k && ER.notes.has(r.key)).map((r) => {
       const won = r.result === 'Won';
       const li = ER.el('li');
-      li.append(ER.el('b', null, `${ER.tr('Match {0}', r.sessionMatch)} · ${ER.tr(won ? 'Won' : 'Lost')} ${r.gamesWon}–${r.gamesLost}`),
+      li.append(ER.el('b', null, `${ER.tr('Match {0}', r.sessionMatch)} · ${ER.word(r)} ${r.gamesWon}–${r.gamesLost}`),
         ER.el('span', null, ER.notes.get(r.key)));
       return li;
     }));
@@ -3031,7 +3049,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
         const chips = ER.el('div', 'er-chips');
         chips.append(...os.map((o) => {
           const r = x.ord.get(o), won = r.result === 'Won';
-          const b = ER.el('button', 'er-chip' + (won ? ' won' : ''), `${r.sessionMatch} · ${ER.tr(won ? 'Won' : 'Lost')} ${r.gamesWon}–${r.gamesLost}`);
+          const b = ER.el('button', 'er-chip' + (won ? ' won' : ''), `${r.sessionMatch} · ${ER.word(r)} ${r.gamesWon}–${r.gamesLost}`);
           b.type = 'button';
           b.dataset.o = String(o);
           b.dataset.t = `${ER.F.time(r.start)}: ${String(r.score).replace(/-/g, '–')}`;
@@ -3678,9 +3696,9 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     h.appendChild(ER.span(ER.tx(r, 'title'), 'plan', 'title', r.key));
     head.appendChild(h);
     const tag = ER.el('span', 'er-ptag' + (r.status === 'none' ? ' none' : keep ? ' ok' : ''));
-    if (r.status === 'none') tag.textContent = ER.tr('No matches won at this level yet, so no target');
-    else if (r.status === 'reached') tag.textContent = ER.tr('At the level of your matches won');
-    else if (keep) tag.textContent = ER.tr('Close to the level of your matches won');
+    if (r.status === 'none') tag.textContent = ER.tr('Not enough matches yet for a target');
+    else if (r.status === 'reached') tag.textContent = ER.tr('As good as your better matches');
+    else if (keep) tag.textContent = ER.tr('Close to your better matches');
     else tag.append(...ER.trn(r.gain >= 0.95 && r.gain < 1.05 ? 'Worth about {0} point a match' : 'Worth about {0} points a match',
       ER.span('+' + ER.fmt1(r.gain), 'plan', 'gain', r.key)));
     const why = ER.el('p');
@@ -3732,7 +3750,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     if (ER.same(el, [ER.lang(), el.clientWidth, ER.rows('plan'), ER.rows('plan_trend'), ER.rows('plan_progress')])) return;
     const mine = rows.filter((r) => isKeep(r) === keep);
     if (!mine.length) {
-      el.replaceChildren(ER.el('li', 'er-muted', ER.tr(keep ? 'Nothing here yet: every item above still has a gap to close.' : 'Every item is at the level of the matches you won. Time to move the targets.')));
+      el.replaceChildren(ER.el('li', 'er-muted', ER.tr(keep ? 'Nothing here yet: every item above still has a gap to close.' : 'Every item is as good as your better matches. Keep playing: the targets move up with you.')));
       return;
     }
     const joinedOf = (r) => prog.find((g) => g.key === r.key && g.level === r.level);
@@ -3751,7 +3769,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     if (!rows) return ER.wait(el, ['plan']);
     const r = rows.find((x) => !isKeep(x));
     if (!r) {
-      el.replaceChildren(ER.el('p', 'er-muted', ER.tr('Every item is at the level of the matches you won. Time to move the targets.')));
+      el.replaceChildren(ER.el('p', 'er-muted', ER.tr('Every item is as good as your better matches. Keep playing: the targets move up with you.')));
       return;
     }
     const h = ER.el('h4');
@@ -4027,8 +4045,10 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       svg.append('text').attr('x', m.l - 8).attr('y', y(t)).attr('text-anchor', 'end').attr('dominant-baseline', 'middle').attr('class', 'er-num').text(t + '%');
     });
     const nTicks = Math.max(2, Math.floor((W - m.l - m.r) / 90));
+    // a few days: one tick on each day, never on the hours between (one day alone drew "Jan 28" five times)
+    const span = d3.utcDay.count(ER.day(rows[0].date), ER.day(last.date)) + 1;
     svg.append('g').attr('transform', `translate(0,${H - m.b})`)
-      .call(d3.axisBottom(x).ticks(nTicks).tickFormat((d) => ER.F.date(d3.utcFormat('%Y-%m-%d')(d))).tickSizeOuter(0).tickSize(4))
+      .call(d3.axisBottom(x).ticks(span <= nTicks ? d3.utcDay.every(1) : nTicks).tickFormat((d) => ER.F.date(d3.utcFormat('%Y-%m-%d')(d))).tickSizeOuter(0).tickSize(4))
       .call((g) => g.select('.domain').remove());
     const ends = [];
     series.forEach((s) => {
@@ -4113,8 +4133,12 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(t)).attr('y2', y(t)).style('stroke', 'var(--cds-chart-grid)');
       svg.append('text').attr('x', m.l - 6).attr('y', y(t)).attr('text-anchor', 'end').attr('dominant-baseline', 'middle').attr('class', 'er-num').text(tf(t));
     });
-    svg.append('text').attr('x', m.l).attr('y', H - 4).attr('text-anchor', 'start').text(ER.F.date(rows[0].date));
-    svg.append('text').attr('x', W - m.r).attr('y', H - 4).attr('text-anchor', 'end').text(ER.F.date(rows[rows.length - 1].date));
+    if (rows.length === 1) {
+      svg.append('text').attr('x', (m.l + W - m.r) / 2).attr('y', H - 4).attr('text-anchor', 'middle').text(ER.F.date(rows[0].date));
+    } else {
+      svg.append('text').attr('x', m.l).attr('y', H - 4).attr('text-anchor', 'start').text(ER.F.date(rows[0].date));
+      svg.append('text').attr('x', W - m.r).attr('y', H - 4).attr('text-anchor', 'end').text(ER.F.date(rows[rows.length - 1].date));
+    }
     const px = (r) => x(ER.day(r.date)), py = (r) => y(r[f]);
     svg.append('path').datum(pts).attr('d', d3.area().x(px).y0(H - m.b).y1(py)).style('fill', ER.YOU).style('fill-opacity', 0.1);
     svg.append('path').datum(pts).attr('d', d3.line().x(px).y(py))
@@ -5499,7 +5523,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     }
   };
   const PAIR_MISS = {n: ER.k('Into the net'), l: ER.k('Long'), w: ER.k('Wide')};
-  const pr = {on: false, sig: '', index: 0, pairs: null, sides: [], tau: 0, lo: 0, hi: 0, rate: 0.25, playing: false, raf: 0, last: 0};
+  const pr = {on: true, sig: '', index: 0, pairs: null, sides: [], tau: 0, lo: 0, hi: 0, rate: 0.25, playing: false, raf: 0, last: 0};
   const side = (rec) => {
     const tr = track(rec.pt.key);
     if (!tr) return null;

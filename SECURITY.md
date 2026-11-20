@@ -23,6 +23,7 @@ Please report privately anything that could expose someone's data, for example:
 
 - the dashboard file, the PDF or the build data containing something from a log beyond match data
 - `elevendash redact` leaving an account, people or location value in its output
+- `elevendash diagnose` (the app's **Report for a bug…**) writing anything from a log beyond counts and problems
 - elevendash sending anything anywhere other than your own Quest
 - a way to make `elevendash fetch`, or an import in the app, write outside the workspace
 - a way for another computer, or a website open in your browser, to use the app's server
@@ -32,8 +33,10 @@ public issue for these.
 
 ## Never attach a raw log
 
-Not to an issue, a pull request, a discussion or a message. If a log is needed to show a problem, make a redacted
-copy first and read it before you share it:
+Not to an issue, a pull request, a discussion or a message. Start with the diagnostic report (**Settings › Your data ›
+Report for a bug…**, or `elevendash diagnose`): it holds versions, counts and log problems, and nothing private. If a
+log is needed to show a problem, make a redacted copy and read it before you share it. It keeps only the lines
+elevendash reads; `--full` keeps every line with private values removed, and needs a closer read:
 
 ```
 elevendash redact logs/ALL-01.05.2026.6.30.00.PM.log redacted.log

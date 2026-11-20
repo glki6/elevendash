@@ -111,20 +111,43 @@
       console.error(what, e);
     }
   };
-  // as a dashboard host does: data listeners first, then every drawing
+  // as a dashboard host does: data listeners first, then every drawing. The drawings in the areas of the page set aside
+  // (.er-off on a [data-area]) come after the ones on screen, a few at a time, so a long history shows its first
+  // area at once and stays answering while the rest is drawn. A PDF or a print draws everything at once.
+  const away = (el) => !root.classList.contains('pdf') && !!el.closest('[data-area].er-off');
+  const drawOne = (fn, name, el) => {
+    try {
+      fn(el);
+    } catch (e) {
+      errors.push(name + ': ' + e.message);
+      console.error(name, e);
+    }
+  };
+  let pass = null;        // the drawings still to do from the latest pass; a new pass drops what an older one left
   const runAll = () => {
     frame();
     listeners.forEach((fn) => call(fn, 'onData'));
+    const rest = [];
     draws.forEach((fn, name) => {
       document.querySelectorAll('[data-draw="' + name + '"]').forEach((el) => {
-        try {
-          fn(el);
-        } catch (e) {
-          errors.push(name + ': ' + e.message);
-          console.error(name, e);
-        }
+        if (away(el)) rest.push([fn, name, el]);
+        else drawOne(fn, name, el);
       });
     });
+    const mine = (pass = rest);
+    const step = () => {
+      if (pass !== mine) return;
+      const end = performance.now() + 25;
+      while (rest.length && performance.now() < end) drawOne(...rest.shift());
+      if (rest.length) setTimeout(step, 0);
+    };
+    if (rest.length) setTimeout(step, 0);
+  };
+  // the drawings still waiting, done now: for a step that needs the whole page as it will be (open a point elsewhere)
+  const flush = () => {
+    const rest = pass || [];
+    pass = null;
+    while (rest.length) drawOne(...rest.shift());
   };
 
   // Printing (the page's Save as PDF button, or the browser's own Print): the look and language on screen, every
@@ -162,6 +185,7 @@
   window.dash = {
     colors: Array.from({length: CONF.colors}, (_, i) => 'var(--chart-' + i + ')'),
     params: () => Object.assign({}, params),
+    flush: () => flush(),
     setParams(p) {
       Object.assign(params, p);
       toHash();

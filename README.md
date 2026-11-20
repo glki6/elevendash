@@ -87,6 +87,27 @@ phone has a connection, as long as the computer is on with the app running: tick
 running from sign-in (it doesn't open a browser tab then, and while the phone link is on it doesn't stop by itself).
 **New link** ends the old one, for a lost phone. See `SECURITY.md`.
 
+### Updating
+
+Your logs, notes and results live in your folder (`Documents/elevendash`), never in the app's own folder, so an update
+never touches them. To be safe, make a backup first: **Settings › Your data › Back up everything…**.
+
+- **Windows app:** in **Settings**, press **Stop the app**. Download the new `Eleven-Dashboard-windows.zip` from the
+  [latest release](https://github.com/glki6/elevendash/releases/latest), unzip it over the old folder (or anywhere) and
+  open **Eleven Dashboard.exe**. If you unzipped it somewhere new, press **Add to Start menu and desktop** again so the
+  shortcuts open the new copy.
+- **pipx:** `pipx upgrade elevendash` takes the newest code. To install one release instead,
+  `pipx install --force git+https://github.com/glki6/elevendash@v1.0.0` (any tag from the releases page).
+- **From source:** `git pull`, then `pip install -e .` in your environment.
+
+Fixes to how logs are read or numbers are worked out show up the next time the data is built: after your next
+**Import new logs**, or at once with **Settings › Rebuild from the logs** (`elevendash build` on the command line).
+
+Releases after 1.0.0 come with a SHA-256 checksum file (`Eleven-Dashboard-windows.zip.sha256`) and a GitHub build
+attestation, which says the zip was built by this repository's release workflow. To check a download, compare the
+output of `Get-FileHash Eleven-Dashboard-windows.zip` in PowerShell with the checksum file, or run
+`gh attestation verify Eleven-Dashboard-windows.zip --repo glki6/elevendash`.
+
 ## What it looks like
 
 The dashboard is six areas, one on screen at a time, each answering a question: **Overview** (how am I doing?),
@@ -135,7 +156,7 @@ against your average before it.
 
 ![Training plan items, each with a drill, what it is worth in points a match, and a chart of the number against its target.](pages/img/plan.png)
 
-What to practise next, ranked by how many points a match each item is worth, with a drill, a target taken from the matches you won, and the trend. Plan history, under it, shows session by session when each item joined the plan, whether it left, and whether it came back.
+What to practise next, ranked by how many points a match each item is worth, with a drill, a target taken from your better recent matches, and the trend. Plan history, under it, shows session by session when each item joined the plan, whether it left, and whether it came back.
 
 ### What works for you
 
@@ -214,12 +235,21 @@ Eleven's log files contain your **Eleven and Meta account tokens**, your platfor
 you played online, and sometimes your location. elevendash keeps the logs in your workspace and never sends them
 anywhere. The dashboard file holds match data only, never logs or tokens.
 
-**Never share your `logs` folder, a raw log or a backup** (a backup is your logs in one file). If you need to show a
-log (for a bug report), make a redacted copy and read it before you share it:
+**Never share your `logs` folder, a raw log or a backup** (a backup is your logs in one file). For a bug report, start
+with the diagnostic report: **Settings › Your data › Report for a bug…** in the app, or `elevendash diagnose`. It
+holds versions, counts and the problems found in reading your logs, and nothing private (no log lines, names, ids,
+tokens, addresses, paths, dates or scores). If a log is needed too, make a redacted copy and read it before you share
+it:
 
 ```
 elevendash redact logs/ALL-01.05.2026.6.30.00.PM.log redacted.log
 ```
+
+The copy keeps only the lines elevendash reads (match starts and ends, scores, ball contacts, the paddle hand, and
+each online match's ratings with the players' ids replaced by stand-ins), so it shows how a log reads and nothing else.
+`--full` keeps every line and removes what it recognises as private instead (tokens, ids, names, e-mail and network
+addresses, and every other mention of those values). It is for a problem the short copy cannot show, and needs a
+closer read before you share it.
 
 The only network requests elevendash makes are two read-only calls to your own Quest on your own network
 (`/getListing` and `/downloadFile`). It never uploads to the headset or deletes anything there. The app's server
@@ -277,7 +307,8 @@ No Wi-Fi sharing? Copy the `ALL-*.log` files off the headset any other way (USB 
 | `elevendash export [--format csv\|json] [--out DIR]` | Matches, points and shots as tables for other tools (`export/`, with `columns.txt`). Match data only |
 | `elevendash share --last N \| --from DATE [--to DATE] \| --match KEY [--out FILE]` | A dashboard of some matches only (`share/`), to send to a coach |
 | `elevendash demo [DIR]` | A workspace of made-up matches and its dashboard |
-| `elevendash redact LOG OUT` | A copy of a log without account, people or location data |
+| `elevendash redact [--full] LOG OUT` | A copy of a log with only the lines elevendash reads: no account, people or location data |
+| `elevendash diagnose [--quick]` | A report for a bug report (`diagnose/`): versions, counts and log problems, nothing private |
 
 Add `--nice` to any command to run it at the lowest CPU priority. Commands use the workspace in the current folder,
 or `--dir`, or `ELEVENDASH_HOME`.
@@ -342,10 +373,41 @@ it lists text with no Chinese yet, entries nothing uses any more, and placeholde
 
 Version 1.0, and so far tested on one player's logs (Quest 3S, AI levels 75 to 100, a few hundred matches), plus generated
 logs. The dashboard opens on your main level (the AI level with the most points in your last five sessions), and its
-findings are written from your numbers by fixed rules in `builddata.py`. Online play: see "Against the AI, and against
-people online" above. Left-handed play is handled but has only been tested by forcing `hand=left` on right-handed logs. Logs
-from other headsets, game versions and online matches are welcome (redacted): see `CONTRIBUTING.md`. What comes next
-is in [`ROADMAP.md`](ROADMAP.md).
+findings are written from your numbers by fixed rules in `builddata.py`. Logs from other headsets, game versions and
+online matches are welcome (redacted): see `CONTRIBUTING.md`. What comes next is in [`ROADMAP.md`](ROADMAP.md).
+
+### What it has been tested on
+
+| | Tested | Should work, not yet tested |
+|---|---|---|
+| Headset | Quest 3S | Quest 2, Quest 3, Quest Pro (the same game writes the same logs) |
+| Eleven | the game as of November 2026 | later versions, until an update changes the log format; the log check warns when a log does not read as expected |
+| Play | against the AI, levels 75 to 100, a few hundred matches; one real online match | lower AI levels; a season of online play |
+| Hand | right-handed | left-handed (checked only by setting `hand=left` on right-handed logs) |
+| Computer | Windows 10 (the Windows app, and Python 3.12); the tests also run on Windows and Linux with Python 3.10 and 3.12 | Windows 11; macOS and Linux with pipx |
+| Browser | Chrome and Firefox (every check of the page test) | Edge; Safari 16.4 or newer; any browser from 2023 or later |
+| History | a few hundred real matches; 1,800 made-up matches (a 27 MB dashboard file that shows its first view in about a second) | longer histories; the file grows with the number of shots |
+
+### Known limitations
+
+- **Tested on one player.** The numbers and written findings are checked on one player's logs and on generated ones.
+- **Online matches** are close to untested (see above). The misses reel and session videos are for AI sessions only.
+- **Dates in the logs** are read as month/day/year, as the game writes them on a US-English headset. A headset set to
+  another date format may give wrong dates or logs that do not read.
+- **Only matches played to the end count.** A match stopped before the end (a restart, a quit, a match left during a
+  game, or a crash, which the log cannot tell apart) is left out of every number. The notes at the bottom of the
+  dashboard say how many were left out.
+- **Shots hit after the ball was already dead** are counted as shots, as 11hero appears to count them.
+- **Chance.** A change is called clear when chance alone would show one that large about one time in ten, so about one
+  clear change in ten is still luck. Points within one match are treated as separate tries, which makes the ranges a
+  little too narrow.
+- **The 2D replay** draws the ball in straight lines between the contacts the game logged; the 3D view's curves are
+  worked out from the logged speeds, not measured.
+- **Links to "Matches you pick"** refer to matches by their place in your history, so importing an older log later can
+  change what such a link opens. Links to one match or one session are not affected.
+- **The Windows app is not code-signed**, so Windows asks before the first start.
+- **Your phone** reaches the app only through Tailscale; there is no other remote access.
+- **Session videos** need your own Google Cloud OAuth client, and the reels' captions use a Windows font.
 
 ## Backstory
 

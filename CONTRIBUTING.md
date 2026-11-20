@@ -31,7 +31,8 @@ It reads the files to be committed and every file version in the commits being p
 ## Ground rules
 
 - **No real logs, ever**, in commits, issues or pull requests: they hold account tokens. Use the generated logs, or a
-  copy made with `elevendash redact` that you have read through. Workspaces (`elevendash.json`, `logs/`, `build/`,
+  copy made with `elevendash redact` that you have read through. For a bug report, `elevendash diagnose` (in the app,
+  **Report for a bug…**) says most of what is needed and holds nothing private. Workspaces (`elevendash.json`, `logs/`, `build/`,
   `site/` …) are ignored by git; keep it that way.
 - No other people's data: no screenshots or dashboards with real player names unless they agreed.
 - The dashboard needs only the Python standard library. A new dependency needs a strong reason, and goes in an
