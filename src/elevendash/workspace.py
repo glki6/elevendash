@@ -5,6 +5,7 @@ Logs hold the game's account tokens, so a workspace is private: share the dashbo
 """
 import json
 import os
+import time
 
 CONFIG = 'elevendash.json'
 
@@ -23,11 +24,16 @@ class Workspace:
         self.videos = os.path.join(self.root, 'videos.json')
 
     def config(self):
-        try:
-            with open(self.config_path, encoding='utf-8') as f:
-                return json.load(f)
-        except FileNotFoundError:
-            return {}
+        for tries_left in range(20, 0, -1):
+            try:
+                with open(self.config_path, encoding='utf-8') as f:
+                    return json.load(f)
+            except FileNotFoundError:
+                return {}
+            except ValueError:      # read while set() is writing it (the app reads it from more than one thread)
+                if tries_left == 1:
+                    raise
+                time.sleep(0.05)
 
     def set(self, **values):
         c = self.config()
