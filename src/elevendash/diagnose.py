@@ -59,7 +59,7 @@ def make(ws, read=True):
     frozen = getattr(sys, 'frozen', False)
     out.append(f'elevendash {__version__} ({"the Windows app" if frozen else "the Python package"})')
     out.append(f'Python {platform.python_version()}, {platform.system()} {platform.release()} '
-               f'({platform.version()}, {platform.machine()})')
+               f'({platform.machine()})')
     docs = os.path.join(os.path.expanduser('~'), 'Documents')
     inside = os.path.normcase(os.path.abspath(ws.root)).startswith(os.path.normcase(os.path.abspath(docs)) + os.sep)
     out.append(f'Workspace: {"in your Documents folder" if inside else "a folder elsewhere"} (its path is not shown)')

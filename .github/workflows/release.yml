@@ -65,7 +65,8 @@ jobs:
       - name: Notes
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api "repos/$GITHUB_REPOSITORY/contents/packaging/windows/RELEASE.md?ref=$GITHUB_REF_NAME" -H 'Accept: application/vnd.github.raw' > notes.md
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/contents/packaging/windows/RELEASE.md?ref=$GITHUB_REF_NAME" -H 'Accept: application/vnd.github.raw' > notes.md
       - uses: actions/attest-build-provenance@ef244123eb79f2f7a7e75d99086184180e6d0018 # v1
         with:
           subject-path: Eleven-Dashboard-windows.zip
