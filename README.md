@@ -129,13 +129,13 @@ Written from the logs after every session: what you won, what changed, and each 
 
 ### Point by point
 
-![A table seen from above with the paths of a 16-shot rally, bars for every point of two games, and a shot list with type, speed and spin.](pages/img/replay.png)
+![A table seen from above with the paths of an 18-shot rally, bars for every point of two games, the longest points as chips, and a shot list with type, speed and spin.](pages/img/replay.png)
 
 Every point of a match as a bar. Click one to play it back from the ball contacts, with the type, speed and spin of each shot.
 
 ### 3D replay
 
-![The table drawn in 3D with the ball in flight over the net, its path so far, and a ball in the corner turning with the spin of the shot.](pages/img/replay-3d.png)
+![The same rally drawn in 3D over the table, with a ball in the corner turning with the spin of the shot.](pages/img/replay-3d.png)
 
 The same point in 3D, with the spin of the ball shown in the corner. "Deciding shot" replays the last shot in slow motion with the camera following the ball.
 
@@ -188,7 +188,7 @@ Rolling win rates with the range chance allows, so a lucky week does not look li
 
 ### Serves and returns
 
-![Points won by the side the serve comes to and by the length of the return, then a bar for each kind of serve showing how its points ended.](pages/img/serves.png)
+![Points won by the side the serve comes to, the serves you miss and the hardest serve to face, then a bar for each kind of serve showing how its points ended.](pages/img/serves.png)
 
 Where points on each serve end: by the side, spin and depth of the serve, for the AI's serves and your own. Below that, the first shots of a point as one pattern (your serve, the ball that came back and your third ball; or the AI's serve, your return, its next ball and your fourth), with the points you win from each pattern against your average, and its points one click from the replay.
 
