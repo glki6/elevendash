@@ -513,7 +513,9 @@ if scope_ms:
             last_row[f + 'Change'] = r1(last_row[f] - prev_row[f])
         summary.append(prev_row)
     summary.append(last_row)
-    summary.append(summary_row('lastDay', 'Last day played', [r for r in scope_ms if r['date'] == last_day]))
+    day_row = summary_row('lastDay', 'Last day played', [r for r in scope_ms if r['date'] == last_day])
+    day_row['moreThanLast'] = int(day_row['matches'] > last_row['matches'])   # the Overview says the day only when it adds to the session
+    summary.append(day_row)
     if other_ms and not PEOPLE:
         summary.append(summary_row('online', 'Online', other_ms))
     # Ratings (the online pass). A rated match is one whose log gave both players' ratings; a ranked one also moved yours.

@@ -473,10 +473,12 @@ table.er-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-cap
 .er-t thead th{color:var(--color-fg-muted);font-weight:400;text-transform:uppercase;letter-spacing:.06em;font-size:calc(var(--cds-font-size-caption)*.92);border-bottom-color:var(--color-fg-muted)}
 .er-t tbody th{font-weight:400;color:var(--color-fg)}
 .er-t tbody tr:last-child th,.er-t tbody tr:last-child td{border-bottom:0}
+.er-t tr.er-picked th,.er-t tr.er-picked td{background:color-mix(in srgb,var(--er-you) 16%,transparent)}
 .er-t tr.er-group th{padding-top:16px;color:var(--color-fg);font-weight:var(--cds-font-weight-medium)}
 
 /* controls */
 .er-controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.er-steps{display:inline-flex;gap:8px;flex:none}
 .er-controls label,.er-controls .er-ctl{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
 .er select.dash-select{max-width:100%}
 .er-tabs{display:inline-flex;flex-wrap:wrap;gap:2px;padding:3px;background-color:var(--er-track);border-radius:calc(var(--cds-radius) + 3px);min-height:32px}
@@ -665,6 +667,7 @@ html.pdf .er-finder{display:none}
   .er-area{min-height:calc(100vh - 150px);min-height:calc(100dvh - 150px);align-content:start}
   .er-dockoff .er-bot{opacity:0;transform:translateY(14px);pointer-events:none}
   .er-dockoff .er-backwrap{transform:translateY(calc(52px + env(safe-area-inset-bottom,0px)))}
+  .er-dockoff .er-finderfloat .er-finderbtn[aria-expanded=false]{opacity:0;pointer-events:none}
 }
 /* Motion. Each move shows a change of state and is over in about a quarter of a second; none of it runs for a reader
    who asked for less motion, or on a printed page. */
@@ -681,7 +684,7 @@ html.pdf .er-finder{display:none}
   html:not(.pdf) .er-area.er-enter .er-fill{transform-origin:left center;animation:er-sweep .5s cubic-bezier(.2,.7,.2,1) .1s backwards}
   html:not(.pdf) .er details[open]>:not(summary){animation:er-drop .18s ease-out}
   .er-areatab,.er-bottab,.er-goto,.er-findermenu button{transition:color .18s ease-out,background-color .18s ease-out}
-  .er-bot,.er-backwrap{transition:opacity .2s ease-out,transform .22s cubic-bezier(.2,.7,.2,1)}
+  .er-bot,.er-backwrap,.er-finderfloat .er-finderbtn{transition:opacity .2s ease-out,transform .22s cubic-bezier(.2,.7,.2,1)}
   .er-inked .er-ink.on{transition:transform .26s cubic-bezier(.2,.7,.2,1),width .26s cubic-bezier(.2,.7,.2,1)}
   .er-findermenu:not([hidden]){animation:er-drop .16s ease-out}
   .er-finderfloat .er-findermenu:not([hidden]),.er-backbtn:not([hidden]){animation:er-rise .2s cubic-bezier(.2,.7,.2,1)}
@@ -757,7 +760,7 @@ html.pdf .er-finder{display:none}
     </div>
   </div>
 </div>
-<p class="er-muted" id="online-note">On the last day you played, <span data-draw="v" data-ds="summary" data-k="lastDay" data-f="from" data-fmt="date">—</span>, you won <span data-draw="v" data-ds="summary" data-k="lastDay" data-f="wins" data-fmt="int">—</span> of <span data-draw="v" data-ds="summary" data-k="lastDay" data-f="matches" data-fmt="int">—</span> matches in all.<span data-showif data-ds="summary" data-k="online" data-f="matches" hidden> Online matches are left out of these totals: <span data-draw="v" data-ds="summary" data-k="online" data-f="matches" data-fmt="int">—</span> in the logs, <span data-draw="v" data-ds="summary" data-k="online" data-f="wins" data-fmt="int">—</span> won. Switch to Online matches at the top of the page to see them.</span></p>
+<p class="er-muted" id="online-note"><span data-showif data-ds="summary" data-k="lastDay" data-f="moreThanLast" hidden>On the last day you played, <span data-draw="v" data-ds="summary" data-k="lastDay" data-f="from" data-fmt="date">—</span>, you won <span data-draw="v" data-ds="summary" data-k="lastDay" data-f="wins" data-fmt="int">—</span> of <span data-draw="v" data-ds="summary" data-k="lastDay" data-f="matches" data-fmt="int">—</span> matches in all.</span><span data-showif data-ds="summary" data-k="online" data-f="matches" hidden> Online matches are left out of these totals: <span data-draw="v" data-ds="summary" data-k="online" data-f="matches" data-fmt="int">—</span> in the logs, <span data-draw="v" data-ds="summary" data-k="online" data-f="wins" data-fmt="int">—</span> won. Switch to Online matches at the top of the page to see them.</span></p>
 <div class="er-ov">
   <div class="er-card" id="ov-form" data-v="ai">
     <div class="er-ovhead"><h3>Recent form</h3><button class="er-goto" type="button" data-jump="form-rolling">Rolling results →</button></div>
@@ -792,8 +795,8 @@ html.pdf .er-finder{display:none}
     <div class="er-controls">
       <label for="session-select">Session</label>
       <select class="dash-select" id="session-select" data-draw="session-select" aria-label="Session"></select>
-      <button class="er-btn" type="button" data-sstep="-1" id="session-prev">← Older</button>
-      <button class="er-btn" type="button" data-sstep="1" id="session-next">Newer →</button>
+      <span class="er-steps"><button class="er-btn" type="button" data-sstep="-1" id="session-prev">← Older</button>
+      <button class="er-btn" type="button" data-sstep="1" id="session-next">Newer →</button></span>
     </div>
   </div>
   <div class="er-grid">
@@ -858,8 +861,8 @@ html.pdf .er-finder{display:none}
     <div class="er-controls">
       <label for="match-select">Match</label>
       <select class="dash-select" id="match-select" data-draw="match-select" aria-label="Match"></select>
-      <button class="er-btn" type="button" data-step="-1" id="match-prev">← Older</button>
-      <button class="er-btn" type="button" data-step="1" id="match-next">Newer →</button>
+      <span class="er-steps"><button class="er-btn" type="button" data-step="-1" id="match-prev">← Older</button>
+      <button class="er-btn" type="button" data-step="1" id="match-next">Newer →</button></span>
     </div>
   </div>
   <div data-part="matches" class="er-card" id="match-head">
@@ -1394,7 +1397,7 @@ html.pdf .er-finder{display:none}
   <div class="er-wkgrid">
     <div class="er-card" id="works-serves">
       <h3>Your best serves</h3>
-      <p class="er-muted">Serves that landed, by spin, depth and where they landed: the three that win you the most points.</p>
+      <p class="er-muted">Serves that landed, by spin, depth and where they landed: up to three that win you more points than your serves do overall, best first.</p>
       <ol class="er-wk" data-draw="wk-serves" data-source="shots"></ol>
     </div>
     <div class="er-card" id="works-strokes">
@@ -1418,7 +1421,7 @@ html.pdf .er-finder{display:none}
 <section class="er-section" id="journal-part" data-part="journal">
   <div class="er-card" id="journal">
     <h3>Training journal</h3>
-    <p class="er-muted">What the logs cannot know: a drill, a game setting, new equipment, a change of technique. Each entry is marked with a diamond on the chart above and on Rolling results.</p>
+    <p class="er-muted">What the logs cannot know: a drill, a game setting, new equipment, a change of technique. Each entry is marked with a diamond on Progress by day and on Rolling results, both under Progress.</p>
     <form class="er-jform" id="journal-form" data-draw="journal-form">
       <div><label class="er-label" for="journal-date">Day</label><input type="date" id="journal-date" required></div>
       <div><label class="er-label" for="journal-kind">Kind</label><select class="dash-select" id="journal-kind"></select></div>
@@ -2655,7 +2658,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       ms.slice().reverse().forEach((r) => {
         const who = r.vs === 'AI' ? ER.tr('level {0}', r.level) : r.rOpp ? ER.tr('rated {0}', ER.F.rating(r.rOpp)) : ER.tr('online');
         const note = ER.notes.has(r.key) ? ` · ${ER.tr('your note')}` : '';
-        g.appendChild(new Option(`${ER.F.time(r.start)} · ${ER.word(r)} ${r.gamesWon}–${r.gamesLost} · ${who}${note}`, r.key));
+        g.appendChild(new Option(`${ER.tr('{0}, {1}', ER.F.date(r.date), ER.F.time(r.start))} · ${ER.word(r)} ${r.gamesWon}–${r.gamesLost} · ${who}${note}`, r.key));
       });
       return g;
     });
@@ -3960,7 +3963,8 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     }
     if (!rows.length) return none(tb, 'tr', 7);
     tb.replaceChildren(...rows.sort((a, b) => a.rank - b.rank).map((r) => {
-      const tr = ER.el('tr');
+      const tr = ER.el('tr', who === 'serve' && ER.servePick === [r.side, r.spin, r.depth].join('|') ? 'er-picked' : null);
+      tr.dataset.type = [r.side, r.spin, r.depth].join('|');
       const th = ER.el('th');
       th.appendChild(ER.span(ER.tx(r, 'label'), 'serve_types', 'label', r.key));
       tr.appendChild(th);
@@ -7254,6 +7258,28 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
     return li;
   };
   const wkNone = (text) => ER.el('li', 'er-muted', text);
+  // a serve of What works (spin, depth, where it landed: the key works() gives it) in Your serves, type by type: the
+  // card opened at its row, marked until another serve is picked. A type with too few serves for the table has no
+  // row, and the card opens at its top.
+  const SV_SPIN = {t: 'topspin', n: 'little spin', b: 'backspin'}, SV_DEPTH = {s: 'short', h: 'half-long', l: 'long'};
+  const SV_SIDE = {L: 'left', M: 'middle', R: 'right'};
+  const wkServe = (key) => {
+    const card = $('own-serve-types');
+    if (!card) return wkJump('own-serve');
+    ER.servePick = [SV_SIDE[key[2]], SV_SPIN[key[0]], SV_DEPTH[key[1]]].join('|');
+    const mark = () => {
+      let row = null;
+      card.querySelectorAll('tbody tr').forEach((tr) => {
+        const on = tr.dataset.type === ER.servePick;
+        tr.classList.toggle('er-picked', on);
+        if (on) row = tr;
+      });
+      return row;
+    };
+    const row = mark();
+    card.open = true;
+    ER.goto(row || card, {block: row ? 'center' : 'start'});
+  };
   const wkSeq = (c, who) => {
     const seq = ER.el('span', 'er-patseq');
     patSteps(c, who).forEach(([whose, what, yours], i) => {
@@ -7277,7 +7303,7 @@ document.querySelectorAll('[data-sstep]').forEach((b) => {
       ER.tr('{0}, {1}, {2}', ER.tr(P_SPIN[c.key[0]]), ER.tr(P_DEPTH[c.key[1]]), ER.tr(P_LAND[c.key[2]])),
       ER.tr('{0} points, likely range {1}. All your serves that landed: {2}.', ER.F.int(c.n), range(c.won, c.n), rate(w.serve.won, w.serve.n))
         + ' ' + ER.tr(c.move > 0 ? 'Clearly above the rest.' : 'Not clearly above the rest yet.'),
-      rate(c.won, c.n), ER.tr('points won'), () => wkJump('own-serve'))));
+      rate(c.won, c.n), ER.tr('points won'), () => wkServe(c.key))));
   };
   draws['wk-strokes'] = (el) => {
     const w = works();

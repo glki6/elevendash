@@ -18,6 +18,26 @@ class Hosts(unittest.TestCase):
             with self.assertRaises(ValueError):
                 fetch.normalize_host(bad)
 
+    def test_full_width_typing(self):
+        """A Chinese keyboard types full-width digits, colons and stops."""
+        for given in ('１９２．１６８．１．２０：８０９０', '192。168。1。20', '192.168.1.20：8090'):
+            self.assertEqual(fetch.normalize_host(given), '192.168.1.20:8090')
+
+    def test_only_real_addresses(self):
+        for bad in ('192.168.1.300', '192.168.1', '1.2.3.4.5', 'quest', '-quest.local', 'quest..local'):
+            with self.assertRaises(ValueError):
+                fetch.normalize_host(bad)
+        self.assertEqual(fetch.normalize_host('localhost:9000'), 'localhost:9000')
+
+    def test_port_out_of_range(self):
+        for bad in ('192.168.1.20:0', '192.168.1.20:65536', '192.168.1.20:99999'):
+            with self.assertRaises(fetch.PortError) as e:
+                fetch.normalize_host(bad)
+            self.assertIn('1 to 65535', str(e.exception))
+        r = fetch.check('192.168.1.20:70000')
+        self.assertEqual((r['ok'], r.get('why'), r['steps']), (False, 'port', [{'step': 'address', 'ok': False}]))
+        self.assertNotIn('why', fetch.check('192.168.1.300'))
+
 
 class Names(unittest.TestCase):
     def test_log_names(self):

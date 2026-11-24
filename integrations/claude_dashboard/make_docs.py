@@ -157,7 +157,7 @@ def doc(collection, doc_id, data):
     writes.append({'op': 'set', 'collection': collection, 'doc_id': doc_id, 'file_path': path, 'changed': changed})
 
 
-doc('dash', 'meta', {'title': 'Eleven vs AI Report'})
+doc('dash', 'meta', {'title': 'Eleven Dashboard'})
 find_rows = json.load(open(os.path.join(ws.build, 'findings.json'), encoding='utf-8'))['rows']
 main = next((r for r in find_rows if r['key'] == 'main'), None)
 # vs: the side the page opens on, 'ai' or 'people' (its switch at the top changes it)

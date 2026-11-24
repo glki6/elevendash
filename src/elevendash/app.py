@@ -9,7 +9,7 @@ The server answers only this computer, only pages it served itself (a per-run ke
 websites are refused), and stops on its own a while after the last dashboard tab is closed. Starting it again while it
 runs just opens the browser on the running one. Match notes are kept in the workspace (notes.json), not in the browser.
 
-With the phone link on (Settings › Phone), a second server listens on this computer's Tailscale address and asks for
+With the phone link on (Settings › Open on my phone), a second server listens on this computer's Tailscale address and asks for
 the phone key on every request; see "the phone, over Tailscale" below.
 """
 import datetime
@@ -32,7 +32,7 @@ import webbrowser
 
 from . import __version__, backup, cli, export, fetch, health, qr, report, workspace
 from .page import LANGS, THEMES
-from .site import TITLE, tokens_css
+from .site import ICON, TITLE, tokens_css
 from .page import look as read_look
 
 PORT = 8737                    # the usual port, so the address (and what the browser keeps for it) stays the same
@@ -453,10 +453,17 @@ class App:
 
     def bind(self):
         handler = type('Handler', (Handler,), {'app': self})
-        try:
-            self.server = Server(('127.0.0.1', self.port), handler)
-        except OSError:
-            self.server = Server(('127.0.0.1', 0), handler)        # the usual port is taken: any free one
+        # Started again right after Stop, the old app can hold the usual port for a moment as it closes: wait a
+        # second for it before taking any free port, which would give the dashboard a new address.
+        for i in range(5):
+            try:
+                self.server = Server(('127.0.0.1', self.port), handler)
+                break
+            except OSError:
+                if not self.port or i == 4:
+                    self.server = Server(('127.0.0.1', 0), handler)        # the usual port is taken: any free one
+                    break
+                time.sleep(0.25)
         self.port = self.server.server_address[1]
         return self
 
@@ -624,7 +631,9 @@ def is_tailscale_ip(ip):
 
 class Server(socketserver.ThreadingMixIn, http.server.HTTPServer):
     daemon_threads = True
-    allow_reuse_address = False
+    # Elsewhere this only lets the port be taken again while the last app's connections wind down; on Windows it would
+    # let two apps listen on one port, so it stays off there.
+    allow_reuse_address = os.name != 'nt'
 
 
 class Handler(http.server.BaseHTTPRequestHandler):
@@ -813,8 +822,8 @@ OLD_LINK = ('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta na
             'initial-scale=1"><title>Eleven Dashboard</title></head><body style="font:16px/1.5 system-ui,sans-serif;'
             'background:#0b1018;color:#eef1f5;padding:24px;max-width:36em">'
             '<h1 style="font-size:22px">This link needs a new key</h1><p>Open Eleven Dashboard on your computer, then '
-            '<b>Settings › Phone</b>, and scan the code there again.</p>'
-            '<p lang="zh-Hant">請在電腦上開啟 Eleven 儀表板，前往<b>設定 › 手機</b>，再掃描一次那裡的條碼。</p></body></html>')
+            '<b>Settings › Open on my phone</b>, and scan the code there again.</p>'
+            '<p lang="zh-Hant">請在電腦上開啟 Eleven 儀表板，前往<b>設定 › 在手機上開啟</b>，再掃描一次那裡的條碼。</p></body></html>')
 
 
 # ---- the bar above the dashboard ------------------------------------------------------------------------------
@@ -854,7 +863,7 @@ def welcome_page(token, config=None):
         lang = 'document.documentElement.lang=(navigator.language||"").toLowerCase().startsWith("zh")?"zh-Hant":"en";'
     return (f'<!doctype html><html lang="en" data-theme="{theme}"><head><meta charset="utf-8">'
             '<meta name="viewport" content="width=device-width,initial-scale=1">'
-            f'<title>{APP_NAME}</title><style>{tokens_css(look)}body{{margin:0;background:var(--color-bg);color:var(--color-fg);'
+            f'<title>{APP_NAME}</title>{ICON}<style>{tokens_css(look)}body{{margin:0;background:var(--color-bg);color:var(--color-fg);'
             'font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Microsoft JhengHei","PingFang TC",sans-serif}</style>'
             f'{head}</head><body class="ed-welcome-page">{bar}{_web("welcome.html")}'
             f'<script>{lang}</script>'

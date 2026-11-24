@@ -94,6 +94,9 @@ html.pdf .ed-app{display:none}
 .ed-welcome a{color:var(--chart-0)}
 .ed-welcome .ed-muted{color:var(--color-fg-muted);font-size:13px}
 .ed-welcome code{overflow-wrap:anywhere}
+.ed-welcome-prefs{display:flex;justify-content:flex-end;gap:8px;margin-bottom:8px}
+.ed-welcome-prefs .ed-app-btn{min-width:44px;min-height:32px}
+.ed-vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
 html[lang="zh-Hant"] .ed-welcome span[data-l=zh]{display:inline}
 .ed-welcome h2{font-size:19px;line-height:1.25;margin:22px 0 4px}
 .ed-guide-form{display:flex;flex-wrap:wrap;gap:8px 10px;margin-top:8px}

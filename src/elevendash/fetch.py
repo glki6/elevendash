@@ -8,6 +8,7 @@ import os
 import re
 import shutil
 import socket
+import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -22,6 +23,10 @@ MAX_LISTING = 16 << 20         # the largest list of files read from it
 
 class QuestUnreachable(Exception):
     pass
+
+
+class PortError(ValueError):
+    """An address whose number after the colon cannot be a port."""
 
 
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -41,14 +46,34 @@ def _listing(url, timeout=10):
     return json.loads(raw.decode('utf-8'))['output']
 
 
+_LABEL = re.compile(r'(?!-)[A-Za-z0-9-]{1,63}(?<!-)')
+
+
+def _is_name(name):
+    """Four numbers 0 to 255 with dots, a name with a dot in it (quest.local), or localhost."""
+    if re.fullmatch(r'[\d.]+', name):
+        parts = name.split('.')
+        return len(parts) == 4 and all(p.isdigit() and len(p) <= 3 and int(p) <= 255 for p in parts)
+    if name.lower() == 'localhost':
+        return True
+    labels = name.split('.')
+    return len(labels) > 1 and all(_LABEL.fullmatch(x) for x in labels)
+
+
 def normalize_host(host):
-    """'192.168.1.20', '192.168.1.20:8090' or 'http://192.168.1.20:8090/' -> '192.168.1.20:8090'."""
-    h = host.strip()
-    h = re.sub(r'^https?://', '', h).strip('/')
-    if not re.fullmatch(r'[A-Za-z0-9.\-]+(:\d{1,5})?', h):
-        raise ValueError(f'"{host.strip()}" is not an address. The headset shows one like 192.168.1.20:8090: numbers with dots, '
+    """'192.168.1.20', '192.168.1.20:8090' or 'http://192.168.1.20:8090/' -> '192.168.1.20:8090'. Full-width digits,
+    colons and stops, as a Chinese keyboard types them, count as the plain ones."""
+    shown = str(host).strip()
+    h = unicodedata.normalize('NFKC', shown).replace('\u3002', '.').strip()
+    h = re.sub(r'^https?://', '', h, flags=re.I).strip('/')
+    m = re.fullmatch(r'([A-Za-z0-9.\-]+)(?::(\d{1,5}))?', h)
+    if not m or not _is_name(m.group(1)):
+        raise ValueError(f'"{shown}" is not an address. The headset shows one like 192.168.1.20:8090: four numbers with dots, '
                          'then a colon and a number.')
-    return h if ':' in h else f'{h}:{DEFAULT_PORT}'
+    if m.group(2) is not None and not 0 < int(m.group(2)) < 65536:
+        raise PortError(f'"{shown}" has {m.group(2)} after the colon, and that cannot be the number File Sharing shows. '
+                        'It is a number from 1 to 65535, such as 8090.')
+    return f'{m.group(1)}:{int(m.group(2))}' if m.group(2) else f'{m.group(1)}:{DEFAULT_PORT}'
 
 
 def check(host, timeout=5):
@@ -63,13 +88,14 @@ def check(host, timeout=5):
 
     try:
         h = normalize_host(str(host or ''))
-    except ValueError:
+    except ValueError as e:
+        if isinstance(e, PortError):
+            out['why'] = 'port'
         step('address', False)
         return out
     out['host'] = h
     name, _, port = h.partition(':')
-    if not step('address', 0 < int(port) < 65536):
-        return out
+    step('address', True)
     try:
         socket.create_connection((name, int(port)), timeout=timeout).close()
     except (OSError, OverflowError, ValueError):
