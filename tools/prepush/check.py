@@ -14,8 +14,10 @@ about to be pushed:
 It reads the files git would commit, and every file version in the commits being pushed, with their messages and
 authors, and looks inside zip files and inside the data a dashboard file packs. In a picture (PNG, JPEG, WebP) it
 looks for everything in the text the picture carries (its comments, EXIF and XMP), but in the picture itself only for
-values of 6 characters or more: a short name turns up there by chance in the compressed pixels. It prints file names and counts only, never a value, and exits 1 on any hit. With no workspace data next to
-the code (someone else's clone) there is nothing to look for and it passes.
+values and words that cannot match fewer than 6 characters: a short name turns up there by chance in the compressed
+pixels, whether it is written plainly or as a pattern like \\bLee\\b. It prints file names and counts only, never a
+value, and exits 1 on any hit. With no workspace data next to the code (someone else's clone) there is nothing to look
+for and it passes.
 
 usage: python tools/prepush/check.py [--all | REF ...]      (default: what is in the index and in HEAD's history)
        python tools/prepush/check.py --hook                 (the pre-push hook: reads git's "local-ref local-sha
@@ -75,6 +77,24 @@ SHAPES = [re.compile(x) for x in (
 NAMES = re.compile(r'(?i)name')          # name fields: their values count from 3 letters, other short values do not
 LONG = 6                                  # a value this long is looked for in a picture's pixels too; a shorter one
                                           # (or a shorter private word) only in the text the picture carries
+try:                                      # Python 3.11 on; sre_parse before it (it warns when imported from 3.11)
+    from re import _parser as _sre
+except ImportError:                       # pragma: no cover
+    import sre_parse as _sre
+
+
+def shortest(pat):
+    """The fewest characters a pattern can match. A private word is a regular expression, and its length as written
+    says nothing: \\bLee\\b is seven characters long and matches three."""
+    try:
+        return _sre.parse(pat.pattern, pat.flags).getwidth()[0]
+    except Exception:                     # an unusual pattern: treat it as short, so pixels never decide it
+        return 0
+
+
+def entry(pat):
+    """(pattern, long) for the list main() looks through: long when even its shortest match is LONG or more."""
+    return pat, shortest(pat) >= LONG
 
 
 def private():
@@ -112,7 +132,7 @@ def private():
                     config.add(host)
     counts['settings values'] = len(config)
     # (pattern, long): a long value is looked for everywhere, a short one not in a picture's pixels (see LONG)
-    pats = [(redact._pattern(v), len(v) >= LONG) for v in values | config]
+    pats = [entry(redact._pattern(v)) for v in values | config]
 
     secrets = set()
     home = os.path.join(os.path.expanduser('~'), '.eleven-youtube')
@@ -143,7 +163,7 @@ def private():
                 if re.fullmatch(r'[A-Za-z0-9_-]{11}', v):
                     videos.add(v)
     counts['video ids'] = len(videos)
-    pats += [(re.compile(re.escape(s)), len(s) >= LONG) for s in secrets | videos]
+    pats += [entry(re.compile(re.escape(s))) for s in secrets | videos]
 
     words = 0
     p = os.path.join(REPO, 'private-words.txt')
@@ -152,7 +172,7 @@ def private():
             for line in f:
                 line = line.strip()
                 if line and not line.startswith('#'):
-                    pats.append((re.compile(line, re.I), len(line) >= LONG))
+                    pats.append(entry(re.compile(line, re.I)))
                     words += 1
     counts['private words'] = words
     return pats, counts

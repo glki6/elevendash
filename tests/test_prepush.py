@@ -4,7 +4,9 @@ import importlib.util
 import os
 import re
 import struct
+import tempfile
 import unittest
+from unittest import mock
 import zlib
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -64,6 +66,32 @@ class PrepushTest(unittest.TestCase):
         token = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjMifQ.c2lnbmF0dXJlMTIz'
         data = png(chunk(b'IDAT', b' ' + token.encode() + b' '))
         self.assertEqual(check.look(data, 'a.png', []), ['1 secret-shaped value(s) (a token or key)'])
+
+    def test_private_word_pattern_counts_by_its_shortest_match(self):
+        # A line of private-words.txt is a regular expression: written out it can be long and still match three
+        # letters, which the compressed pixels hold by chance. It is looked for there only if every match is long.
+        path = os.path.join(ROOT, 'pages', 'img', 'shots.png')
+        with open(path, 'rb') as f:
+            data = f.read()
+        text = data.decode('utf-8', errors='replace')
+        word = next(m.group(0) for m in re.finditer(r'(?<!\w)[A-Za-z]{3}(?!\w)', text))
+        with tempfile.TemporaryDirectory() as d:
+            with open(os.path.join(d, 'private-words.txt'), 'w', encoding='utf-8') as f:
+                f.write('# my words\n' + r'\b' + word + r'\b' + '\n' + word + '|PlayerSecret42\n'
+                        + r'Player\s?Secret42' + '\n')
+            with mock.patch.object(check, 'REPO', d), mock.patch.object(check, 'homes', lambda: [d]):
+                found, counts = check.private()
+        self.assertEqual(counts['private words'], 3)
+        self.assertEqual([long for _, long in found], [False, False, True])
+        self.assertTrue(found[0][0].search(text))
+        self.assertEqual(check.look(data, 'pages/img/shots.png', found), [])
+        self.assertEqual(check.look(('a ' + word + ' b').encode(), 'notes.md', found), ['2 private value(s)'])
+        pic = png(chunk(b'IDAT', b'\x00\x13noise playersecret42 noise\xff'))
+        self.assertEqual(check.look(pic, 'a.png', found), ['1 private value(s)'])
+
+    def test_shortest_match(self):
+        for pat, n in ((r'\bLee\b', 3), (r'Ann|Annabel', 3), (r'Player\s?Secret42', 14), (r'a{6,}', 6), (r'x*', 0)):
+            self.assertEqual(check.shortest(re.compile(pat, re.I)), n, pat)
 
 
 if __name__ == '__main__':
