@@ -46,7 +46,8 @@ def normalize_host(host):
     h = host.strip()
     h = re.sub(r'^https?://', '', h).strip('/')
     if not re.fullmatch(r'[A-Za-z0-9.\-]+(:\d{1,5})?', h):
-        raise ValueError(f'not a host or host:port: {host!r}')
+        raise ValueError(f'"{host.strip()}" is not an address. The headset shows one like 192.168.1.20:8090: numbers with dots, '
+                         'then a colon and a number.')
     return h if ':' in h else f'{h}:{DEFAULT_PORT}'
 
 

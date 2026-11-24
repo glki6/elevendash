@@ -106,4 +106,8 @@ html[lang="zh-Hant"] .ed-welcome span[data-l=zh]{display:inline}
 .ed-guide-checks li.wait{color:var(--color-fg-muted)}
 .ed-guide-checks li.bad b{color:var(--color-bad)}
 .ed-guide-checks li.ok b{color:var(--color-ok)}
+.ed-welcome .ed-guide-status{margin:10px 0 0;font-size:14px;overflow-wrap:anywhere}
+.ed-welcome .ed-guide-status.bad{color:var(--color-bad)}
+.ed-welcome .ed-guide-status.ok{color:var(--color-fg)}
+.ed-app-msg{overflow-wrap:anywhere}
 .ed-welcome [hidden]{display:none!important}

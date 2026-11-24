@@ -98,6 +98,35 @@ def lower_build_thread():
             pass
 
 
+# What a job that failed says in the app. The technical line goes to the job's details, for a bug report.
+FAILED = {
+    '': 'Something went wrong. The details are below; Settings › Report for a bug makes a report to send.',
+    'quest': 'The import stopped partway. Your logs are safe; try Import new logs again. The details are below.',
+    'files': 'Those files could not be read in. Your other logs are safe. The details are below.',
+    'rebuild': 'The dashboard could not be rebuilt. Your logs are safe. The details are below.',
+    'site': 'The dashboard could not be redrawn. Your logs are safe. The details are below.',
+    'restore': 'The backup could not be restored. The details are below.',
+    'share': 'A dashboard of those matches could not be built. Try picking a few more matches.',
+}
+
+
+def _sentence(text):
+    """'that is not a backup' -> 'That is not a backup.'"""
+    t = text.strip()
+    return (t[:1].upper() + t[1:] + ('' if t.endswith(('.', '!', '?')) else '.')) if t else t
+
+
+def _plain_exit(kind, text):
+    """The command line's message for a failed job, in the app's words: no commands to run, no --help."""
+    if text.startswith('None of those matches'):
+        return 'None of the matches you picked are in your data any more. Reload the page and pick again.'
+    if text.startswith('No game logs'):
+        return 'There are no game logs yet. Import some first.'
+    if text.startswith('No match data'):
+        return 'There is no match data yet. Import some logs first.'
+    return FAILED.get(kind, FAILED[''])
+
+
 class Job:
     """The one import or rebuild that may run at a time, and what it said."""
 
@@ -171,10 +200,17 @@ class App:
                 result['changed'] = True
         except fetch.QuestUnreachable as e:
             result.update(ok=False, code='unreachable', message=str(e))
-        except (SystemExit, ValueError) as e:           # the CLI's own "nothing to build" and the like; a file that is not a backup
-            result.update(ok=False, code='error', message=str(e))
+        except ValueError as e:                         # a file that is not a backup, and the like: already plain words
+            result.update(ok=False, code='error', message=_sentence(str(e)))
+        except SystemExit as e:                         # the command line's own words, which name commands to run
+            say(str(e))
+            result.update(ok=False, code='error', message=_plain_exit(kind, str(e)))
         except Exception as e:
-            result.update(ok=False, code='error', message=f'{type(e).__name__}: {e}')
+            say(f'{type(e).__name__}: {e}')             # kept in the details, for a bug report
+            result.update(ok=False, code='error', message=FAILED.get(kind, FAILED['']))
+        if result['ok'] and result['changed'] and kind in ('quest', 'files', 'restore') and not self.match_count():
+            # logs that hold no finished match yet: no dashboard to show, so the welcome screen stays and says why
+            result.update(changed=False, code='no_matches')
         if result['ok'] and result['changed']:
             result['headline'] = self.headline()
         if result['message']:
@@ -284,6 +320,14 @@ class App:
     def built(self):
         return os.path.isfile(self.site_file())
 
+    def match_count(self):
+        """How many matches the built data holds (0 before the first build, or when the logs hold no finished match)."""
+        try:
+            with open(os.path.join(self.ws.build, 'matches.json'), encoding='utf-8') as f:
+                return len(json.load(f).get('rows') or [])
+        except (OSError, ValueError, AttributeError):
+            return 0
+
     def site_file(self):
         return os.path.join(self.ws.site, 'index.html')
 
@@ -306,7 +350,7 @@ class App:
         c = self.ws.config()
         v = self.job.view()
         v.update({'quest': c.get('quest', ''), 'last_import': c.get('last_import', ''), 'logs': cli.log_count(self.ws),
-                  'built': self.built(), 'settings': {k: c.get(k, SETTINGS[k][0]) for k in SETTINGS},
+                  'built': self.built(), 'matches': self.match_count(), 'settings': {k: c.get(k, SETTINGS[k][0]) for k in SETTINGS},
                   'version': __version__, 'remote': remote, 'phone': bool(self.phone_server), 'report': self.report})
         if not remote:            # where things are on the computer is the computer's business
             v.update({'home': self.ws.root, 'shortcut': os.name == 'nt'})
@@ -394,8 +438,8 @@ class App:
     # ---- pages ------------------------------------------------------------------------------------------------
     def page(self):
         """The dashboard with the app bar on top, or the welcome page while there is no data yet."""
-        if not self.built():
-            return welcome_page(self.token)
+        if not self.built() or not self.match_count():
+            return welcome_page(self.token, self.ws.config())
         path = self.site_file()
         mtime = os.path.getmtime(path)
         if self.page_cache[0] != mtime:
@@ -798,15 +842,22 @@ def inject(html, token):
     return html.replace('</body>', script + '</body>', 1)
 
 
-def welcome_page(token):
+def welcome_page(token, config=None):
     head, bar, script = app_parts(token)
     look = read_look()
-    return ('<!doctype html><html lang="en" data-theme="dark"><head><meta charset="utf-8">'
+    c = config or {}
+    theme = c.get('theme') if c.get('theme') in ('dark', 'light') else 'dark'
+    # the language saved in Settings, or until one is saved, the browser's
+    if c.get('lang') in ('en', 'zh'):
+        lang = 'document.documentElement.lang=' + json.dumps('zh-Hant' if c['lang'] == 'zh' else 'en') + ';'
+    else:
+        lang = 'document.documentElement.lang=(navigator.language||"").toLowerCase().startsWith("zh")?"zh-Hant":"en";'
+    return (f'<!doctype html><html lang="en" data-theme="{theme}"><head><meta charset="utf-8">'
             '<meta name="viewport" content="width=device-width,initial-scale=1">'
             f'<title>{APP_NAME}</title><style>{tokens_css(look)}body{{margin:0;background:var(--color-bg);color:var(--color-fg);'
             'font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Microsoft JhengHei","PingFang TC",sans-serif}</style>'
             f'{head}</head><body class="ed-welcome-page">{bar}{_web("welcome.html")}'
-            '<script>document.documentElement.lang=(navigator.language||"").toLowerCase().startsWith("zh")?"zh-Hant":"en";</script>'
+            f'<script>{lang}</script>'
             f'{script}</body></html>')
 
 
@@ -865,12 +916,15 @@ def make_shortcuts(root, places=('Programs', 'Desktop'), extra=()):
 
 
 def open_folder(path):
-    if os.name == 'nt':
-        os.startfile(path)
-    elif sys.platform == 'darwin':
-        subprocess.Popen(['open', path])
-    else:
-        subprocess.Popen(['xdg-open', path])
+    try:
+        if os.name == 'nt':
+            os.startfile(path)
+        elif sys.platform == 'darwin':
+            subprocess.Popen(['open', path])
+        else:
+            subprocess.Popen(['xdg-open', path])
+    except OSError:
+        raise RuntimeError(f'This computer has no program set to open folders. Your files are in {path}') from None
 
 
 def running_port(ws):
