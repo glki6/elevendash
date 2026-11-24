@@ -37,6 +37,7 @@
     b.textContent = zhText;
     el.replaceChildren(a, b);
     el.className = 'ed-app-msg' + (cls ? ' ' + cls : '');
+    delete el.dataset.stage;
     if (gs && el === bar.msg && mirror !== false) guideSay(en, zhText, cls);
   };
   const guideSay = (en, zhText, cls) => {
@@ -83,7 +84,17 @@
     const what = s.kind === 'site' ? ['Redrawing the dashboard…', '正在重繪儀表板…'] : s.kind === 'rebuild'
       ? ['Rebuilding from the logs…', '正在從記錄重新建立…'] : s.kind === 'restore' ? ['Restoring the backup…', '正在還原備份…']
         : s.kind === 'share' ? ['Writing the dashboard to share…', '正在寫入要分享的儀表板…'] : ['Importing…', '正在匯入…'];
-    say(bar.msg, what[0] + (step ? ' ' + step.trim() : ''), what[1] + (step ? ' ' + step.trim() : ''), '', false);
+    // A screen reader hears the stage once, not the log's latest line on every poll: the line sits beside it, unread.
+    let line = bar.msg.querySelector('.ed-step');
+    if (bar.msg.dataset.stage !== what[0] || !line) {
+      say(bar.msg, what[0], what[1], '', false);
+      bar.msg.dataset.stage = what[0];
+      line = document.createElement('span');
+      line.className = 'ed-step';
+      line.setAttribute('aria-hidden', 'true');
+      bar.msg.appendChild(line);
+    }
+    line.textContent = step ? ' ' + step.trim() : '';
     guideSay(what[0] + (s.kind === 'quest' ? ' The first import takes a minute or two.' : ''), what[1] + (s.kind === 'quest' ? '第一次匯入需要一兩分鐘。' : ''));
     showLog(s.lines, mine);
   };
@@ -204,6 +215,8 @@
       ["Something answers there, but it is not Eleven's File Sharing. In Eleven, start it under Settings › Network Settings › File Sharing, and check the number after the colon.", '那裡有回應，但不是 Eleven 的檔案分享。請在 Eleven 的「設定 › 網路設定 › 檔案分享」啟動它，並檢查冒號後面的數字。']],
     ['logs', null, ['File Sharing is on, but the headset has no game logs yet. Play a match, then check again.', '檔案分享已啟動，但頭戴裝置上還沒有遊戲記錄。打一場比賽後再檢查一次。']],
   ];
+  const PORT_BAD = ['The number after the colon is not one File Sharing uses. It is a number from 1 to 65535, such as 8090: check it against the headset.',
+    '冒號後面的數字不是檔案分享會用的數字。它是 1 到 65535 之間的數字，例如 8090：請對照頭戴裝置上的數字。'];
   const showChecks = (r, pending) => {
     const by = new Map((r.steps || []).map((s) => [s.step, s]));
     guide.list.hidden = false;
@@ -212,7 +225,8 @@
       li.className = !s ? 'wait' : s.ok ? 'ok' : 'bad';
       mark.textContent = !s ? (pending && !i ? '…' : '·') : s.ok ? '✓' : '✗';
       mark.setAttribute('aria-hidden', 'true');
-      const text = !s ? (pending && !i ? ['Checking… This can take a few seconds.', '正在檢查…可能需要幾秒鐘。'] : ['Not checked yet.', '尚未檢查。']) : !s.ok ? bad
+      const text = !s ? (pending && !i ? ['Checking… This can take a few seconds.', '正在檢查…可能需要幾秒鐘。'] : ['Not checked yet.', '尚未檢查。'])
+        : !s.ok ? (id === 'address' && r.why === 'port' ? PORT_BAD : bad)
         : ok || [r.logs === 1 ? '1 game log found.' : `${r.logs} game logs found.`, `找到 ${r.logs} 個遊戲記錄。`];
       const span = document.createElement('span');
       span.append(...two(text[0], text[1]));
@@ -598,11 +612,20 @@
     if (note) note.remove();
     note = null;
   };
+  // the gear's name, with the dot said in words for a screen reader
+  const name = () => {
+    if (!gear) return;
+    const dot = gear.classList.contains('ed-dot');
+    const t = zh() ? '匯入與設定' : 'Import and settings';
+    gear.setAttribute('aria-label', t + (dot ? (zh() ? '，有新訊息' : ', something to read') : ''));
+    gear.title = t;
+  };
   const flag = () => {
     if (!gear) return;
     const rep = $('ed-report'), text = bar.msg.textContent;
     const loud = bar.msg.classList.contains('ok') || bar.msg.classList.contains('bad');
     gear.classList.toggle('ed-dot', head.hidden && ((rep && !rep.hidden) || !bar.help.hidden || bar.msg.classList.contains('bad') || !!(last && last.busy)));
+    name();
     if (!head.hidden || !loud || text === said) return;
     said = text;
     unsay();
@@ -615,6 +638,9 @@
     place(note);
     noteTimer = setTimeout(unsay, 12000);
   };
+  // what can take the keyboard in the open panel, in order
+  const stops = () => [...head.querySelectorAll('button,input,select,textarea,a[href],summary,[tabindex]:not([tabindex="-1"])')]
+    .filter((el) => !el.disabled && el.getClientRects().length);
   const pop = (open) => {
     if (!gear) return;
     head.hidden = !open;
@@ -625,6 +651,9 @@
       place(head);
       if (last) render(last);
       openSettings(false);
+      // the panel sits elsewhere in the page, so the keyboard goes into it with it
+      const first = stops()[0];
+      if (first) first.focus();
     }
     flag();
   };
@@ -638,11 +667,6 @@
     gear.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round">'
       + '<path d="M6.71 3.17L6.87 1.40L9.13 1.40L9.29 3.17L10.51 3.67L11.87 2.53L13.47 4.13L12.33 5.49L12.83 6.71L14.60 6.87L14.60 9.13L12.83 9.29L12.33 10.51L13.47 11.87L11.87 13.47L10.51 12.33L9.29 12.83L9.13 14.60L6.87 14.60L6.71 12.83L5.49 12.33L4.13 13.47L2.53 11.87L3.67 10.51L3.17 9.29L1.40 9.13L1.40 6.87L3.17 6.71L3.67 5.49L2.53 4.13L4.13 2.53L5.49 3.67Z"/>'
       + '<circle cx="8" cy="8" r="2.1"/></g></svg>';
-    const name = () => {
-      const t = zh() ? '匯入與設定' : 'Import and settings';
-      gear.setAttribute('aria-label', t);
-      gear.title = t;
-    };
     name();
     new MutationObserver(name).observe(document.documentElement, {attributes: true, attributeFilter: ['lang']});
     prefs.appendChild(gear);
@@ -653,15 +677,66 @@
       if (!head.hidden && !head.contains(e.target) && !gear.contains(e.target)) pop(false);
     });
     document.addEventListener('keydown', (e) => {
-      if (e.key !== 'Escape' || head.hidden) return;
-      pop(false);
-      gear.focus();
+      if (head.hidden) return;
+      if (e.key === 'Escape') {
+        pop(false);
+        gear.focus();
+        return;
+      }
+      if (e.key !== 'Tab' || e.altKey || e.ctrlKey || e.metaKey) return;
+      // Tab runs from the gear through the panel and on to what follows the gear; Shift+Tab runs back the same way
+      const all = stops(), at = all.indexOf(document.activeElement);
+      if (document.activeElement === gear && !e.shiftKey && all.length) {
+        e.preventDefault();
+        all[0].focus();
+      } else if (at === 0 && e.shiftKey) {
+        e.preventDefault();
+        gear.focus();
+      } else if (at === all.length - 1 && !e.shiftKey) {
+        pop(false);
+        gear.focus();          // the Tab itself then moves on from the gear
+      }
     });
     window.addEventListener('resize', () => {
       if (!head.hidden) place(head);
       if (note) place(note);
     });
     new MutationObserver(flag).observe(head, {subtree: true, childList: true, attributes: true, attributeFilter: ['hidden', 'class']});
+  }
+
+  // The welcome page's own look and language switches, like the dashboard's, kept as the settings it opens with.
+  const wTheme = $('ed-w-theme'), wLang = $('ed-w-lang');
+  if (wTheme && wLang) {
+    const root = document.documentElement;
+    const look = () => {
+      const light = root.dataset.theme === 'light', z = zh();
+      wTheme.textContent = z ? (light ? '深色' : '淺色') : (light ? 'Dark' : 'Light');
+      wTheme.setAttribute('aria-label', z ? (light ? '切換到深色' : '切換到淺色') : (light ? 'Switch to the dark look' : 'Switch to the light look'));
+      wLang.textContent = z ? 'Eng' : '中';
+      wLang.lang = z ? 'en' : 'zh-Hant';
+      wLang.setAttribute('aria-label', z ? '切換到英文' : 'Switch to Chinese');
+    };
+    const keep = async (body) => {
+      if (body.theme && bar.theme) bar.theme.value = body.theme;
+      if (body.lang && bar.lang) bar.lang.value = body.lang;
+      try {
+        await A.api('POST', '/api/settings', body);
+      } catch (err) {
+        // the page has switched; it opens as before next time
+      }
+    };
+    wTheme.addEventListener('click', () => {
+      const t = root.dataset.theme === 'light' ? 'dark' : 'light';
+      root.dataset.theme = t;
+      keep({theme: t});
+    });
+    wLang.addEventListener('click', () => {
+      const l = zh() ? 'en' : 'zh';
+      root.lang = l === 'zh' ? 'zh-Hant' : 'en';
+      keep({lang: l});
+    });
+    look();
+    new MutationObserver(look).observe(root, {attributes: true, attributeFilter: ['lang', 'data-theme']});
   }
 
   // the session report's first lines (app.py headline), in Chinese

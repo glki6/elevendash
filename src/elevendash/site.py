@@ -12,8 +12,10 @@ import zlib
 
 from .page import LANGS, THEMES, WEB, color_tokens, fill
 
-TITLE = 'Eleven vs AI Report'
-FOOT_ZH = '「Eleven 對 AI 報告」'
+TITLE = 'Eleven Dashboard'
+FOOT_ZH = '「Eleven 儀表板」'
+# the tab's icon: the landing page's table seen from above
+ICON = "<link rel=\"icon\" href=\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='7' y='2' width='18' height='28' rx='2' fill='%231f63c9'/%3E%3Cpath d='M3 16h26' stroke='%23fff' stroke-width='2.4'/%3E%3Cpath d='M16 3v26' stroke='%23fff' stroke-width='1' opacity='.7'/%3E%3Ccircle cx='21' cy='9' r='3' fill='%23e0700a'/%3E%3C/svg%3E\">"
 VIDEO_FIELDS = ('video', 'videoT')
 
 
@@ -103,6 +105,7 @@ def render(build_dir, videos=True, title=TITLE, theme='dark', lang='en', pack=Tr
         '<html lang="en"><head><meta charset="utf-8">',
         '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">',
         f'<title>{title}</title>',
+        ICON,
         '<meta name="generator" content="elevendash">',
         '<style>', tokens_css(look), _read('site.css'), '</style>',
         '</head><body>',

@@ -1,4 +1,5 @@
 <main class="ed-welcome">
+  <div class="ed-welcome-prefs" translate="no"><button type="button" class="ed-app-btn" id="ed-w-theme"></button><button type="button" class="ed-app-btn" id="ed-w-lang"></button></div>
   <div data-l="en">
     <h1>Your Eleven dashboard</h1>
     <p>Match analysis for Eleven Table Tennis, worked out from the game's own logs. Everything stays on this computer.</p>
@@ -13,7 +14,8 @@
       <li><span data-l="en">On the headset, open Eleven, then <b>Settings › Network Settings › File Sharing</b>, and start it. It shows an address such as <code>192.168.1.20:8090</code>. Keep the game open.</span><span data-l="zh" lang="zh-Hant">在頭戴裝置上開啟 Eleven，前往<b>設定 › 網路設定 › 檔案分享</b>並啟動。畫面會顯示一個位址，例如 <code>192.168.1.20:8090</code>。讓遊戲保持開啟。</span></li>
       <li><span data-l="en">Type that address here and check the connection. This computer must be on the same Wi-Fi.</span><span data-l="zh" lang="zh-Hant">在這裡輸入該位址，然後檢查連線。這部電腦必須連上同一個 Wi-Fi。</span>
         <form class="ed-guide-form" id="ed-guide-form">
-          <input type="text" id="ed-guide-quest" placeholder="192.168.1.20:8090" autocomplete="off" spellcheck="false" inputmode="url" aria-label="Quest address · 頭戴裝置位址">
+          <span class="ed-vh" id="ed-guide-quest-name"><span data-l="en">Headset address</span><span data-l="zh" lang="zh-Hant">頭戴裝置位址</span></span>
+          <input type="text" id="ed-guide-quest" placeholder="192.168.1.20:8090" autocomplete="off" spellcheck="false" inputmode="url" aria-labelledby="ed-guide-quest-name">
           <button type="submit" class="ed-app-btn ed-app-main" id="ed-guide-check"><span data-l="en">Check the connection</span><span data-l="zh" lang="zh-Hant">檢查連線</span></button>
         </form>
         <ul class="ed-guide-checks" id="ed-guide-checks" role="status" aria-live="polite" hidden></ul>

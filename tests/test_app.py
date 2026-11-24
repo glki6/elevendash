@@ -79,6 +79,10 @@ class AppServer(unittest.TestCase):
         self.assertEqual(code, 200)
         self.assertIn('ed-welcome', html)
         self.assertIn(self.app.token, html)        # the page carries its key; other sites cannot read it
+        # its own look and language switches, a tab icon, and an address box named in the page's language
+        for bit in ('id="ed-w-theme"', 'id="ed-w-lang"', 'rel="icon"', 'aria-labelledby="ed-guide-quest-name"'):
+            self.assertIn(bit, html)
+        self.assertNotIn('Quest address · ', html)
 
     def test_3_no_quest(self):
         code, s = self.call('POST', '/api/import', {'source': 'quest'})

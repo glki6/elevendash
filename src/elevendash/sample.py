@@ -111,9 +111,15 @@ def play_point(log, rng, t, server, miss):
     hitter, incoming, n = other(server), top, 1
     while True:
         h = end(hitter)
-        t += rng.uniform(0.25, 0.35)
+        # from the bounce to the bat: some balls taken early, on the rise, most later as they fall. The ball is met
+        # nearer the bounce the earlier it is taken. (One draw each, as before, so the points come out the same.)
+        since = 0.09 + 0.26 * rng.random()
+        t += since
         push = incoming < 0 and rng.random() < 0.5
-        pos = (max(-0.8, min(0.8, land[0] * 1.2)), rng.uniform(0.82, 1.05), h * (rng.uniform(1.15, 1.3) if push else rng.uniform(1.45, 1.85)))
+        reach = min(1.0, (since + 0.05) / 0.35)
+        y = rng.uniform(0.82, 1.05)
+        z = rng.uniform(1.15, 1.3) if push else rng.uniform(1.45, 1.85)
+        pos = (max(-0.8, min(0.8, land[0] * 1.2)), y, h * (abs(land[2]) + (z - abs(land[2])) * reach))
         if push:
             top, speed = -rng.uniform(20, 45), rng.uniform(4.0, 6.0)
         elif rng.random() < 0.45:

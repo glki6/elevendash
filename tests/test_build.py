@@ -279,6 +279,15 @@ class Build(unittest.TestCase):
         self.assertGreater(len(html), 300_000)
         self.assertIn('d3js.org', html)
         self.assertNotIn('ALL-01.', html)                     # no log file names in the shared file
+        self.assertIn('<title>Eleven Dashboard</title>', html)
+        self.assertIn('<link rel="icon" href="data:image/svg+xml,', html)
+        self.assertNotIn('Eleven vs AI', html)
+
+    def test_last_day_only_when_it_adds(self):
+        """The Overview names the last day played only when it held more matches than the last session."""
+        rows = {r['key']: r for r in self.rows('summary')}
+        day, last = rows['lastDay'], rows['last']
+        self.assertEqual(day['moreThanLast'], int(day['matches'] > last['matches']))
 
 
 class Translations(unittest.TestCase):

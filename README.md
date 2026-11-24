@@ -174,7 +174,7 @@ Before you play, pick up to three targets in the session report: a share of retu
 
 ### Training journal
 
-Under Progress by day you can write down what the logs cannot know: a drill, a game setting, new equipment, a change of technique. Each entry is marked on the progress and form charts, and opens a before-and-since table: your matches from that day on against the four weeks before, measure by measure. Entries are kept with your match notes on your own computer, never in the dashboard file.
+Under Coaching › Journal you can write down what the logs cannot know: a drill, a game setting, new equipment, a change of technique. Each entry is marked on the progress and form charts, and opens a before-and-since table: your matches from that day on against the four weeks before, measure by measure. Entries are kept with your match notes on your own computer, never in the dashboard file.
 
 ### Personal records
 
