@@ -1,3 +1,17 @@
+## What's new in 1.1.2
+
+- The gear's menu works from the keyboard: Tab moves into it when it opens and on through it, and Shift+Tab goes back.
+- The welcome screen has its own light or dark and 中 or Eng switches, and the app opens in what you pick there.
+- The page and browser tab are called Eleven Dashboard, with the app's icon.
+- The match list shows the date with each match's time.
+- See it on a best serve opens Your serves at that serve's row and marks it.
+- Clearer wording in a few places: what "best" serves means, where the journal points you, and the Import and phone settings named as the app names them. The Overview mentions your last day only when it holds more than your last session.
+- The headset address box reads full-width digits, colons and stops, turns away anything that isn't a real address, and says so plainly when the port number is out of range. Started again right after Stop, the app waits a moment for its usual port instead of failing.
+- At phone width the Older and Newer buttons stay together, and Jump to moves out of the way as you scroll down.
+- Screen readers hear an import's stage once instead of every log line, and the gear says when it has something new to read.
+- The demo's shots are met at realistic times after the bounce, so Time from the bounce and Still rising have something to show. The README and website screenshots match the updated demo.
+- For contributors: the pre-push leak check no longer flags screenshots by chance.
+
 ## What's new in 1.1.1
 
 - The welcome screen follows your language and theme, says when it is checking the connection, and shows import progress and results under its own buttons. If an import fails, you can try again from there.
