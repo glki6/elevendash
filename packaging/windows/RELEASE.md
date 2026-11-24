@@ -1,3 +1,11 @@
+## What's new in 1.1.1
+
+- The welcome screen follows your language and theme, says when it is checking the connection, and shows import progress and results under its own buttons. If an import fails, you can try again from there.
+- Logs with no finished match keep you on the welcome screen and say why, instead of opening an empty dashboard.
+- Rolling results, Your floor and Recent form work from 10 matches when you don't have 20 yet, and Patterns shows something sooner.
+- Errors read as plain sentences that say what went wrong, without technical wording.
+- Reading the settings no longer fails when it catches the file halfway through being saved.
+
 ## Eleven Dashboard for Windows
 
 1. Download **Eleven-Dashboard-windows.zip** below and unzip it anywhere (Documents, for example).
