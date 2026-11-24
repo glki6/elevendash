@@ -80,6 +80,11 @@ def shot(rng, pos, target, speed, top, side_spin=0.0):
     return vel, (ax * top * 360, side_spin * 360, az * top * 360)
 
 
+# Each side's favourite serves (across the table, how deep, spin): people serve a few serves over and over, so the
+# demo's serve and pattern tables have some that come up often enough to say something.
+HABIT = {'A': ((-0.4, 0.5, -35), (0.35, 1.05, 30)), 'B': ((0.3, 0.55, -30), (-0.35, 1.0, 25))}
+
+
 def play_point(log, rng, t, server, miss):
     """One point from app second t. miss[side] is how often that side misses a shot. Returns (winner, time it ended)."""
     s = end(server)
@@ -87,8 +92,13 @@ def play_point(log, rng, t, server, miss):
     log.contact(t, f'Toss{server}', (x, 0.95, s * 1.55), (0.0, 2.6, 0.0), game_time=0)
     t += rng.uniform(0.55, 0.75)
     pos = (x, rng.uniform(0.85, 1.0), s * rng.uniform(1.45, 1.6))
-    land = (rng.uniform(-0.6, 0.6), TABLE_Y, -s * rng.uniform(0.4, 1.2))
-    top = rng.choice((-1, -1, 1)) * rng.uniform(15, 45)
+    if rng.random() < 0.75:                       # a serve the server likes, a little different each time
+        side, depth, spin = rng.choice(HABIT[server])
+        land = (side + rng.uniform(-0.08, 0.08), TABLE_Y, -s * (depth + rng.uniform(-0.06, 0.06)))
+        top = spin * rng.uniform(0.85, 1.15)
+    else:
+        land = (rng.uniform(-0.6, 0.6), TABLE_Y, -s * rng.uniform(0.4, 1.2))
+        top = rng.choice((-1, -1, 1)) * rng.uniform(15, 45)
     vel, rr = shot(rng, pos, land, rng.uniform(5.0, 8.0), top, rng.uniform(-20, 20))
     log.contact(t, f'Hit{server}', pos, vel, rr, f'Paddle{server}')
     if rng.random() < 0.03:                       # a serve into the net

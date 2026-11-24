@@ -260,7 +260,47 @@ class AppServer(unittest.TestCase):
         self.assertEqual(self.call('POST', '/api/share', {'matches': ['2001-01-01 00:00:00']})[0], 202)
         r = self.wait()['result']
         self.assertFalse(r['ok'])
-        self.assertIn('None of those matches', r['message'])
+        self.assertIn('None of the matches you picked', r['message'])
+        self.assertNotIn('--help', r['message'])
+
+
+class NoMatches(unittest.TestCase):
+    """Logs that hold no finished match yet: the welcome screen stays, and says why, instead of an empty dashboard."""
+    setUpClass = classmethod(AppServer.setUpClass.__func__)
+    tearDownClass = classmethod(AppServer.tearDownClass.__func__)
+    call, wait = AppServer.call, AppServer.wait
+
+    def test_welcome_stays(self):
+        name = self.names[0]
+        with open(os.path.join(self.src, name), encoding='utf-8') as f:
+            head = ''.join(f.readlines()[:20])          # the start of a log, before any match
+        self.assertEqual(self.call('POST', '/api/upload?name=' + name, raw=head.encode('utf-8'))[0], 200)
+        self.assertEqual(self.call('POST', '/api/import', {'source': 'files'})[0], 202)
+        s = self.wait()
+        self.assertTrue(s['result']['ok'], s['lines'])
+        self.assertEqual(s['result']['code'], 'no_matches')
+        self.assertFalse(s['result']['changed'])
+        self.assertEqual((s['logs'], s['matches']), (1, 0))
+        self.assertIn('ed-welcome', self.call('GET', '/', key=False)[1])
+
+    def test_welcome_follows_settings(self):
+        self.assertEqual(self.call('POST', '/api/settings', {'lang': 'zh', 'theme': 'light'})[0], 200)
+        html = self.call('GET', '/', key=False)[1]
+        self.assertIn('data-theme="light"', html)
+        self.assertIn('document.documentElement.lang="zh-Hant"', html)
+        self.call('POST', '/api/settings', {'lang': 'en', 'theme': 'dark'})
+
+
+class PlainWords(unittest.TestCase):
+    def test_messages(self):
+        with self.assertRaises(ValueError) as e:
+            app.fetch.normalize_host('hello world')
+        self.assertNotIn('host:port', str(e.exception))
+        self.assertEqual(app._sentence('that is not an elevendash backup'), 'That is not an elevendash backup.')
+        for kind in ('quest', 'share', 'rebuild', 'nothing like it'):
+            for text in ('None of those matches are in your data. Pick matches from the dashboard, or see "elevendash share --help".',
+                         'No game logs in /x yet. Run "elevendash fetch" or "elevendash import" first.', 'Something else'):
+                self.assertNotIn('elevendash ', app._plain_exit(kind, text))
 
 
 class Restore(unittest.TestCase):

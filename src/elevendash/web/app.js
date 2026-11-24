@@ -19,8 +19,15 @@
   let timer = 0;
   let stopped = false;
 
-  // a message in both languages; the page's language picks which shows
-  const say = (el, en, zhText, cls) => {
+  // On the welcome page what the bar says also shows under the guide's buttons, where the eye is; the bar's own line
+  // is then not read out a second time.
+  const gs = $('ed-guide-status');
+  if (gs) {
+    bar.msg.removeAttribute('role');
+    bar.msg.removeAttribute('aria-live');
+  }
+  // a message in both languages; the page's language picks which shows. mirror: false keeps it off the guide.
+  const say = (el, en, zhText, cls, mirror) => {
     const a = document.createElement('span');
     a.dataset.l = 'en';
     a.textContent = en;
@@ -30,7 +37,25 @@
     b.textContent = zhText;
     el.replaceChildren(a, b);
     el.className = 'ed-app-msg' + (cls ? ' ' + cls : '');
+    if (gs && el === bar.msg && mirror !== false) guideSay(en, zhText, cls);
   };
+  const guideSay = (en, zhText, cls) => {
+    if (!gs) return;
+    const said = en + '|' + (cls || '');
+    if (gs.dataset.said === said) return;      // the same line again: not read out again
+    gs.dataset.said = said;
+    const a = document.createElement('span'), b = document.createElement('span');
+    a.dataset.l = 'en';
+    a.textContent = en;
+    b.dataset.l = 'zh';
+    b.lang = 'zh-Hant';
+    b.textContent = zhText;
+    gs.replaceChildren(a, b);
+    gs.className = 'ed-app-msg ed-guide-status' + (cls ? ' ' + cls : '');
+    gs.hidden = !en;
+  };
+  const NO_MATCHES = ['The logs are in, but none of them holds a finished match yet. Play a match to the end in Eleven, then import again.',
+    '記錄已匯入，但還沒有一場打完的比賽。在 Eleven 打完一場比賽後再匯入。'];
   const when = (iso) => {
     const d = new Date(iso);
     if (isNaN(d)) return '';
@@ -39,10 +64,11 @@
   const plural = (n, one, many) => n + ' ' + (n === 1 ? one : many);
 
   const idle = (s) => {
-    if (!s.logs) return say(bar.msg, 'No logs yet.', '還沒有記錄。');
+    if (!s.logs) return say(bar.msg, 'No logs yet.', '還沒有記錄。', '', false);
+    if (gs && s.built && !s.matches) return say(bar.msg, NO_MATCHES[0], NO_MATCHES[1]);
     const t = s.last_import ? when(s.last_import) : '';
-    if (t) say(bar.msg, `${plural(s.logs, 'log', 'logs')} · last import ${t}`, `${s.logs} 個記錄 · 上次匯入 ${t}`);
-    else say(bar.msg, plural(s.logs, 'log', 'logs'), `${s.logs} 個記錄`);
+    if (t) say(bar.msg, `${plural(s.logs, 'log', 'logs')} · last import ${t}`, `${s.logs} 個記錄 · 上次匯入 ${t}`, '', false);
+    else say(bar.msg, plural(s.logs, 'log', 'logs'), `${s.logs} 個記錄`, '', false);
   };
 
   const showLog = (lines, open) => {
@@ -52,18 +78,20 @@
   };
 
   const busy = (s) => {
-    [bar.imp, bar.files, bar.rebuild].forEach((b) => (b.disabled = true));
+    [bar.imp, bar.files, bar.rebuild, guide.imp, guide.check].forEach((b) => b && (b.disabled = true));
     const step = (s.lines || []).filter((l) => l.trim()).slice(-1)[0] || '';
     const what = s.kind === 'site' ? ['Redrawing the dashboard…', '正在重繪儀表板…'] : s.kind === 'rebuild'
       ? ['Rebuilding from the logs…', '正在從記錄重新建立…'] : s.kind === 'restore' ? ['Restoring the backup…', '正在還原備份…']
         : s.kind === 'share' ? ['Writing the dashboard to share…', '正在寫入要分享的儀表板…'] : ['Importing…', '正在匯入…'];
-    say(bar.msg, what[0] + (step ? ' ' + step.trim() : ''), what[1] + (step ? ' ' + step.trim() : ''));
+    say(bar.msg, what[0] + (step ? ' ' + step.trim() : ''), what[1] + (step ? ' ' + step.trim() : ''), '', false);
+    guideSay(what[0] + (s.kind === 'quest' ? ' The first import takes a minute or two.' : ''), what[1] + (s.kind === 'quest' ? '第一次匯入需要一兩分鐘。' : ''));
     showLog(s.lines, mine);
   };
 
   const finished = (s) => {
     const r = s.result || {};
     [bar.imp, bar.files, bar.rebuild].forEach((b) => (b.disabled = false));
+    guideFree();
     showLog(s.lines, false);
     if (r.ok && r.changed) {
       try {
@@ -75,7 +103,7 @@
       setTimeout(() => location.reload(), 300);
       return true;
     }
-    bar.help.hidden = r.code !== 'unreachable';
+    bar.help.hidden = r.code !== 'unreachable' || !!gs;      // on the welcome page the guide says it, beside its buttons
     if (r.code === 'shared') {
       const en = `Dashboard to share written: ${r.file} (${plural(r.n, 'match', 'matches')}). It holds those matches only, as match data.`;
       const zh = `已寫入要分享的儀表板：${r.file}（${r.n} 場比賽）。裡面只有這些比賽的比賽資料。`;
@@ -88,9 +116,13 @@
     } else if (r.code === 'nothing') {
       say(bar.msg, 'No new logs on the Quest. Play a session and import again.', '頭戴裝置上沒有新記錄。打完一場再匯入。', 'ok');
       if (s.kind === 'files') say(bar.msg, 'Those logs are already in.', '這些記錄已經匯入過了。', 'ok');
+    } else if (r.code === 'no_matches') {
+      say(bar.msg, NO_MATCHES[0], NO_MATCHES[1], 'ok');
     } else if (r.code === 'need_quest') {
-      say(bar.msg, "Enter the Quest's address in Settings first.", '請先在「設定」中輸入頭戴裝置位址。', 'bad');
-      openSettings(true);
+      askQuest();
+    } else if (r.code === 'unreachable' && gs) {
+      say(bar.msg, 'The Quest did not answer. Is Eleven still open with File Sharing on? Check the connection again, then import.',
+        '頭戴裝置沒有回應。Eleven 是否還開著，檔案分享也還在執行？請再檢查一次連線，然後匯入。', 'bad');
     } else if (r.code === 'unreachable') {
       say(bar.msg, 'The Quest did not answer.', '頭戴裝置沒有回應。', 'bad');
     } else if (!r.ok && s.kind === 'restore') {
@@ -147,6 +179,22 @@
   // The welcome page's guide: check the headset connection step by step (the app asks the headset for its list of
   // logs, nothing else), then import.
   const guide = {form: $('ed-guide-form'), quest: $('ed-guide-quest'), check: $('ed-guide-check'), list: $('ed-guide-checks'), imp: $('ed-guide-import')};
+  let guideOk = false, checking = false;      // the last check passed; a check is running
+  // the guide's buttons once a job or a check is over: Import again as soon as the connection checked out
+  const guideFree = () => {
+    if (!guide.imp) return;
+    guide.check.disabled = checking;
+    guide.imp.disabled = checking || !guideOk;
+  };
+  // no address to import from: ask for it where it is typed, the guide on the welcome page or Settings
+  const askQuest = () => {
+    if (guide.quest) {
+      say(bar.msg, "Type the Quest's address above and check the connection first.", '請先在上面輸入頭戴裝置位址並檢查連線。', 'bad');
+      return guide.quest.focus();
+    }
+    say(bar.msg, "Enter the Quest's address in Settings first.", '請先在「設定」中輸入頭戴裝置位址。', 'bad');
+    openSettings(true);
+  };
   const STEPS = [
     ['address', ['That is an address.', '位址格式正確。'],
       ['That does not look like an address. It is numbers with dots, then a colon and a number, such as 192.168.1.20:8090.', '這看起來不像位址。位址是用點分隔的數字，加上冒號和一個數字，例如 192.168.1.20:8090。']],
@@ -156,46 +204,57 @@
       ["Something answers there, but it is not Eleven's File Sharing. In Eleven, start it under Settings › Network Settings › File Sharing, and check the number after the colon.", '那裡有回應，但不是 Eleven 的檔案分享。請在 Eleven 的「設定 › 網路設定 › 檔案分享」啟動它，並檢查冒號後面的數字。']],
     ['logs', null, ['File Sharing is on, but the headset has no game logs yet. Play a match, then check again.', '檔案分享已啟動，但頭戴裝置上還沒有遊戲記錄。打一場比賽後再檢查一次。']],
   ];
-  const showChecks = (r) => {
+  const showChecks = (r, pending) => {
     const by = new Map((r.steps || []).map((s) => [s.step, s]));
     guide.list.hidden = false;
-    guide.list.replaceChildren(...STEPS.map(([id, ok, bad]) => {
+    guide.list.replaceChildren(...STEPS.map(([id, ok, bad], i) => {
       const s = by.get(id), li = document.createElement('li'), mark = document.createElement('b');
       li.className = !s ? 'wait' : s.ok ? 'ok' : 'bad';
-      mark.textContent = !s ? '·' : s.ok ? '✓' : '✗';
+      mark.textContent = !s ? (pending && !i ? '…' : '·') : s.ok ? '✓' : '✗';
       mark.setAttribute('aria-hidden', 'true');
-      const text = !s ? ['Not checked yet.', '尚未檢查。'] : !s.ok ? bad
+      const text = !s ? (pending && !i ? ['Checking… This can take a few seconds.', '正在檢查…可能需要幾秒鐘。'] : ['Not checked yet.', '尚未檢查。']) : !s.ok ? bad
         : ok || [r.logs === 1 ? '1 game log found.' : `${r.logs} game logs found.`, `找到 ${r.logs} 個遊戲記錄。`];
       const span = document.createElement('span');
       span.append(...two(text[0], text[1]));
       li.append(mark, span);
       return li;
     }));
+    if (pending) return;
+    guideOk = !!r.ok;
     guide.imp.disabled = !r.ok;
     if (r.ok) guide.imp.focus();
   };
   if (guide.form) {
     guide.form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      checking = true;
       guide.check.disabled = true;
       guide.imp.disabled = true;
+      guide.form.setAttribute('aria-busy', 'true');
+      guideSay('', '');
+      showChecks({steps: [], ok: false}, true);
       try {
         const r = await A.api('POST', '/api/check', {quest: guide.quest.value});
         if (r.host) guide.quest.value = r.host;
+        checking = false;
         showChecks(r);
       } catch (err) {
+        checking = false;
+        guideOk = false;
         showChecks({steps: [], ok: false});
         say(bar.msg, 'The check could not run: ' + err.message, '無法檢查：' + err.message, 'bad');
       }
-      guide.check.disabled = false;
+      guide.form.removeAttribute('aria-busy');
+      guideFree();
     });
     guide.imp.addEventListener('click', async () => {
       guide.imp.disabled = true;
+      guideSay('Starting the import…', '正在開始匯入…');
       try {
         render(await A.api('POST', '/api/settings', {quest: guide.quest.value}));
         start('quest');
       } catch (err) {
-        guide.imp.disabled = false;
+        guideFree();
         say(bar.msg, err.message, err.message, 'bad');
       }
     });
@@ -327,7 +386,9 @@
     bar.home.textContent = s.home || '';
     bar.home.parentElement.hidden = bar.folder.hidden = !s.home;
     if (s.home) document.querySelectorAll('.ed-home-text').forEach((el) => (el.textContent = s.home));
-    bar.phone.hidden = bar.quit.hidden = !!s.remote;
+    bar.phone.hidden = !!s.remote || !s.matches;      // the phone link is for a dashboard, so it waits for one
+    bar.quit.hidden = !!s.remote;
+    if (gs) bar.imp.hidden = true;                      // the welcome page imports from its guide
     bar.version.textContent = 'elevendash ' + s.version;
     bar.shortcut.hidden = !s.shortcut;
     bar.rebuild.hidden = !s.logs;
@@ -347,6 +408,7 @@
       const other = seq !== null && s.seq !== seq && s.result && s.result.ok && s.result.changed;
       seq = s.seq;
       [bar.imp, bar.files, bar.rebuild].forEach((b) => (b.disabled = false));
+      guideFree();
       if (other) return say(bar.msg, 'New data came in from another tab. Reload this page to see it.', '另一個分頁匯入了新資料，重新載入此頁即可看到。', 'ok');
       if (!bar.msg.classList.contains('bad') && !bar.msg.classList.contains('ok')) idle(s);
     }
@@ -385,10 +447,7 @@
   };
 
   bar.imp.addEventListener('click', () => {
-    if (last && !last.quest) {
-      say(bar.msg, "Enter the Quest's address in Settings first.", '請先在「設定」中輸入頭戴裝置位址。', 'bad');
-      return openSettings(true);
-    }
+    if (last && !last.quest) return askQuest();
     start('quest');
   });
   bar.rebuild.addEventListener('click', () => start('rebuild'));
@@ -498,7 +557,7 @@
       say(bar.setMsg, err.message, err.message, 'bad');
     }
   });
-  bar.folder.addEventListener('click', () => A.api('POST', '/api/folder').catch(() => {}));
+  bar.folder.addEventListener('click', () => A.api('POST', '/api/folder').catch((err) => say(bar.setMsg, err.message, err.message, 'bad')));
   bar.quit.addEventListener('click', async () => {
     try {
       await A.api('POST', '/api/quit');
