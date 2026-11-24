@@ -12,7 +12,9 @@ about to be pushed:
   - anything you list in private-words.txt, one word or regular expression a line (your name, an address, ...)
 
 It reads the files git would commit, and every file version in the commits being pushed, with their messages and
-authors, and looks inside zip files and inside the data a dashboard file packs. It prints file names and counts only, never a value, and exits 1 on any hit. With no workspace data next to
+authors, and looks inside zip files and inside the data a dashboard file packs. In a picture (PNG, JPEG, WebP) it
+looks for everything in the text the picture carries (its comments, EXIF and XMP), but in the picture itself only for
+values of 6 characters or more: a short name turns up there by chance in the compressed pixels. It prints file names and counts only, never a value, and exits 1 on any hit. With no workspace data next to
 the code (someone else's clone) there is nothing to look for and it passes.
 
 usage: python tools/prepush/check.py [--all | REF ...]      (default: what is in the index and in HEAD's history)
@@ -71,6 +73,8 @@ SHAPES = [re.compile(x) for x in (
     r'\bAIza[0-9A-Za-z_-]{35}\b',
 )]
 NAMES = re.compile(r'(?i)name')          # name fields: their values count from 3 letters, other short values do not
+LONG = 6                                  # a value this long is looked for in a picture's pixels too; a shorter one
+                                          # (or a shorter private word) only in the text the picture carries
 
 
 def private():
@@ -107,7 +111,8 @@ def private():
                 if re.fullmatch(r'\d{1,3}(\.\d{1,3}){3}', host):
                     config.add(host)
     counts['settings values'] = len(config)
-    pats = [redact._pattern(v) for v in values | config]
+    # (pattern, long): a long value is looked for everywhere, a short one not in a picture's pixels (see LONG)
+    pats = [(redact._pattern(v), len(v) >= LONG) for v in values | config]
 
     secrets = set()
     home = os.path.join(os.path.expanduser('~'), '.eleven-youtube')
@@ -138,7 +143,7 @@ def private():
                 if re.fullmatch(r'[A-Za-z0-9_-]{11}', v):
                     videos.add(v)
     counts['video ids'] = len(videos)
-    pats += [re.compile(re.escape(s)) for s in secrets | videos]
+    pats += [(re.compile(re.escape(s)), len(s) >= LONG) for s in secrets | videos]
 
     words = 0
     p = os.path.join(REPO, 'private-words.txt')
@@ -147,7 +152,7 @@ def private():
             for line in f:
                 line = line.strip()
                 if line and not line.startswith('#'):
-                    pats.append(re.compile(line, re.I))
+                    pats.append((re.compile(line, re.I), len(line) >= LONG))
                     words += 1
     counts['private words'] = words
     return pats, counts
@@ -156,8 +161,73 @@ def private():
 PACKED = re.compile(r'[A-Za-z0-9+/]{40,}={0,2}')       # a dashboard's packed data: deflated JSON in base64
 
 
+def _png_text(data):
+    """The text chunks of a PNG (tEXt, zTXt, iTXt) and its EXIF."""
+    i = 8
+    while i + 8 <= len(data):
+        size = int.from_bytes(data[i:i + 4], 'big')
+        kind, body = data[i + 4:i + 8], data[i + 8:i + 8 + size]
+        i += 12 + size
+        try:
+            if kind in (b'tEXt', b'eXIf'):
+                yield body
+            elif kind == b'zTXt':
+                key, _, rest = body.partition(b'\0')
+                yield key + b'\0' + zlib.decompress(rest[1:])
+            elif kind == b'iTXt':
+                key, _, rest = body.partition(b'\0')
+                packed, rest = rest[:1] == b'\1', rest[2:]
+                lang, _, rest = rest.partition(b'\0')
+                word, _, text = rest.partition(b'\0')
+                yield b'\0'.join((key, lang, word, zlib.decompress(text) if packed else text))
+        except zlib.error:
+            yield body
+        if kind == b'IEND':
+            break
+
+
+def _jpeg_text(data):
+    """The APPn segments (EXIF, XMP, ...) and comments of a JPEG, up to where the picture starts."""
+    i = 2
+    while i + 4 <= len(data) and data[i] == 0xFF:
+        marker = data[i + 1]
+        if marker in (0xD9, 0xDA):                      # end, or start of the picture itself
+            break
+        if marker == 0xFF or 0xD0 <= marker <= 0xD8 or marker == 0x01:
+            i += 1 if marker == 0xFF else 2
+            continue
+        size = int.from_bytes(data[i + 2:i + 4], 'big')
+        if 0xE0 <= marker <= 0xEF or marker == 0xFE:
+            yield data[i + 4:i + 2 + size]
+        i += 2 + size
+
+
+def _webp_text(data):
+    """The EXIF and XMP chunks of a WebP."""
+    i = 12
+    while i + 8 <= len(data):
+        kind, size = data[i:i + 4], int.from_bytes(data[i + 4:i + 8], 'little')
+        if kind in (b'EXIF', b'XMP '):
+            yield data[i + 8:i + 8 + size]
+        i += 8 + size + (size & 1)
+
+
+def picture_text(data):
+    """The text a picture carries, or None when the data is not a PNG, JPEG or WebP picture."""
+    if data[:8] == b'\x89PNG\r\n\x1a\n':
+        parts = _png_text(data)
+    elif data[:3] == b'\xff\xd8\xff':
+        parts = _jpeg_text(data)
+    elif data[:4] == b'RIFF' and data[8:12] == b'WEBP':
+        parts = _webp_text(data)
+    else:
+        return None
+    return '\n'.join(p.decode('utf-8', errors='replace') for p in parts)
+
+
 def texts(data, path, depth=0):
-    """The text of a file and of what it holds: each member of a zip, the packed data of a dashboard file."""
+    """(name, text, whole) for a file and for what it holds: each member of a zip, the packed data of a dashboard
+    file. whole is False for a picture's pixels, where only long values are looked for (see LONG)."""
     if data[:4] == b'PK\x03\x04' and depth < 2:
         try:
             with zipfile.ZipFile(io.BytesIO(data)) as z:
@@ -168,14 +238,17 @@ def texts(data, path, depth=0):
             pass
         return
     text = data.decode('utf-8', errors='replace')
-    yield path, text
+    meta = picture_text(data)
+    if meta is not None:
+        yield path + ' (picture text)', meta, True
+    yield path, text, meta is None
     if depth < 2:
         for m in PACKED.finditer(text):
             try:
                 inner = zlib.decompress(base64.b64decode(m.group(0)))
             except (ValueError, zlib.error):
                 continue
-            yield path + ' (packed data)', inner.decode('utf-8', errors='replace')
+            yield path + ' (packed data)', inner.decode('utf-8', errors='replace'), True
 
 
 def look(data, path, pats):
@@ -183,8 +256,8 @@ def look(data, path, pats):
     n = 0
     shaped = 0
     loglike = False
-    for name, text in texts(data, path):
-        n += sum(1 for p in pats if p.search(text))
+    for name, text, whole in texts(data, path):
+        n += sum(1 for p, long in pats if (whole or long) and p.search(text))
         if not path.startswith(LOG_OK):
             shaped += sum(1 for p in SHAPES if p.search(text))
             loglike = loglike or bool(LOGLINE.search(text))
@@ -235,7 +308,7 @@ def main(argv):
                 blobs.setdefault(sha, path)
         commits += len(git('rev-list', *rng).split())
         msgs = git('log', '--format=%B%n%an %ae%n%cn %ce', *rng)
-        n = sum(1 for p in pats if p.search(msgs))
+        n = sum(1 for p, _ in pats if p.search(msgs))
         if n:
             hits += 1
             print(f'HIT commit messages or authors: {n} private value(s)')
